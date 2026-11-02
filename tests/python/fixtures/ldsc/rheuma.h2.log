@@ -1,0 +1,33 @@
+*********************************************************************
+* LD Score Regression (LDSC)
+* Version 1.0.1
+* (C) 2014-2019 Brendan Bulik-Sullivan and Hilary Finucane
+* Broad Institute of MIT and Harvard / MIT Department of Mathematics
+* GNU General Public License v3
+*********************************************************************
+Call: 
+./ldsc.py \
+--h2 rheuma.sumstats.gz \
+--out rheuma.h2 \
+--w-ld w_ld/all \
+--ref-ld ref_ld/all 
+
+Beginning analysis at Mon Nov  2 17:26:16 2026
+Reading summary statistics from rheuma.sumstats.gz ...
+Read summary statistics for 85314 SNPs.
+Reading reference panel LD Score from ref_ld/all ...
+Read reference panel LD Scores for 351471 SNPs.
+Removing partitioned LD Scores with zero variance.
+Reading regression weight LD Score from w_ld/all ...
+Read regression weight LD Scores for 351471 SNPs.
+After merging with reference panel LD, 85314 SNPs remain.
+After merging with regression SNP LD, 85314 SNPs remain.
+WARNING: number of SNPs less than 200k; this is almost always bad.
+Using two-step estimator with cutoff at 30.
+Total Observed scale h2: 0.0559 (0.0133)
+Lambda GC: 2.5641
+Mean Chi^2: 39.5757
+Intercept: 1.073 (0.0862)
+Ratio: 0.0019 (0.0022)
+Analysis finished at Mon Nov  2 17:26:17 2026
+Total time elapsed: 1.22s

@@ -13,20 +13,68 @@ nextflow_pipeline {
         }
 
         then {
-            // stable_path: All files + folders in ${params.outdir}/ with a stable path (including file name)
-            def stable_path = getAllFilesFromDir(params.outdir, relative: true, includeDir: true, ignore: ['pipeline_info/*.{html,json,txt}'])
-            // stable_content: All files in ${params.outdir}/ with stable content
-            def stable_content = getAllFilesFromDir(params.outdir, ignoreFile: 'tests/.nftignore')
+            def lines  = new File("$outputDir/gencorr_results.tsv").readLines()
+            def header = lines[0].split('\t', -1) as List
+            def rows   = lines.drop(1).collect { line -> [header, line.split('\t', -1) as List].transpose().collectEntries() }
+            // Content snapshot that is robust to last-digit floating point noise
+            // across platforms/BLAS: rg rounded to 3 decimals + status per row.
+            def summary = rows.collect { r ->
+                def rg = r.rg == 'NA' ? 'NA' : String.format('%.3f', r.rg as double)
+                "${r.method}|${r.trait1}|${r.trait2}|${r.locus}|${r.status}|${rg}"
+            }
+            def stable_path = getAllFilesFromDir(params.outdir, relative: true, includeDir: true,
+                ignore: ['pipeline_info/*.{html,json,txt}'])
             assert workflow.success
             assertAll(
+                // every pair analysed by LDSC; 6 pairs x 10 loci for LAVA
+                { assert rows.count { it.method == 'ldsc' } == 6 },
+                { assert rows.count { it.method == 'lava' } == 60 },
+                { assert rows.findAll { it.method == 'ldsc' }.every { it.status == 'ok' } },
                 { assert snapshot(
-                    // pipeline versions.yml file for multiqc from which Nextflow version is removed because we test pipelines on multiple Nextflow versions
-                    removeNextflowVersion("$outputDir/pipeline_info/gencorr_software_mqc_versions.yml"),
-                    // All stable path name, with a relative path
                     stable_path,
-                    // All files with stable contents
-                    stable_content
+                    summary,
+                    path("$outputDir/ldsc/gencorr.sample_overlap.txt"),
+                    path("$outputDir/harmonized/bmi.qc.json").json
                 ).match() }
+            )
+        }
+    }
+
+    test("-profile test -stub") {
+
+        options "-stub"
+
+        when {
+            params {
+                outdir = "$outputDir"
+            }
+        }
+
+        then {
+            assert workflow.success
+        }
+    }
+
+    test("-profile test, pair_mode target, joint LAVA SNP set") {
+
+        when {
+            params {
+                outdir       = "$outputDir"
+                pair_mode    = 'target'
+                targets      = 'depression'
+                lava_snp_set = 'joint'
+            }
+        }
+
+        then {
+            def lines  = new File("$outputDir/gencorr_results.tsv").readLines()
+            def header = lines[0].split('\t', -1) as List
+            def rows   = lines.drop(1).collect { line -> [header, line.split('\t', -1) as List].transpose().collectEntries() }
+            assert workflow.success
+            assertAll(
+                // depression vs the 3 other traits
+                { assert rows.findAll { it.method == 'ldsc' }.collect { [it.trait1, it.trait2].sort() }.unique().size() == 3 },
+                { assert rows.findAll { it.method == 'lava' }.every { 'depression' in [it.trait1, it.trait2] } }
             )
         }
     }

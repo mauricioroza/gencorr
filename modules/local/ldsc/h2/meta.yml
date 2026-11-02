@@ -1,0 +1,30 @@
+name: "ldsc_h2"
+description: "LDSC SNP heritability (observed scale; plus liability scale for binary traits with pop_prev)"
+keywords:
+  - ldsc
+  - heritability
+input:
+  - meta:
+      type: map
+      description: "Trait meta: id, n_cases, n_controls, pop_prev"
+  - sumstats:
+      type: file
+      description: "<id>.sumstats.gz"
+  - ld:
+      type: map
+      description: "LD meta: prefix, split_by_chr"
+  - ref_ld:
+      type: directory
+      description: "Reference LD scores"
+  - w_ld:
+      type: directory
+      description: "Regression-weight LD scores"
+output:
+  - log:
+      type: file
+      description: "<id>.h2.log and, for binary traits with pop_prev, <id>.h2_liab.log"
+  - versions:
+      type: tuple
+      description: (process, tool, version) emitted to the "versions" topic
+authors:
+  - "MR"

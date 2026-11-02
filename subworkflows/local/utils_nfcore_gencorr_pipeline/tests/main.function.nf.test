@@ -1,0 +1,111 @@
+nextflow_function {
+
+    name "Test pairing and validation functions"
+    script "../main.nf"
+    tag "subworkflows"
+    tag "utils_nfcore_gencorr_pipeline"
+
+    test("makePairs: all -> every unordered pair once, samplesheet order") {
+        function "makePairs"
+        when {
+            function {
+                """
+                input[0] = ['a', 'b', 'c']
+                input[1] = 'all'
+                input[2] = null
+                input[3] = null
+                """
+            }
+        }
+        then {
+            assert function.success
+            assert function.result == [['a', 'b'], ['a', 'c'], ['b', 'c']]
+        }
+    }
+
+    test("makePairs: target -> target vs every other trait, no duplicates between targets") {
+        function "makePairs"
+        when {
+            function {
+                """
+                input[0] = ['a', 'b', 'c', 'd']
+                input[1] = 'target'
+                input[2] = 'b,a'
+                input[3] = null
+                """
+            }
+        }
+        then {
+            assert function.success
+            // b-a is produced once (as b,a) even though a is also a target
+            assert function.result == [['b', 'a'], ['b', 'c'], ['b', 'd'], ['a', 'c'], ['a', 'd']]
+        }
+    }
+
+    test("makePairs: pairs -> listed pairs, reversed duplicates removed") {
+        function "makePairs"
+        when {
+            function {
+                """
+                input[0] = ['a', 'b', 'c']
+                input[1] = 'pairs'
+                input[2] = null
+                input[3] = [['a', 'c'], ['c', 'a'], ['b', 'c']]
+                """
+            }
+        }
+        then {
+            assert function.success
+            assert function.result == [['a', 'c'], ['b', 'c']]
+        }
+    }
+
+    test("makePairs: unknown target fails") {
+        function "makePairs"
+        when {
+            function {
+                """
+                input[0] = ['a', 'b']
+                input[1] = 'target'
+                input[2] = 'z'
+                input[3] = null
+                """
+            }
+        }
+        then {
+            assert function.failed
+        }
+    }
+
+    test("makePairs: self pair fails") {
+        function "makePairs"
+        when {
+            function {
+                """
+                input[0] = ['a', 'b']
+                input[1] = 'pairs'
+                input[2] = null
+                input[3] = [['a', 'a']]
+                """
+            }
+        }
+        then {
+            assert function.failed
+        }
+    }
+
+    test("cleanMeta: empty samplesheet cells are dropped") {
+        function "cleanMeta"
+        when {
+            function {
+                """
+                input[0] = [id: 'x', n: null, n_cases: [], pop_prev: 0.1, colmap: '']
+                """
+            }
+        }
+        then {
+            assert function.success
+            assert function.result == [id: 'x', pop_prev: 0.1]
+        }
+    }
+}

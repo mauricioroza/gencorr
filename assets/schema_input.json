@@ -2,32 +2,67 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://raw.githubusercontent.com/karlssonlab/gencorr/master/assets/schema_input.json",
     "title": "karlssonlab/gencorr pipeline - params.input schema",
-    "description": "Schema for the file provided with params.input",
+    "description": "One row per GWAS summary statistics file (one trait).",
     "type": "array",
     "items": {
         "type": "object",
         "properties": {
-            "sample": {
+            "id": {
                 "type": "string",
-                "pattern": "^\\S+$",
-                "errorMessage": "Sample name must be provided and cannot contain spaces",
+                "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$",
+                "errorMessage": "id must start with a letter and contain only letters, digits, '_', '.', '-' (it becomes a file name and a LAVA phenotype ID)",
                 "meta": ["id"]
             },
-            "fastq_1": {
+            "sumstats": {
                 "type": "string",
                 "format": "file-path",
                 "exists": true,
-                "pattern": "^([\\S\\s]*\\/)?[^\\s\\/]+\\.f(ast)?q\\.gz$",
-                "errorMessage": "FastQ file for reads 1 must be provided, cannot contain spaces and must have extension '.fq.gz' or '.fastq.gz'"
+                "pattern": "^\\S+$",
+                "errorMessage": "sumstats must be a path to an existing summary statistics file without spaces"
             },
-            "fastq_2": {
+            "n": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "errorMessage": "n must be a positive number (total sample size; used only when the file has no N column)",
+                "meta": ["n"]
+            },
+            "n_cases": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "errorMessage": "n_cases must be a positive number",
+                "meta": ["n_cases"]
+            },
+            "n_controls": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "errorMessage": "n_controls must be a positive number",
+                "meta": ["n_controls"]
+            },
+            "pop_prev": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "exclusiveMaximum": 1,
+                "errorMessage": "pop_prev must be between 0 and 1 (population prevalence, binary traits only)",
+                "meta": ["pop_prev"]
+            },
+            "colmap": {
                 "type": "string",
-                "format": "file-path",
-                "exists": true,
-                "pattern": "^([\\S\\s]*\\/)?[^\\s\\/]+\\.f(ast)?q\\.gz$",
-                "errorMessage": "FastQ file for reads 2 cannot contain spaces and must have extension '.fq.gz' or '.fastq.gz'"
+                "pattern": "^([A-Z0-9]+=[^,=\\s]+)(,[A-Z0-9]+=[^,=\\s]+)*$",
+                "errorMessage": "colmap must look like 'Z=STAT,N=NMISS' (standard=source, comma-separated)",
+                "meta": ["colmap"]
+            },
+            "label": {
+                "type": "string",
+                "errorMessage": "label is a free-text display name",
+                "meta": ["label"]
             }
         },
-        "required": ["sample", "fastq_1"]
+        "required": ["id", "sumstats"],
+        "dependentRequired": {
+            "n_cases": ["n_controls"],
+            "n_controls": ["n_cases"],
+            "pop_prev": ["n_cases", "n_controls"]
+        },
+        "uniqueEntries": ["id"]
     }
 }

@@ -16,6 +16,7 @@ lint:
     - .github/PULL_REQUEST_TEMPLATE.md
     - assets/email_template.txt
     - docs/README.md
+    - README.md
   nextflow_config:
     - manifest.name
     - manifest.homePage
@@ -46,7 +47,6 @@ template:
   author: MR, KarlssonLaboratory (ACES, Stockholm University)
   version: 0.1.0dev
   force: true
-  outdir: /home/claude/work/gencorr
   skip_features:
     - igenomes
     - multiqc

@@ -10,9 +10,23 @@
 
 ## Pipeline tools
 
+- [LDSC](https://doi.org/10.1038/ng.3211)
 
+  > Bulik-Sullivan BK, Loh PR, Finucane HK, Ripke S, Yang J; Schizophrenia Working Group of the Psychiatric Genomics Consortium, Patterson N, Daly MJ, Price AL, Neale BM. LD Score regression distinguishes confounding from polygenicity in genome-wide association studies. Nat Genet. 2015;47(3):291-295. doi: 10.1038/ng.3211.
 
+- [LDSC cross-trait (genetic correlation)](https://doi.org/10.1038/ng.3406)
 
+  > Bulik-Sullivan B, Finucane HK, Anttila V, et al. An atlas of genetic correlations across human diseases and traits. Nat Genet. 2015;47(11):1236-1241. doi: 10.1038/ng.3406.
+
+- [LAVA](https://doi.org/10.1038/s41588-022-01017-y)
+
+  > Werme J, van der Sluis S, Posthuma D, de Leeuw CA. An integrated framework for local genetic correlation analysis. Nat Genet. 2022;54(3):274-282. doi: 10.1038/s41588-022-01017-y.
+
+- [BigaGWAS](https://bigagwas.org): the web platform whose LDSC/LAVA usage this pipeline reproduces.
+
+- [Liability-scale heritability](https://doi.org/10.1016/j.ajhg.2011.02.002)
+
+  > Lee SH, Wray NR, Goddard ME, Visscher PM. Estimating missing heritability for disease from genome-wide association studies. Am J Hum Genet. 2011;88(3):294-305.
 
 ## Software packaging/containerisation tools
 

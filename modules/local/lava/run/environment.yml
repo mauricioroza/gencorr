@@ -1,0 +1,8 @@
+# LAVA is not packaged for conda (it is installed from GitHub, and its
+# dependency matrixsampling is not on conda-forge). Use a container profile
+# (docker / singularity / apptainer) to run LAVA; see containers/gencorr-tools.
+# The pipeline stops at start-up if LAVA is requested with -profile conda.
+channels:
+  - conda-forge
+dependencies:
+  - conda-forge::r-base=4.4.2

@@ -3,7 +3,9 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     karlssonlab/gencorr
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Github : https://github.com/karlssonlab/gencorr
+    Global (LDSC) and local (LAVA) genetic correlation from GWAS summary
+    statistics, with one harmonization step and one results format shared by
+    all methods.
 ----------------------------------------------------------------------------------------
 */
 
@@ -13,33 +15,30 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { GENCORR  } from './workflows/gencorr'
+include { GENCORR                 } from './workflows/gencorr'
 include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_gencorr_pipeline'
 include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_gencorr_pipeline'
+
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     NAMED WORKFLOWS FOR PIPELINE
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-//
-// WORKFLOW: Run main analysis pipeline depending on type of input
-//
 workflow KARLSSONLAB_GENCORR {
 
     take:
-    samplesheet // channel: samplesheet read in from --input
+    samplesheet // channel: [ meta, sumstats ]
+    pairs       // channel: [ meta1, meta2 ]
 
     main:
-
-    //
-    // WORKFLOW: Run pipeline
-    //
     GENCORR (
         samplesheet,
-        params.outdir,
+        pairs,
+        params.outdir
     )
 }
+
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RUN MAIN WORKFLOW
@@ -50,7 +49,7 @@ workflow {
 
     main:
     //
-    // SUBWORKFLOW: Run initialisation tasks
+    // SUBWORKFLOW: Validate params, read samplesheet, build trait pairs
     //
     PIPELINE_INITIALISATION (
         params.version,
@@ -68,8 +67,10 @@ workflow {
     // WORKFLOW: Run main workflow
     //
     KARLSSONLAB_GENCORR (
-        PIPELINE_INITIALISATION.out.samplesheet
+        PIPELINE_INITIALISATION.out.samplesheet,
+        PIPELINE_INITIALISATION.out.pairs
     )
+
     //
     // SUBWORKFLOW: Run completion tasks
     //

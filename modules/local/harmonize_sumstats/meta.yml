@@ -1,0 +1,25 @@
+name: "harmonize_sumstats"
+description: "Convert one GWAS summary statistics file to the gencorr harmonized format and write a QC report"
+keywords:
+  - gwas
+  - summary statistics
+  - harmonization
+input:
+  - meta:
+      type: map
+      description: "Trait meta: id (required), n, n_cases, n_controls, colmap"
+  - sumstats:
+      type: file
+      description: "Raw summary statistics (txt/tsv/csv, optionally gzipped)"
+output:
+  - sumstats:
+      type: file
+      description: "<id>.harmonized.tsv.gz with columns SNP CHR BP A1 A2 Z BETA SE P N EAF INFO"
+  - qc:
+      type: file
+      description: "<id>.qc.json: column mapping, Z source counts, removed variants per filter, lambda GC"
+  - versions:
+      type: tuple
+      description: (process, tool, version) emitted to the "versions" topic
+authors:
+  - "MR"

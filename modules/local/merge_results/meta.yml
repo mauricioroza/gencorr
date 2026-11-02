@@ -1,0 +1,22 @@
+name: "merge_results"
+description: "Concatenate, validate (RESULT_COLUMNS, no duplicate estimates) and sort standard results tables"
+keywords:
+  - results
+  - merge
+  - validation
+input:
+  - meta:
+      type: map
+      description: "Output meta (id = output name)"
+  - tables:
+      type: file
+      description: "Standard results tables"
+output:
+  - results:
+      type: file
+      description: "<id>.tsv"
+  - versions:
+      type: tuple
+      description: (process, tool, version) emitted to the "versions" topic
+authors:
+  - "MR"

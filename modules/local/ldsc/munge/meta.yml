@@ -1,0 +1,27 @@
+name: "ldsc_munge"
+description: "LDSC munge_sumstats.py on the LDSC export of a harmonized file"
+keywords:
+  - ldsc
+  - munge
+input:
+  - meta:
+      type: map
+      description: "Trait meta (id)"
+  - sumstats:
+      type: file
+      description: "<id>.ldsc.tsv.gz"
+  - merge_alleles:
+      type: file
+      description: "Optional SNP list for --merge-alleles (e.g. w_hm3.snplist); [] for none"
+output:
+  - sumstats:
+      type: file
+      description: "<id>.sumstats.gz"
+  - log:
+      type: file
+      description: "<id>.munge.log"
+  - versions:
+      type: tuple
+      description: (process, tool, version) emitted to the "versions" topic
+authors:
+  - "MR"

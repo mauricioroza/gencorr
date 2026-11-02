@@ -1,0 +1,36 @@
+name: "lava_run"
+description: "LAVA univariate + bivariate local genetic correlation for one locus chunk and a group of trait pairs"
+keywords:
+  - lava
+  - local genetic correlation
+input:
+  - meta:
+      type: map
+      description: "Group meta: id, traits (list of trait metas), pairs (list of [id1, id2])"
+  - sumstats:
+      type: file
+      description: "<id>.lava.tsv for every trait in the group"
+  - loci:
+      type: file
+      description: "Locus chunk (LOC CHR START STOP)"
+  - ref_prefix:
+      type: string
+      description: "Basename of the LD reference prefix"
+  - reference:
+      type: file
+      description: "All LD reference files"
+  - overlap:
+      type: file
+      description: "Sample-overlap matrix; [] for none"
+output:
+  - results:
+      type: file
+      description: "<group>.<chunk>.lava.tsv (standard results)"
+  - univ:
+      type: file
+      description: "<group>.<chunk>.lava_univ.tsv (local h2 per locus and trait)"
+  - versions:
+      type: tuple
+      description: (process, tool, version) emitted to the "versions" topic
+authors:
+  - "MR"

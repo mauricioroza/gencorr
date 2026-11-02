@@ -1,0 +1,33 @@
+name: "ldsc_rg"
+description: "Cross-trait LDSC for trait1 against a batch of traits (ldsc --rg trait1,a,b,...)"
+keywords:
+  - ldsc
+  - genetic correlation
+input:
+  - meta:
+      type: map
+      description: "Batch meta: id (<trait1>__bN), trait1, traits2"
+  - sumstats1:
+      type: file
+      description: "trait1 .sumstats.gz"
+  - others:
+      type: file
+      description: "Partner .sumstats.gz files"
+  - ld:
+      type: map
+      description: "LD meta"
+  - ref_ld:
+      type: directory
+      description: "Reference LD scores"
+  - w_ld:
+      type: directory
+      description: "Regression-weight LD scores"
+output:
+  - log:
+      type: file
+      description: "<batch>.rg.log"
+  - versions:
+      type: tuple
+      description: (process, tool, version) emitted to the "versions" topic
+authors:
+  - "MR"

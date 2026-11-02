@@ -1,0 +1,47 @@
+*********************************************************************
+* LD Score Regression (LDSC)
+* Version 1.0.1
+* (C) 2014-2019 Brendan Bulik-Sullivan and Hilary Finucane
+* Broad Institute of MIT and Harvard / MIT Department of Mathematics
+* GNU General Public License v3
+*********************************************************************
+Call: 
+./ldsc.py \
+--out bmi__err.rg \
+--rg bmi.sumstats.gz,depression.sumstats.gz \
+--w-ld ref_ld/all \
+--ref-ld ref_ld/all 
+
+Beginning analysis at Mon Nov  2 17:34:33 2026
+Reading summary statistics from bmi.sumstats.gz ...
+Read summary statistics for 130418 SNPs.
+Reading reference panel LD Score from ref_ld/all ...
+Read reference panel LD Scores for 351471 SNPs.
+Removing partitioned LD Scores with zero variance.
+Reading regression weight LD Score from ref_ld/all ...
+Read regression weight LD Scores for 351471 SNPs.
+After merging with reference panel LD, 130418 SNPs remain.
+After merging with regression SNP LD, 130418 SNPs remain.
+Computing rg for phenotype 2/2
+Reading summary statistics from depression.sumstats.gz ...
+Read summary statistics for 84910 SNPs.
+After merging with summary statistics, 76901 SNPs remain.
+76898 SNPs with valid alleles.
+ERROR computing rg for phenotype 2/2, from file depression.sumstats.gz.
+Traceback (most recent call last):
+  File "/opt/mamba/envs/ldsc/lib/python2.7/site-packages/ldscore/sumstats.py", line 409, in estimate_rg
+    loop = _read_other_sumstats(args, log, p2, sumstats, ref_ld_cnames)
+  File "/opt/mamba/envs/ldsc/lib/python2.7/site-packages/ldscore/sumstats.py", line 441, in _read_other_sumstats
+    loop['Z2'] = _align_alleles(loop.Z2, alleles)
+  File "/opt/mamba/envs/ldsc/lib/python2.7/site-packages/ldscore/sumstats.py", line 519, in _align_alleles
+    raise KeyError(msg)
+KeyError: 'Incompatible alleles in .sumstats files: GTTC. Did you forget to use --merge-alleles with munge_sumstats.py?'
+
+
+
+Summary of Genetic Correlation Results
+p1                      p2  rg  se   z   p h2_obs h2_obs_se h2_int h2_int_se gcov_int gcov_int_se
+bmi.sumstats.gz  depression.sumstats.gz  NA  NA  NA  NA     NA        NA     NA        NA       NA          NA
+
+Analysis finished at Mon Nov  2 17:34:35 2026
+Total time elapsed: 1.81s

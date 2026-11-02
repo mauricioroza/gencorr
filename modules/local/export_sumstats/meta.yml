@@ -1,0 +1,24 @@
+name: "export_sumstats"
+description: "Write a harmonized file in the column layout a method expects (formats defined in bin/export_sumstats.py)"
+keywords:
+  - gwas
+  - format conversion
+input:
+  - meta:
+      type: map
+      description: "Trait meta (id)"
+  - harmonized:
+      type: file
+      description: "<id>.harmonized.tsv.gz"
+  - format:
+      type: string
+      description: "Format name: ldsc | lava | ..."
+output:
+  - sumstats:
+      type: file
+      description: "<id>.<format>.tsv[.gz]"
+  - versions:
+      type: tuple
+      description: (process, tool, version) emitted to the "versions" topic
+authors:
+  - "MR"

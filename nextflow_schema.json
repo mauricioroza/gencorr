@@ -10,7 +10,10 @@
             "type": "object",
             "fa_icon": "fas fa-terminal",
             "description": "Define where the pipeline should find input data and save output data.",
-            "required": ["input", "outdir"],
+            "required": [
+                "input",
+                "outdir"
+            ],
             "properties": {
                 "input": {
                     "type": "string",
@@ -19,8 +22,8 @@
                     "schema": "assets/schema_input.json",
                     "mimetype": "text/csv",
                     "pattern": "^\\S+\\.csv$",
-                    "description": "Path to comma-separated file containing information about the samples in the experiment.",
-                    "help_text": "You will need to create a design file with information about the samples in your experiment before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 3 columns, and a header row.",
+                    "description": "Samplesheet (CSV): one row per trait with columns id, sumstats [, n, n_cases, n_controls, pop_prev, colmap, label].",
+                    "help_text": "See docs/usage.md. Binary traits need n_cases and n_controls; add pop_prev to also get liability-scale h2.",
                     "fa_icon": "fas fa-file-csv"
                 },
                 "outdir": {
@@ -28,6 +31,186 @@
                     "format": "directory-path",
                     "description": "The output directory where the results will be saved. You have to use absolute paths to storage on Cloud infrastructure.",
                     "fa_icon": "fas fa-folder-open"
+                },
+                "methods": {
+                    "type": "string",
+                    "description": "Comma-separated methods to run.",
+                    "help_text": "Available: ldsc (global rg), lava (local rg). New methods are added via the registry in subworkflows/local/utils_nfcore_gencorr_pipeline.",
+                    "default": "ldsc,lava",
+                    "pattern": "^[a-z0-9_]+(,[a-z0-9_]+)*$",
+                    "fa_icon": "fas fa-list"
+                },
+                "pair_mode": {
+                    "type": "string",
+                    "description": "How trait pairs are formed.",
+                    "help_text": "all: every pair of samplesheet traits. target: --targets against every other trait (BigaGWAS 'one vs group'). pairs: exactly the pairs in --pairs.",
+                    "default": "all",
+                    "enum": [
+                        "all",
+                        "target",
+                        "pairs"
+                    ],
+                    "fa_icon": "fas fa-project-diagram"
+                },
+                "targets": {
+                    "type": "string",
+                    "description": "pair_mode target: comma-separated trait IDs to test against all other traits.",
+                    "fa_icon": "fas fa-bullseye"
+                },
+                "pairs": {
+                    "type": "string",
+                    "description": "pair_mode pairs: CSV/TSV with header trait1,trait2.",
+                    "format": "file-path",
+                    "exists": true,
+                    "fa_icon": "fas fa-file-csv"
+                },
+                "save_harmonized": {
+                    "type": "boolean",
+                    "description": "Publish the harmonized summary statistics (otherwise only their QC reports).",
+                    "default": false,
+                    "fa_icon": "fas fa-save"
+                },
+                "save_intermediates": {
+                    "type": "boolean",
+                    "description": "Publish munged LDSC files and per-chunk LAVA tables.",
+                    "default": false,
+                    "fa_icon": "fas fa-save"
+                }
+            }
+        },
+        "harmonization_options": {
+            "title": "Harmonization options",
+            "type": "object",
+            "fa_icon": "fas fa-sliders-h",
+            "description": "How raw summary statistics are converted to the shared format.",
+            "properties": {
+                "z_priority": {
+                    "type": "string",
+                    "description": "Order in which the signed Z-score is derived: z (Z column), p (P + sign of effect), beta_se (BETA/SE).",
+                    "help_text": "Default 'z,p,beta_se' matches what LDSC munge and LAVA do with raw files (and what BigaGWAS fed them).",
+                    "default": "z,p,beta_se",
+                    "pattern": "^(z|p|beta_se)(,(z|p|beta_se))*$"
+                },
+                "drop_ambiguous": {
+                    "type": "boolean",
+                    "description": "Remove strand-ambiguous A/T and C/G SNPs before any method.",
+                    "help_text": "Off by default to stay comparable with running LDSC/LAVA directly. LDSC munge always removes them for LDSC.",
+                    "default": false
+                }
+            }
+        },
+        "ldsc_options": {
+            "title": "LDSC options",
+            "type": "object",
+            "fa_icon": "fas fa-chart-line",
+            "description": "Global genetic correlation (LD score regression).",
+            "properties": {
+                "ldsc_ld": {
+                    "type": "string",
+                    "description": "Directory with LDSC reference LD scores (e.g. eur_w_ld_chr/).",
+                    "format": "directory-path",
+                    "exists": true
+                },
+                "ldsc_w_ld": {
+                    "type": "string",
+                    "description": "Directory with regression-weight LD scores. Default: same as --ldsc_ld.",
+                    "format": "directory-path",
+                    "exists": true
+                },
+                "ldsc_ld_prefix": {
+                    "type": "string",
+                    "description": "File prefix inside the LD-score directory ('' for eur_w_ld_chr, whose files are 1.l2.ldscore.gz ...)."
+                },
+                "ldsc_ld_split_by_chr": {
+                    "type": "boolean",
+                    "description": "LD scores are split by chromosome (--ref-ld-chr). Set false for a single file set (--ref-ld).",
+                    "default": true
+                },
+                "ldsc_merge_alleles": {
+                    "type": "string",
+                    "description": "SNP list passed to munge_sumstats.py --merge-alleles (normally w_hm3.snplist).",
+                    "help_text": "Strongly recommended: without it, LDSC fails a pair when an rsID has different alleles in the two traits.",
+                    "format": "file-path",
+                    "exists": true
+                },
+                "ldsc_rg_batch_size": {
+                    "type": "integer",
+                    "description": "Maximum number of traits compared with one trait1 in a single ldsc --rg call. Batching does not change estimates.",
+                    "default": 50,
+                    "minimum": 1
+                }
+            }
+        },
+        "lava_options": {
+            "title": "LAVA options",
+            "type": "object",
+            "fa_icon": "fas fa-map-marked-alt",
+            "description": "Local genetic correlation (LAVA).",
+            "properties": {
+                "lava_ref": {
+                    "type": "string",
+                    "description": "LD reference prefix: PLINK (<prefix>.bed/.bim/.fam) or LAVA LD format (e.g. lava-ukb-v1.1).",
+                    "help_text": "For European-ancestry data the LAVA authors recommend their UK Biobank LD reference over 1000 Genomes (1000G can inflate type I error)."
+                },
+                "lava_loci": {
+                    "type": "string",
+                    "description": "Locus definition file (LOC CHR START STOP). Default: LAVA's 2,495 GRCh37 blocks.",
+                    "default": "https://raw.githubusercontent.com/josefin-werme/LAVA/e729a245f7b6923967a96804fbf5246eadf2d6c6/support_data/blocks_s2500_m25_f1_w200.GRCh37_hg19.locfile",
+                    "format": "file-path"
+                },
+                "lava_overlap": {
+                    "type": "string",
+                    "description": "Sample-overlap correction: 'ldsc' (from LDSC intercepts), 'none', or a path to a matrix file.",
+                    "default": "ldsc"
+                },
+                "lava_snp_set": {
+                    "type": "string",
+                    "description": "Which SNPs a pair is analysed on.",
+                    "help_text": "pairwise: SNPs shared by the two traits (result independent of other traits). joint: SNPs shared by all traits in the run (LAVA multi-phenotype behaviour, as in BigaGWAS batches).",
+                    "default": "pairwise",
+                    "enum": [
+                        "pairwise",
+                        "joint"
+                    ]
+                },
+                "lava_loci_per_chunk": {
+                    "type": "integer",
+                    "description": "Loci per LAVA task. Smaller = more parallel tasks. Does not change results.",
+                    "default": 250,
+                    "minimum": 1
+                },
+                "lava_univ_thresh": {
+                    "type": "number",
+                    "description": "Run the bivariate test only when both traits have local univariate p below this.",
+                    "help_text": "LAVA default 0.05. The LAVA authors suggest a Bonferroni-type threshold (e.g. 0.05/2495) for genome-wide screens.",
+                    "default": 0.05,
+                    "minimum": 0,
+                    "maximum": 1
+                },
+                "lava_adap_thresh": {
+                    "type": "string",
+                    "description": "p-value thresholds at which LAVA increases simulation iterations (1e4 -> 1e5 -> 1e6).",
+                    "default": "1e-4,1e-6"
+                },
+                "lava_param_lim": {
+                    "type": "number",
+                    "description": "Estimates beyond +/- this bound are set to NA (LAVA param.lim).",
+                    "default": 1.25
+                },
+                "lava_p_values": {
+                    "type": "boolean",
+                    "description": "Compute bivariate p-values.",
+                    "default": true
+                },
+                "lava_cis": {
+                    "type": "boolean",
+                    "description": "Compute 95% confidence intervals.",
+                    "default": true
+                },
+                "lava_seed": {
+                    "type": "integer",
+                    "description": "Base random seed; each (locus, pair) gets a seed derived from it.",
+                    "default": 20201231
                 }
             }
         },
@@ -98,7 +281,14 @@
                     "description": "Method used to save pipeline results to output directory.",
                     "help_text": "The Nextflow `publishDir` option specifies which intermediate files should be saved to the output directory. This option tells the pipeline what method should be used to move these files. See [Nextflow docs](https://www.nextflow.io/docs/latest/process.html#publishdir) for details.",
                     "fa_icon": "fas fa-copy",
-                    "enum": ["symlink", "rellink", "link", "copy", "copyNoFollow", "move"],
+                    "enum": [
+                        "symlink",
+                        "rellink",
+                        "link",
+                        "copy",
+                        "copyNoFollow",
+                        "move"
+                    ],
                     "hidden": true
                 },
                 "monochrome_logs": {
@@ -128,7 +318,10 @@
                     "hidden": true
                 },
                 "help": {
-                    "type": ["boolean", "string"],
+                    "type": [
+                        "boolean",
+                        "string"
+                    ],
                     "description": "Display the help message."
                 },
                 "help_full": {
@@ -145,6 +338,15 @@
     "allOf": [
         {
             "$ref": "#/$defs/input_output_options"
+        },
+        {
+            "$ref": "#/$defs/harmonization_options"
+        },
+        {
+            "$ref": "#/$defs/ldsc_options"
+        },
+        {
+            "$ref": "#/$defs/lava_options"
         },
         {
             "$ref": "#/$defs/institutional_config_options"

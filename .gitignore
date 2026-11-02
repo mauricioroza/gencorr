@@ -10,3 +10,10 @@ null/
 .lineage/
 .nf-test/
 .nf-test.log
+
+# Python / test artefacts
+__pycache__/
+*.pyc
+.pytest_cache/
+.nf-test/
+.nf-test.log

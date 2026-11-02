@@ -1,0 +1,27 @@
+name: "ldsc_summarise"
+description: "Parse LDSC h2/rg logs into the standard results table, a per-trait h2 table and the LAVA sample-overlap matrix"
+keywords:
+  - ldsc
+  - parsing
+input:
+  - h2_logs:
+      type: file
+      description: "All <id>.h2*.log"
+  - rg_logs:
+      type: file
+      description: "All <batch>.rg.log"
+output:
+  - results:
+      type: file
+      description: "gencorr.ldsc.tsv"
+  - h2:
+      type: file
+      description: "gencorr.ldsc_h2.tsv"
+  - overlap:
+      type: file
+      description: "gencorr.sample_overlap.txt"
+  - versions:
+      type: tuple
+      description: (process, tool, version) emitted to the "versions" topic
+authors:
+  - "MR"

@@ -1,79 +1,90 @@
 # karlssonlab/gencorr
 
-## Introduction
+Global and local genetic correlation from GWAS summary statistics, as a
+Nextflow pipeline built on the nf-core template.
 
-**karlssonlab/gencorr** is a bioinformatics pipeline that ...
+* **Global rg**: LDSC 1.0.1 (Bulik-Sullivan et al. 2015), same version BigaGWAS uses
+* **Local rg**: LAVA 0.1.5 (Werme et al. 2022), pinned to commit `e729a24`
+* **Pluggable**: every method reads the same harmonized inputs and writes the
+  same results table, so adding HDL, SumHer, Popcorn, HDL-L … is one subworkflow
+  ([docs/extending.md](docs/extending.md)).
+* **Testable**: 33 Python tests + 6 nf-test function tests + 3 pipeline tests,
+  including *oracle* tests that check the pipeline reproduces LDSC and LAVA
+  run directly ([docs/validation.md](docs/validation.md)).
 
-<!-- TODO nf-core:
-   Complete this sentence with a 2-3 sentence summary of what types of data the pipeline ingests, a brief overview of the
-   major pipeline sections and the types of output it produces. You're giving an overview to someone new
-   to nf-core here, in 15-20 seconds. For an example, see https://github.com/nf-core/rnaseq/blob/master/README.md#introduction
--->
-
-<!-- TODO nf-core: Include a figure that guides the user through the major workflow steps. Many nf-core
-     workflows use the "tube map" design for that. See https://nf-co.re/docs/community/brand/workflow-schematics#examples for examples.   -->
-<!-- TODO nf-core: Fill in short bullet-pointed list of the default steps in the pipeline -->
-
-## Usage
-
-> [!NOTE]
-> If you are new to Nextflow and nf-core, please refer to [this page](https://nf-co.re/docs/get_started/environment_setup/overview) on how to set-up Nextflow. Make sure to [test your setup](https://nf-co.re/docs/get_started/run-your-first-pipeline) with `-profile test` before running the workflow on actual data.
-
-<!-- TODO nf-core: Describe the minimum required steps to execute the pipeline, e.g. how to prepare samplesheets.
-     Explain what rows and columns represent. For instance (please edit as appropriate):
-
-First, prepare a samplesheet with your input data that looks as follows:
-
-`samplesheet.csv`:
-
-```csv
-sample,fastq_1,fastq_2
-CONTROL_REP1,AEG588A1_S1_L002_R1_001.fastq.gz,AEG588A1_S1_L002_R2_001.fastq.gz
+```
+ samplesheet.csv ─► HARMONIZE_SUMSTATS ─┬─► METHOD_LDSC ── munge ─ h2 ─ rg ─► ldsc table ─┐
+ (any common GWAS      (one format,      │                          └─► sample overlap ──┐ │
+  column layout)        QC report)       │                                               ▼ │
+                                         └─► METHOD_LAVA ── loci split into chunks ─► lava table
+                                                                                          │
+                                         gencorr_results.tsv  ◄── MERGE (schema-checked) ◄┘
 ```
 
-Each row represents a fastq file (single-end) or a pair of fastq files (paired end).
-
--->
-
-Now, you can run the pipeline using:
-
-<!-- TODO nf-core: update the following command to include all required parameters for a minimal example -->
+## Quick start
 
 ```bash
-nextflow run karlssonlab/gencorr \
-   -profile <docker/singularity/.../institute> \
-   --input samplesheet.csv \
-   --outdir <OUTDIR>
+# 1. Check your setup on the bundled test data (4 traits, 6 pairs, ~5 min)
+nextflow run karlssonlab/gencorr -profile test,apptainer --outdir test_out
+
+# 2. Real run
+nextflow run karlssonlab/gencorr -profile apptainer \
+    --input samplesheet.csv --outdir results \
+    --methods ldsc,lava \
+    --ldsc_ld /refs/eur_w_ld_chr --ldsc_merge_alleles /refs/w_hm3.snplist \
+    --lava_ref /refs/lava-ukb/lava-ukb-v1.1
 ```
 
-> [!WARNING]
-> Please provide pipeline parameters via the CLI or Nextflow `-params-file` option. Custom config files including those provided by the `-c` Nextflow option can be used to provide any configuration _**except for parameters**_; see [docs](https://nf-co.re/docs/running/run-pipelines#using-parameter-files).
+`samplesheet.csv` has one row per trait:
+
+```csv
+id,sumstats,n,n_cases,n_controls,pop_prev,colmap,label
+bmi,/data/bmi.txt.gz,,,,,,Body mass index
+mdd,/data/mdd.tsv.gz,,170756,329443,0.15,,Major depression
+scz,/data/scz.txt,,53386,77258,0.01,"Z=STAT",Schizophrenia
+```
+
+Column names in the files are detected automatically (SNP/rsid/MarkerName,
+A1/effect_allele, BETA/OR/LogOR, SE, P, Z, N/NMISS/…); `colmap` overrides
+when needed. See [docs/usage.md](docs/usage.md) for pair modes (`all`,
+`target` = BigaGWAS "one vs group", `pairs`) and reference-data downloads.
+
+## Outputs
+
+`results/gencorr_results.tsv`: one row per (method, trait pair, locus):
+
+| method | scope | trait1 | trait2 | locus | rg | rg_se | rg_ci_low | rg_ci_high | p | h2_1 | h2_2 | status | extra |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| ldsc | global | bmi | mdd | NA | 0.11 | 0.07 | … | … | 0.11 | … | … | ok | {"gcov_int": …} |
+| lava | local | bmi | mdd | 464 | 0.51 | NA | 0.27 | 0.81 | 1.1e-4 | … | … | ok | {"r2": …} |
+| lava | local | bmi | mdd | 100 | NA | NA | NA | NA | NA | … | … | univ_filtered | … |
+
+Pairs that could not be estimated are **kept with a status** (`univ_filtered`,
+`ldsc_error`, `estimate_out_of_bounds`, …) instead of disappearing.
+Details: [docs/output.md](docs/output.md).
+
+## Documentation
+
+| | |
+|---|---|
+| [docs/usage.md](docs/usage.md) | samplesheet, parameters, reference data, running on UPPMAX |
+| [docs/output.md](docs/output.md) | every output file and column, status values |
+| [docs/validation.md](docs/validation.md) | the test layers, how to compare against BigaGWAS |
+| [docs/extending.md](docs/extending.md) | adding a new method, step by step |
+| [docs/design.md](docs/design.md) | design decisions and where results differ from BigaGWAS on purpose |
+
+## Requirements
+
+* Nextflow ≥ 25.10.4
+* Apptainer/Singularity or Docker. LAVA has no conda package, so `-profile conda`
+  works for LDSC only (`--methods ldsc`).
+* The helper image `ghcr.io/karlssonlab/gencorr-tools:0.1.0` must be built once
+  from [containers/gencorr-tools](containers/gencorr-tools/Dockerfile)
+  (instructions in the Dockerfile). Note: LAVA's licence says *All rights
+  reserved*, so keep that image private unless the LAVA authors agree.
 
 ## Credits
 
-karlssonlab/gencorr was originally written by MR, KarlssonLaboratory (ACES, Stockholm University).
-
-We thank the following people for their extensive assistance in the development of this pipeline:
-
-<!-- TODO nf-core: If applicable, make list of people who have also contributed -->
-
-## Contributions and Support
-
-If you would like to contribute to this pipeline, please see the [contributing guidelines](docs/CONTRIBUTING.md).
-
-## Citations
-
-<!-- TODO nf-core: Add citation for pipeline after first release. Uncomment lines below and update Zenodo doi and badge at the top of this file. -->
-<!-- If you use karlssonlab/gencorr for your analysis, please cite it using the following doi: [10.5281/zenodo.XXXXXX](https://doi.org/10.5281/zenodo.XXXXXX) -->
-
-<!-- TODO nf-core: Add bibliography of tools and data used in your pipeline -->
-
-An extensive list of references for the tools used by the pipeline can be found in the [`CITATIONS.md`](CITATIONS.md) file.
-
-This pipeline uses code and infrastructure developed and maintained by the [nf-core](https://nf-co.re) community, reused here under the [MIT license](https://github.com/nf-core/tools/blob/main/LICENSE).
-
-> **The nf-core framework for community-curated bioinformatics pipelines.**
->
-> Philip Ewels, Alexander Peltzer, Sven Fillinger, Harshil Patel, Johannes Alneberg, Andreas Wilm, Maxime Ulysse Garcia, Paolo Di Tommaso & Sven Nahnsen.
->
-> _Nat Biotechnol._ 2020 Feb 13. doi: [10.1038/s41587-020-0439-x](https://dx.doi.org/10.1038/s41587-020-0439-x).
+Written by MR (KarlssonLaboratory, ACES, Stockholm University). Method choices
+follow BigaGWAS (bigagwas.org), whose LDSC/LAVA usage this pipeline reproduces
+and extends. Tool citations: [CITATIONS.md](CITATIONS.md).
