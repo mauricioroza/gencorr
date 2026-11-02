@@ -1,7 +1,7 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://raw.githubusercontent.com/genis/gencorr/master/nextflow_schema.json",
-    "title": "genis/gencorr pipeline parameters",
+    "$id": "https://raw.githubusercontent.com/mauricioroza/gencorr/master/nextflow_schema.json",
+    "title": "mauricioroza/gencorr pipeline parameters",
     "description": "Global (LDSC) and local (LAVA) genetic correlation from GWAS summary statistics, with a pluggable method interface",
     "type": "object",
     "$defs": {

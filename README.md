@@ -1,4 +1,4 @@
-# genis/gencorr
+# mauricioroza/gencorr
 
 Global and local genetic correlation from GWAS summary statistics, as a
 Nextflow pipeline built on the nf-core template.
@@ -25,10 +25,10 @@ Nextflow pipeline built on the nf-core template.
 
 ```bash
 # 1. Check your setup on the bundled test data (4 traits, 6 pairs, ~5 min)
-nextflow run genis/gencorr -profile test,apptainer --outdir test_out
+nextflow run mauricioroza/gencorr -profile test,apptainer --outdir test_out
 
 # 2. Real run
-nextflow run genis/gencorr -profile apptainer \
+nextflow run mauricioroza/gencorr -profile apptainer \
     --input samplesheet.csv --outdir results \
     --methods ldsc,lava \
     --ldsc_ld /refs/eur_w_ld_chr --ldsc_merge_alleles /refs/w_hm3.snplist \
@@ -78,7 +78,7 @@ Details: [docs/output.md](docs/output.md).
 * Nextflow ≥ 25.10.4
 * Apptainer/Singularity or Docker. LAVA has no conda package, so `-profile conda`
   works for LDSC only (`--methods ldsc`).
-* The helper image `ghcr.io/genis/gencorr-tools:0.1.0` must be built once
+* The helper image `ghcr.io/mauricioroza/gencorr-tools:0.1.0` must be built once
   from [containers/gencorr-tools](containers/gencorr-tools/Dockerfile)
   (instructions in the Dockerfile). Note: LAVA's licence says *All rights
   reserved*, so keep that image private unless the LAVA authors agree.

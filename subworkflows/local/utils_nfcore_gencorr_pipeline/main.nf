@@ -1,5 +1,5 @@
 //
-// Subworkflow with functionality specific to the genis/gencorr pipeline
+// Subworkflow with functionality specific to the mauricioroza/gencorr pipeline
 //
 
 /*

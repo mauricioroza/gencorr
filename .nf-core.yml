@@ -40,7 +40,7 @@ lint:
     - nfcore_template_badge
 
 template:
-  org: genis
+  org: mauricioroza
   name: gencorr
   description: Global (LDSC) and local (LAVA) genetic correlation from GWAS summary
     statistics, with a pluggable method interface

@@ -1,6 +1,6 @@
 {
-    "name": "genis/gencorr",
-    "homePage": "https://github.com/genis/gencorr",
+    "name": "mauricioroza/gencorr",
+    "homePage": "https://github.com/mauricioroza/gencorr",
     "repos": {
         "https://github.com/nf-core/modules.git": {
             "modules": {

@@ -14,7 +14,7 @@ process HARMONIZE_SUMSTATS {
     label 'process_low'
 
     conda "${moduleDir}/environment.yml"
-    container "ghcr.io/genis/gencorr-tools:0.1.0"
+    container "ghcr.io/mauricioroza/gencorr-tools:0.1.0"
 
     input:
     tuple val(meta), path(sumstats)

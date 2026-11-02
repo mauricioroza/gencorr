@@ -10,7 +10,7 @@ process MERGE_RESULTS {
     label 'process_single'
 
     conda "${moduleDir}/environment.yml"
-    container "ghcr.io/genis/gencorr-tools:0.1.0"
+    container "ghcr.io/mauricioroza/gencorr-tools:0.1.0"
 
     input:
     tuple val(meta), path(tables, stageAs: 'in/table_*.tsv')

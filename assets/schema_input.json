@@ -1,7 +1,7 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://raw.githubusercontent.com/genis/gencorr/master/assets/schema_input.json",
-    "title": "genis/gencorr pipeline - params.input schema",
+    "$id": "https://raw.githubusercontent.com/mauricioroza/gencorr/master/assets/schema_input.json",
+    "title": "mauricioroza/gencorr pipeline - params.input schema",
     "description": "One row per GWAS summary statistics file (one trait).",
     "type": "array",
     "items": {

@@ -1,4 +1,4 @@
-# genis/gencorr: Documentation
+# mauricioroza/gencorr: Documentation
 
 - [Usage](usage.md): samplesheet, parameters, reference data, running on UPPMAX
 - [Output](output.md): output files, the standard results table, status values
