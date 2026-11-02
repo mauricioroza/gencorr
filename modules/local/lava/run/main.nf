@@ -19,7 +19,7 @@ process LAVA_RUN {
     label 'process_long'
 
     conda "${moduleDir}/environment.yml"
-    container "ghcr.io/karlssonlab/gencorr-tools:0.1.0"
+    container "ghcr.io/genis/gencorr-tools:0.1.0"
 
     input:
     tuple val(meta), path(sumstats, stageAs: 'sumstats/*'), path(loci)

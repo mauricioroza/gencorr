@@ -11,7 +11,7 @@ process LDSC_SUMMARISE {
     label 'process_single'
 
     conda "${moduleDir}/environment.yml"
-    container "ghcr.io/karlssonlab/gencorr-tools:0.1.0"
+    container "ghcr.io/genis/gencorr-tools:0.1.0"
 
     input:
     path h2_logs, stageAs: 'h2/*'

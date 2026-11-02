@@ -1,7 +1,7 @@
 #!/usr/bin/env nextflow
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    karlssonlab/gencorr
+    genis/gencorr
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     Global (LDSC) and local (LAVA) genetic correlation from GWAS summary
     statistics, with one harmonization step and one results format shared by
@@ -25,7 +25,7 @@ include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_genc
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-workflow KARLSSONLAB_GENCORR {
+workflow GENIS_GENCORR {
 
     take:
     samplesheet // channel: [ meta, sumstats ]
@@ -66,7 +66,7 @@ workflow {
     //
     // WORKFLOW: Run main workflow
     //
-    KARLSSONLAB_GENCORR (
+    GENIS_GENCORR (
         PIPELINE_INITIALISATION.out.samplesheet,
         PIPELINE_INITIALISATION.out.pairs
     )

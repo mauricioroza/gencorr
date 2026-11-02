@@ -12,7 +12,7 @@ process EXPORT_SUMSTATS {
     label 'process_single'
 
     conda "${moduleDir}/environment.yml"
-    container "ghcr.io/karlssonlab/gencorr-tools:0.1.0"
+    container "ghcr.io/genis/gencorr-tools:0.1.0"
 
     input:
     tuple val(meta), path(harmonized)

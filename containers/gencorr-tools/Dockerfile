@@ -13,10 +13,10 @@
 #   - Python packages are pinned with ==.
 #
 # Build and push (from the repository root):
-#   docker build -t ghcr.io/karlssonlab/gencorr-tools:0.1.0 containers/gencorr-tools
-#   docker push ghcr.io/karlssonlab/gencorr-tools:0.1.0
+#   docker build -t ghcr.io/genis/gencorr-tools:0.1.0 containers/gencorr-tools
+#   docker push ghcr.io/genis/gencorr-tools:0.1.0
 # Apptainer on a cluster without Docker (e.g. UPPMAX):
-#   apptainer build gencorr-tools_0.1.0.sif docker://ghcr.io/karlssonlab/gencorr-tools:0.1.0
+#   apptainer build gencorr-tools_0.1.0.sif docker://ghcr.io/genis/gencorr-tools:0.1.0
 #
 # LICENCE NOTE: LAVA's DESCRIPTION says "All rights reserved". Keep this image
 # private (or ask the LAVA authors) until redistribution is clarified.
@@ -24,8 +24,8 @@
 FROM rocker/r-ver:4.4.2
 
 LABEL org.opencontainers.image.title="gencorr-tools" \
-      org.opencontainers.image.description="Python + R/LAVA runtime for the karlssonlab/gencorr pipeline" \
-      org.opencontainers.image.source="https://github.com/karlssonlab/gencorr"
+      org.opencontainers.image.description="Python + R/LAVA runtime for the genis/gencorr pipeline" \
+      org.opencontainers.image.source="https://github.com/genis/gencorr"
 
 ARG LAVA_COMMIT=e729a245f7b6923967a96804fbf5246eadf2d6c6
 

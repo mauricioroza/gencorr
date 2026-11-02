@@ -108,7 +108,7 @@ reference and loci (GRCh37 for the defaults).** The pipeline does not lift over.
 | `--drop_ambiguous` | `false` | remove A/T, C/G SNPs for all methods (LDSC munge always removes them) |
 | `--save_harmonized` / `--save_intermediates` | `false` | publish intermediate files |
 
-`nextflow run karlssonlab/gencorr --help --show_hidden` lists everything.
+`nextflow run genis/gencorr --help --show_hidden` lists everything.
 
 ## 5. Running on UPPMAX (Pelle)
 
@@ -117,7 +117,7 @@ module load Nextflow           # or install Nextflow >= 25.10.4 yourself
 export NXF_HOME=/proj/<project>/nobackup/$USER/.nextflow
 export NXF_APPTAINER_CACHEDIR=/proj/<project>/nobackup/$USER/apptainer_cache
 
-nextflow run karlssonlab/gencorr -profile apptainer -c pelle.config \
+nextflow run genis/gencorr -profile apptainer -c pelle.config \
     --input samplesheet.csv --outdir results ...
 ```
 
