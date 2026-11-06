@@ -106,12 +106,12 @@ workflow PIPELINE_INITIALISATION {
     //
     // Trait pairs, decided once here so every method analyses the same pairs.
     //
-    def ids   = samples.collect { it[0].id }
+    def ids   = samples.collect { row -> row[0].id }
     def pair_list = makePairs(ids, params.pair_mode, params.targets,
                               params.pairs ? readPairsFile(params.pairs) : null)
     log.info "gencorr: ${samples.size()} traits, ${pair_list.size()} pairs (pair_mode = ${params.pair_mode}), methods: ${methods.join(', ')}"
 
-    def meta_by_id = samples.collectEntries { [ (it[0].id): it[0] ] }
+    def meta_by_id = samples.collectEntries { row -> [ (row[0].id): row[0] ] }
 
     emit:
     samplesheet = channel.fromList(samples)                                        // [ meta, sumstats ]
@@ -152,14 +152,14 @@ workflow PIPELINE_COMPLETION {
 // Drop null / empty-list meta values produced by empty samplesheet cells
 //
 def cleanMeta(Map meta) {
-    return meta.findAll { k, v -> v != null && v != [] && v != '' }
+    return meta.findAll { _k, v -> v != null && v != [] && v != '' }
 }
 
 //
 // Samplesheet consistency checks that the JSON schema cannot express
 //
 def validateSamples(List samples) {
-    samples.each { meta, sumstats ->
+    samples.each { meta, _sumstats ->
         if (meta.n_cases && meta.n_controls && meta.n && Math.abs((meta.n as double) - (meta.n_cases as double) - (meta.n_controls as double)) > 0.5) {
             error("Samplesheet row '${meta.id}': n (${meta.n}) differs from n_cases + n_controls (${(meta.n_cases as double) + (meta.n_controls as double)}). Leave n empty for binary traits.")
         }
@@ -175,48 +175,61 @@ def validateSamples(List samples) {
 //   target : each target trait against every other trait (BigaGWAS "one vs group")
 //   pairs  : exactly the pairs listed in a CSV (columns trait1,trait2)
 // Pairs are unordered: [a, b] and [b, a] are the same pair; the first seen wins.
+// (Written without switch/for loops: Nextflow >= 26 parses strict syntax.)
 //
 def makePairs(List ids, String mode, String targets, List listed) {
-    def out  = []
-    def seen = [] as Set
-    def add  = { a, b ->
-        if (a == b) error("Pair '${a}' vs '${b}': a trait cannot be paired with itself.")
-        def key = [a, b].sort().join('\u0000')
-        if (!seen.contains(key)) { seen << key; out << [a, b] }
+    def candidates = []
+    if (mode == 'all') {
+        candidates = (0..<ids.size()).collectMany { i ->
+            ((i + 1)..<ids.size()).collect { j -> [ ids[i], ids[j] ] }
+        }
     }
-    switch (mode) {
-        case 'all':
-            for (int i = 0; i < ids.size(); i++)
-                for (int j = i + 1; j < ids.size(); j++)
-                    add(ids[i], ids[j])
-            break
-        case 'target':
-            if (!targets) error("--pair_mode target requires --targets (comma-separated trait IDs).")
-            def tlist = targets.tokenize(',')*.trim()
-            def unknown = tlist.findAll { !(it in ids) }
-            if (unknown) error("--targets: unknown trait ID(s) ${unknown}. Known: ${ids}")
-            tlist.each { t -> ids.each { o -> if (o != t) add(t, o) } }
-            break
-        case 'pairs':
-            if (listed == null) error("--pair_mode pairs requires --pairs <csv with trait1,trait2>.")
-            listed.each { p ->
-                def unknown = p.findAll { !(it in ids) }
-                if (unknown) error("--pairs: unknown trait ID(s) ${unknown} in pair ${p}. Known: ${ids}")
-                add(p[0], p[1])
+    else if (mode == 'target') {
+        if (!targets) {
+            error("--pair_mode target requires --targets (comma-separated trait IDs).")
+        }
+        def tlist   = targets.tokenize(',').collect { t -> t.trim() }
+        def unknown = tlist.findAll { t -> !(t in ids) }
+        if (unknown) {
+            error("--targets: unknown trait ID(s) ${unknown}. Known: ${ids}")
+        }
+        candidates = tlist.collectMany { t -> ids.findAll { o -> o != t }.collect { o -> [ t, o ] } }
+    }
+    else if (mode == 'pairs') {
+        if (listed == null) {
+            error("--pair_mode pairs requires --pairs <csv with trait1,trait2>.")
+        }
+        listed.each { p ->
+            def unknown = p.findAll { x -> !(x in ids) }
+            if (unknown) {
+                error("--pairs: unknown trait ID(s) ${unknown} in pair ${p}. Known: ${ids}")
             }
-            break
-        default:
-            error("--pair_mode must be one of all, target, pairs (got '${mode}').")
+        }
+        candidates = listed.collect { p -> [ p[0], p[1] ] }
     }
-    if (!out) error("No trait pairs to analyse with pair_mode '${mode}'.")
+    else {
+        error("--pair_mode must be one of all, target, pairs (got '${mode}').")
+    }
+
+    def self_pairs = candidates.findAll { p -> p[0] == p[1] }
+    if (self_pairs) {
+        error("Pair '${self_pairs[0][0]}' vs '${self_pairs[0][1]}': a trait cannot be paired with itself.")
+    }
+    // drop reversed duplicates, keep first occurrence and its orientation
+    def out = candidates.unique(false) { p -> [ p[0], p[1] ].sort().join('\u0000') }
+    if (!out) {
+        error("No trait pairs to analyse with pair_mode '${mode}'.")
+    }
     return out
 }
 
 def readPairsFile(String path) {
-    def lines = file(path, checkIfExists: true).readLines().findAll { it.trim() }
-    def header = lines[0].split(/[,\t]/)*.trim()
-    if (header[0..1] != ['trait1', 'trait2']) error("--pairs: header must start with trait1,trait2 (got ${header})")
-    return lines.drop(1).collect { it.split(/[,\t]/)*.trim()[0..1] }
+    def lines  = file(path, checkIfExists: true).readLines().findAll { line -> line.trim() }
+    def header = lines[0].split(/[,\t]/).collect { x -> x.trim() }
+    if (header.take(2) != ['trait1', 'trait2']) {
+        error("--pairs: header must start with trait1,trait2 (got ${header})")
+    }
+    return lines.drop(1).collect { line -> line.split(/[,\t]/).collect { x -> x.trim() }.take(2) }
 }
 
 //
@@ -224,14 +237,20 @@ def readPairsFile(String path) {
 //
 def validateGencorrParams(Map p, String profile) {
     def registry = methodRegistry()
-    def methods  = (p.methods ?: '').tokenize(',')*.trim().unique()
-    def unknown  = methods.findAll { !registry.containsKey(it) }
-    if (!methods) error("--methods is empty. Choose from: ${registry.keySet().join(', ')}")
-    if (unknown)  error("--methods: unknown method(s) ${unknown}. Choose from: ${registry.keySet().join(', ')}")
+    def methods  = (p.methods ?: '').tokenize(',').collect { m -> m.trim() }.unique()
+    def unknown  = methods.findAll { m -> !registry.containsKey(m) }
+    if (!methods) {
+        error("--methods is empty. Choose from: ${registry.keySet().join(', ')}")
+    }
+    if (unknown) {
+        error("--methods: unknown method(s) ${unknown}. Choose from: ${registry.keySet().join(', ')}")
+    }
 
     methods.each { m ->
         registry[m].required_params.each { rp ->
-            if (!p[rp]) error("--methods ${m} requires --${rp}.")
+            if (!p[rp]) {
+                error("--methods ${m} requires --${rp}.")
+            }
         }
         def conda = (profile ?: '').tokenize(',').intersect(['conda', 'mamba'])
         if (conda && !registry[m].conda_ok) {

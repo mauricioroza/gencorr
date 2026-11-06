@@ -49,17 +49,17 @@ workflow METHOD_LDSC {
         .map     { id1, id2, f2, f1 -> [ id1, f1, id2, f2 ] }
         .groupTuple( by: 0 )                                // [ id1, [f1..], [id2..], [f2..] ]
         .flatMap { id1, f1s, id2s, f2s ->
-            def others = [ id2s, f2s ].transpose().sort { it[0] }
+            def others = [ id2s, f2s ].transpose().sort { x -> x[0] }
             others.collate( rg_batch_size as int ).withIndex().collect { batch, i ->
-                [ [ id: "${id1}__b${i + 1}", trait1: id1, traits2: batch*.get(0) ], f1s[0], batch*.get(1) ]
+                [ [ id: "${id1}__b${i + 1}", trait1: id1, traits2: batch.collect { x -> x[0] } ], f1s[0], batch.collect { x -> x[1] } ]
             }
         }
 
     LDSC_RG ( ch_batches, ch_ld )
 
     LDSC_SUMMARISE (
-        LDSC_H2.out.log.map { meta, logs -> logs }.flatten().collect(),
-        LDSC_RG.out.log.map { meta, log -> log }.collect().ifEmpty([])
+        LDSC_H2.out.log.map { _meta, logs -> logs }.flatten().collect(),
+        LDSC_RG.out.log.map { _meta, log -> log }.collect().ifEmpty([])
     )
 
     emit:

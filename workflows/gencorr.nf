@@ -26,7 +26,7 @@ workflow GENCORR {
     outdir
 
     main:
-    def methods     = params.methods.tokenize(',')*.trim()
+    def methods     = params.methods.tokenize(',').collect { m -> m.trim() }
     def ch_versions = channel.empty()
     def ch_results  = channel.empty()
     def ch_overlap  = channel.value([])     // LAVA sample overlap: none unless set below
@@ -137,7 +137,7 @@ def resolveLavaReference(String prefix) {
     } else {
         def found = file("${prefix}*")
         files = found instanceof List ? found : (found ? [ found ] : [])
-        files = files.findAll { it.isFile() }
+        files = files.findAll { f -> f.isFile() }
     }
     if (!files) {
         error("--lava_ref: no reference files found with prefix '${prefix}' (expected <prefix>.bed/.bim/.fam or LAVA LD-format files).")

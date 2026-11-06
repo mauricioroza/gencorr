@@ -51,8 +51,8 @@ workflow METHOD_LAVA {
         ch_groups = ch_pairs
             .toList()
             .map { pairs ->
-                def traits = pairs.collectMany { it }.unique { it.id }.sort { it.id }
-                [ id: 'joint', traits: traits, pairs: pairs.collect { [ it[0].id, it[1].id ] } ]
+                def traits = pairs.collectMany { pair -> pair }.unique { m -> m.id }.sort { m -> m.id }
+                [ id: 'joint', traits: traits, pairs: pairs.collect { pair -> [ pair[0].id, pair[1].id ] } ]
             }
     } else {
         ch_groups = ch_pairs.map { m1, m2 ->
@@ -66,24 +66,24 @@ workflow METHOD_LAVA {
 
     def ch_tasks = ch_groups
         .combine( ch_file_map )
-        .map    { group, fmap -> [ group, group.traits.collect { fmap[it.id] } ] }
+        .map    { group, fmap -> [ group, group.traits.collect { m -> fmap[m.id] } ] }
         .combine( ch_chunks )                                // [ group, files, chunk ]
 
     LAVA_RUN ( ch_tasks, ch_reference, ch_overlap )
 
     MERGE_RESULTS (
         LAVA_RUN.out.results
-            .map { meta, table -> table }
+            .map { _meta, table -> table }
             .collect( sort: { a, b -> a.name <=> b.name } )
             .map { tables -> [ [ id: 'gencorr.lava' ], tables ] }
     )
 
     def ch_univ = LAVA_RUN.out.univ
-        .map { meta, table -> table }
-        .collectFile( name: 'gencorr.lava_univ.tsv', keepHeader: true, skip: 1, sort: { it.name },
+        .map { _meta, table -> table }
+        .collectFile( name: 'gencorr.lava_univ.tsv', keepHeader: true, skip: 1, sort: { f -> f.name },
                       storeDir: "${params.outdir}/lava" )
 
     emit:
-    results = MERGE_RESULTS.out.results.map { meta, f -> f }   // path: standard results
+    results = MERGE_RESULTS.out.results.map { _meta, f -> f }   // path: standard results
     univ    = ch_univ                                          // path: local univariate h2 per locus
 }

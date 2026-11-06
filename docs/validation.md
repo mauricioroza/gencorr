@@ -15,6 +15,15 @@ short, readable scripts.
 | function (nf-test) | `nf-test test subworkflows/local/utils_nfcore_gencorr_pipeline/tests/` | pair construction for all/target/pairs modes, error cases | 40 s |
 | pipeline (nf-test) | `nf-test test tests/default.nf.test --profile +apptainer` | full test profile succeeds; row counts; snapshot of every (method, pair, locus, status, rg to 3 decimals); `-stub` wiring; target + joint mode | 15 min |
 
+**Nextflow ≥ 26 and nf-test:** the pipeline itself is written in Nextflow's
+strict syntax (`nextflow lint .` reports no errors) and runs on 26.x as is. nf-test
+0.9.3, however, generates wrapper scripts with syntax the strict parser rejects.
+Run nf-test with the legacy parser:
+
+```bash
+NXF_SYNTAX_PARSER=v1 nf-test test tests/default.nf.test --profile +docker
+```
+
 Oracle tests need `ldsc.py`/`munge_sumstats.py` and R with LAVA on `PATH`, and
 are skipped otherwise. In the container they are available:
 
@@ -32,6 +41,8 @@ Python 2.7.15), LAVA 0.1.5 (`e729a24`) on R 4.3.3:
 * nf-test function tests: **6/6 pass**
 * nf-test pipeline tests: **3/3 pass** (`-profile test`, `-stub`, target + joint);
   snapshot in `tests/default.nf.test.snap`
+* `-profile test` also run on Nextflow 26.10.5 (strict syntax): results identical
+  to the 25.10 run at zero tolerance (66/66 rows)
 * Tools were on PATH (`-profile test,local_tools`); nf-schema plugin 2.5.1 was
   used locally because the plugin registry was unreachable from the build machine
 
