@@ -134,16 +134,14 @@ workflow GENCORR {
 // Returns [ prefix_basename, [ files ] ].
 //
 def resolveLavaReference(String prefix) {
-    def files
+    def ref_files
     if (prefix ==~ /^(https?|ftp):\/\/.*/) {
-        files = ['bed', 'bim', 'fam'].collect { ext -> file("${prefix}.${ext}") }
+        ref_files = ['bed', 'bim', 'fam'].collect { ext -> file("${prefix}.${ext}") }
     } else {
-        def found = file("${prefix}*")
-        files = found instanceof List ? found : (found ? [ found ] : [])
-        files = files.findAll { f -> f.isFile() }
+        ref_files = files("${prefix}*").findAll { f -> f.isFile() }
     }
-    if (!files) {
+    if (!ref_files) {
         error("--lava_ref: no reference files found with prefix '${prefix}' (expected <prefix>.bed/.bim/.fam or LAVA LD-format files).")
     }
-    return [ file(prefix).name, files ]
+    return [ file(prefix).name, ref_files ]
 }
