@@ -17,6 +17,9 @@
       snp_set = 'joint'    : one group with every trait. All pairs use the SNPs
                              shared by ALL traits (LAVA's behaviour when many
                              phenotypes are loaded at once, as in BigaGWAS batches).
+    SNP set: by default every harmonized SNP is used. With --lava_snp_list
+    (e.g. w_hm3.snplist) the input is first restricted to that list, as
+    BigaGWAS does with its HapMap3-based list.
     Results are identical however the loci are chunked: run_lava.R seeds each
     (locus, pair) separately (tests/python/test_lava_runner.py).
 */
@@ -33,11 +36,12 @@ workflow METHOD_LAVA {
     ch_reference     // value channel: [ prefix, [ reference files ] ]
     ch_loci          // value channel: locus file (LOC CHR START STOP)
     ch_overlap       // value channel: sample-overlap matrix, or [] for none
+    ch_snp_list      // value channel: SNP list to restrict LAVA input to, or [] for all SNPs
     snp_set          // string: 'pairwise' or 'joint'
     loci_per_chunk   // integer
 
     main:
-    EXPORT_SUMSTATS ( ch_harmonized, 'lava' )
+    EXPORT_SUMSTATS ( ch_harmonized, 'lava', ch_snp_list )
 
     // id -> LAVA-format file, as one map so groups can look up their files
     def ch_file_map = EXPORT_SUMSTATS.out.sumstats

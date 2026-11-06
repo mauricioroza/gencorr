@@ -8,7 +8,7 @@
 #              --pairs pairs.tsv --out <prefix>
 #              [--overlap sample_overlap.txt] [--univ-thresh 0.05]
 #              [--adap-thresh 1e-4,1e-6] [--param-lim 1.25]
-#              [--p-values TRUE] [--cis TRUE] [--seed 20201231]
+#              [--p-values TRUE] [--cis TRUE] [--seed 20201231] [--snp-set all]
 #
 # Inputs
 #   --info     LAVA input info file: phenotype, cases, controls, prevalence, filename
@@ -68,6 +68,7 @@ param_lim   <- as.numeric(get_opt("param-lim", "1.25"))
 do_p        <- as_flag(get_opt("p-values", "TRUE"))
 do_ci       <- as_flag(get_opt("cis", "TRUE"))
 base_seed   <- as.numeric(get_opt("seed", "20201231"))
+snp_set     <- get_opt("snp-set", "all")   # recorded only: "all" or the SNP-list file name
 if (overlap %in% c("none", "NA", "")) overlap <- NULL
 
 # ------------------------------------------------------------------ helpers --
@@ -101,7 +102,7 @@ result_row <- function(loc, t1, t2, status, n_snps = NA, k = NA, u1 = NULL, u2 =
         univ_p_1 = pick(u1, "p"), univ_p_2 = pick(u2, "p"),
         h2_latent_1 = pick(u1, "h2.latent"), h2_latent_2 = pick(u2, "h2.latent"),
         r2 = pick(bv, "r2"), r2_ci_low = pick(bv, "r2.lower"), r2_ci_high = pick(bv, "r2.upper"),
-        univ_thresh = univ_thresh, seed = base_seed
+        univ_thresh = univ_thresh, seed = base_seed, snp_set = snp_set
     )
     data.frame(
         method = "lava", scope = "local", trait1 = t1, trait2 = t2,

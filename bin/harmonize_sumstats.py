@@ -21,11 +21,17 @@ What it does, in order (every step is counted in the QC report):
  7. Drop variants that cannot be used: missing SNP/alleles/Z/N, non-SNV or
     multi-character alleles, A1 == A2, (optionally) strand-ambiguous A/T and C/G
     pairs, and every copy of a duplicated SNP ID.
- 8. Recompute P from Z where P is missing or 0, and write the harmonized table
+ 8. Optional QC thresholds (--min-info, --min-maf; off by default). Same rule
+    as LDSC munge: a variant is removed when its value is <= the threshold.
+    Variants with a missing INFO/MAF value are kept (genotyped SNPs often have
+    no INFO). MAF comes from a MAF column if present, else min(EAF, 1 - EAF).
+    If the file has neither column, the threshold cannot be applied and the
+    QC report says so (no variant is removed for it).
+ 9. Recompute P from Z where P is missing or 0, and write the harmonized table
     plus a JSON QC report with counts and the median-chi2 lambda (lambda_GC).
 
-It does NOT lift over genome builds, impute missing columns from a reference
-panel, or apply MAF/INFO thresholds. Thresholds are left to each method (LDSC
+It does NOT lift over genome builds or impute missing columns from a reference
+panel. Without --min-info/--min-maf, thresholds are left to each method (LDSC
 applies its own INFO > 0.9 / MAF > 0.01) so results stay comparable with
 running the tools directly.
 """
@@ -69,6 +75,9 @@ COLUMN_SYNONYMS: dict[str, list[str]] = {
     "EAF": ["eaf", "effect_allele_frequency", "hm_effect_allele_frequency",
             "a1freq", "a1_freq", "freq", "frq", "freq1", "af"],
     "INFO": ["info", "info_ukb", "imputation_info", "impinfo", "r2"],
+    # MAF is read only for --min-maf; it is not written to the harmonized file
+    # (it has no allele orientation, unlike EAF)
+    "MAF": ["maf", "minor_allele_frequency"],
 }
 
 EFFECTIVE_N_NAMES = {"neff", "n_eff"}
@@ -94,6 +103,10 @@ def parse_args(argv=None):
                    help="order in which Z sources are tried (default: z,p,beta_se)")
     p.add_argument("--drop-ambiguous", action="store_true",
                    help="drop strand-ambiguous A/T and C/G SNPs")
+    p.add_argument("--min-info", type=float, default=None,
+                   help="remove variants with INFO <= this value (default: off)")
+    p.add_argument("--min-maf", type=float, default=None,
+                   help="remove variants with MAF <= this value (default: off)")
     return p.parse_args(argv)
 
 
@@ -170,7 +183,8 @@ def to_num(series: pd.Series | None) -> pd.Series | None:
 # --------------------------------------------------------------------------- #
 def harmonize(raw: pd.DataFrame, mapping: dict[str, str], *, n=None, n_cases=None,
               n_controls=None, z_priority=("z", "p", "beta_se"),
-              drop_ambiguous=False) -> tuple[pd.DataFrame, dict]:
+              drop_ambiguous=False, min_info=None,
+              min_maf=None) -> tuple[pd.DataFrame, dict]:
     qc: dict = {"rows_in": int(len(raw)), "column_mapping": mapping, "removed": {}}
 
     def col(name):
@@ -254,6 +268,13 @@ def harmonize(raw: pd.DataFrame, mapping: dict[str, str], *, n=None, n_cases=Non
     out["INFO"] = to_num(col("INFO")) if "INFO" in mapping else np.nan
     out["P"] = pval if pval is not None else np.nan
 
+    # MAF only for --min-maf: MAF column, else derived from EAF; folded to <= 0.5
+    maf = to_num(col("MAF")) if "MAF" in mapping else (
+        out["EAF"] if "EAF" in mapping else None)
+    out["_MAF"] = np.minimum(maf, 1 - maf) if maf is not None else np.nan
+    qc["maf_source"] = (f"column:{mapping['MAF']}" if "MAF" in mapping else
+                        f"EAF:{mapping['EAF']}" if "EAF" in mapping else None)
+
     # ---- filters, each counted ------------------------------------------- #
     def drop(mask: pd.Series, reason: str):
         nonlocal out
@@ -271,6 +292,21 @@ def harmonize(raw: pd.DataFrame, mapping: dict[str, str], *, n=None, n_cases=Non
         pair = [frozenset(x) for x in zip(out["A1"], out["A2"])]
         drop(pd.Series([p in AMBIGUOUS_PAIRS for p in pair], index=out.index),
              "strand_ambiguous")
+    # ---- optional QC thresholds (LDSC munge convention: remove value <= t) - #
+    qc["thresholds"] = {"min_info": min_info, "min_maf": min_maf}
+    if min_info is not None:
+        if "INFO" in mapping:
+            qc["info_missing_kept"] = int(out["INFO"].isna().sum())
+            drop(out["INFO"] <= min_info, f"info_le_{min_info:g}")
+        else:
+            qc["warning_min_info"] = "--min-info requested but the file has no INFO column; not applied"
+    if min_maf is not None:
+        if qc["maf_source"] is not None:
+            qc["maf_missing_kept"] = int(out["_MAF"].isna().sum())
+            drop(out["_MAF"] <= min_maf, f"maf_le_{min_maf:g}")
+        else:
+            qc["warning_min_maf"] = "--min-maf requested but the file has no MAF or EAF column; not applied"
+
     dup = out["SNP"].duplicated(keep=False)
     drop(dup, "duplicated_snp_all_copies")
 
@@ -297,7 +333,11 @@ def main(argv=None):
     harmonized, qc = harmonize(
         raw, mapping, n=args.n, n_cases=args.n_cases, n_controls=args.n_controls,
         z_priority=tuple(x.strip() for x in args.z_priority.split(",") if x.strip()),
-        drop_ambiguous=args.drop_ambiguous)
+        drop_ambiguous=args.drop_ambiguous, min_info=args.min_info,
+        min_maf=args.min_maf)
+    for key in ("warning_min_info", "warning_min_maf", "warning_effective_n"):
+        if key in qc:
+            print(f"WARNING ({args.id}): {qc[key]}", file=sys.stderr)
     qc = {"id": args.id, "input": Path(args.input).name, **qc}
     if qc["rows_out"] == 0:
         die(f"{args.id}: no variants left after harmonization; see QC: {json.dumps(qc)}")

@@ -30,7 +30,7 @@ workflow METHOD_LDSC {
     rg_batch_size    // integer: max traits per ldsc --rg call
 
     main:
-    EXPORT_SUMSTATS ( ch_harmonized, 'ldsc' )
+    EXPORT_SUMSTATS ( ch_harmonized, 'ldsc', [] )   // LDSC restricts SNPs via --merge-alleles in munge
     LDSC_MUNGE      ( EXPORT_SUMSTATS.out.sumstats, merge_alleles )
     LDSC_H2         ( LDSC_MUNGE.out.sumstats, ch_ld )
 

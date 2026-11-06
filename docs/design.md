@@ -45,6 +45,8 @@ caused by input handling.
 | LDSC liability h2 | second `--h2` run with prevalences; both scales reported from LDSC itself | LDSC prints only the liability value when prevalences are given |
 | OR = 1 variants | Z = 0 | LAVA's raw reader gives them sign −1 |
 | gzip outputs | written with mtime 0 | byte-identical reruns, stable checksums |
+| LAVA SNP set | all SNPs by default; HapMap3 (or any list) with `--lava_snp_list` | BigaGWAS restricts LAVA to a HapMap3-based list (~16k of ~100k SNPs on the test data). With the same list gencorr reproduces BigaGWAS' rho to ~1e-5; the default follows the LAVA authors, who do not filter |
+| LAVA version | 0.1.5 | BigaGWAS runs 0.1.0. On identical SNPs, continuous traits, the estimates matched to 5 decimals; binary traits differ by design (0.1.5 changed the binary model) |
 
 ## Reproducibility
 

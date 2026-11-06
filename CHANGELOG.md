@@ -9,6 +9,10 @@ Initial version.
 
 ### Added
 
+- `--min_info` / `--min_maf`: optional variant QC in harmonization, applied to all methods (LDSC munge rule: remove value <= threshold; missing kept; warning when the column is absent).
+- `--lava_snp_list`: restrict LAVA to a SNP-ID list (e.g. `w_hm3.snplist`), as BigaGWAS does; recorded in `extra.snp_set`.
+- BigaGWAS comparison kit (`tests/bigagwas/`, `docs/bigagwas_comparison.md`); LDSC and LAVA reproduce BigaGWAS on the test data.
+
 - Harmonization of GWAS summary statistics from common layouts into one format, with per-trait QC reports.
 - LDSC 1.0.1: munge, observed + liability h2, batched cross-trait rg, sample-overlap matrix.
 - LAVA 0.1.5 (`e729a24`): univariate + bivariate local rg, loci split into chunks, per-(locus, pair) seeds, `pairwise`/`joint` SNP sets, LDSC-based sample-overlap correction.

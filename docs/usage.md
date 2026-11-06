@@ -106,9 +106,49 @@ reference and loci (GRCh37 for the defaults).** The pipeline does not lift over.
 | `--lava_seed` | `20201231` | base seed for LAVA's Monte Carlo CIs/p-values |
 | `--ldsc_rg_batch_size` | `50` | traits per `ldsc --rg` call; does not change estimates |
 | `--drop_ambiguous` | `false` | remove A/T, C/G SNPs for all methods (LDSC munge always removes them) |
+| `--min_info` | `0` (off) | remove variants with INFO ≤ value, for all methods (see 4a) |
+| `--min_maf` | `0` (off) | remove variants with MAF ≤ value, for all methods (see 4a) |
+| `--lava_snp_list` | none (all SNPs) | run LAVA only on the SNP IDs in this list, e.g. `w_hm3.snplist` (see 4b) |
 | `--save_harmonized` / `--save_intermediates` | `false` | publish intermediate files |
 
 `nextflow run mauricioroza/gencorr --help --show_hidden` lists everything.
+
+## 4a. Variant QC: `--min_info`, `--min_maf`
+
+Applied once, during harmonization, so **every method** sees the same
+filtered variants. The rule is LDSC munge's: a variant is removed when its value
+is **≤** the threshold. Missing values are kept (genotyped SNPs often have no
+INFO).
+
+* INFO comes from the INFO column (`info`, `info_ukb`, `impinfo`, `r2`, …).
+* MAF comes from a `MAF` column if present, otherwise `min(EAF, 1 − EAF)`.
+* If a file has no such column the threshold cannot be applied: nothing is
+  removed and `harmonized/<id>.qc.json` contains `warning_min_info` /
+  `warning_min_maf` (also printed in the task log).
+
+**Recommended for real analyses: `--min_maf 0.01 --min_info 0.9`** (LDSC's
+standard values). Without them, LDSC still filters MAF itself, but only when the
+file has an allele-frequency column munge recognises; a file with only a
+`MAF` column (like the vignette bmi file) would otherwise pass rare variants
+into LDSC. LAVA applies no MAF/INFO filter of its own.
+
+## 4b. SNP set for LAVA: `--lava_snp_list`
+
+By default LAVA uses every harmonized SNP that is also in the LD reference.
+`--lava_snp_list w_hm3.snplist` restricts LAVA to the IDs in a list
+(first column; header optional; plain or gzipped). This is what BigaGWAS does
+(HapMap3-based list), and it is needed to reproduce BigaGWAS' LAVA results.
+
+| | all SNPs (default) | HapMap3 only (`--lava_snp_list w_hm3.snplist`) |
+|---|---|---|
+| information per locus | all SNPs; LAVA compresses LD to PCs itself | ~15–20% of SNPs; some loci drop to a handful of SNPs |
+| robustness to imputation quality | depends on QC → use `--min_info`/`--min_maf` | common, well-imputed SNPs only |
+| same SNPs across GWAS | pairwise intersection | fixed list |
+| comparable with BigaGWAS | no | yes (shown on the test data: rho equal to ~1e-5) |
+| ancestry | whatever the reference covers | HapMap3 is less complete outside European ancestry |
+
+LDSC is not affected (it has its own list: `--ldsc_merge_alleles`). The SNP set
+used is recorded in every LAVA row (`extra.snp_set`: `all` or the file name).
 
 ## 5. Running on UPPMAX (Pelle)
 

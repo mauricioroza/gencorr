@@ -96,6 +96,22 @@
                     "description": "Remove strand-ambiguous A/T and C/G SNPs before any method.",
                     "help_text": "Off by default to stay comparable with running LDSC/LAVA directly. LDSC munge always removes them for LDSC.",
                     "default": false
+                },
+                "min_info": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "Remove variants with imputation INFO <= this value, for all methods. 0 = off (default).",
+                    "help_text": "Same rule as LDSC munge (which uses 0.9 for LDSC only). Variants without an INFO value are kept. Ignored, with a warning in the QC report, for files without an INFO column.",
+                    "default": 0
+                },
+                "min_maf": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 0.5,
+                    "description": "Remove variants with minor allele frequency <= this value, for all methods. 0 = off (default).",
+                    "help_text": "MAF is taken from a MAF column, or computed as min(EAF, 1-EAF). Variants without a value are kept. Ignored, with a warning in the QC report, for files with neither column.",
+                    "default": 0
                 }
             }
         },
@@ -211,6 +227,13 @@
                     "type": "integer",
                     "description": "Base random seed; each (locus, pair) gets a seed derived from it.",
                     "default": 20201231
+                },
+                "lava_snp_list": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Restrict LAVA to the SNP IDs in this list (first column; e.g. w_hm3.snplist). Default: all SNPs.",
+                    "help_text": "Reproduces BigaGWAS, which runs LAVA on HapMap3 SNPs only. Fewer SNPs = more robust to imputation quality and faster, but less information and some loci become sparse. Recorded in the results ('extra.snp_set')."
                 }
             }
         },

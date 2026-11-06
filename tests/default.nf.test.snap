@@ -117,7 +117,8 @@
                     "SE": "SE",
                     "P": "P",
                     "N": "NMISS",
-                    "INFO": "INFO_UKB"
+                    "INFO": "INFO_UKB",
+                    "MAF": "MAF"
                 },
                 "removed": {
                     "missing_snp": 0,
@@ -131,6 +132,11 @@
                     "p": 152394
                 },
                 "n_source": "column:NMISS",
+                "maf_source": "column:MAF",
+                "thresholds": {
+                    "min_info": null,
+                    "min_maf": null
+                },
                 "p_recomputed_from_z": 0,
                 "p_floored_at_1e-300": 0,
                 "rows_out": 152394,
@@ -141,8 +147,8 @@
         ],
         "meta": {
             "nf-test": "0.9.3",
-            "nextflow": "25.10.6"
+            "nextflow": "26.10.5"
         },
-        "timestamp": "2026-11-02T18:32:34.018112384"
+        "timestamp": "2026-11-06T12:50:07.215750708"
     }
 }

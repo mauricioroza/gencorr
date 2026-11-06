@@ -67,9 +67,12 @@ workflow GENCORR {
     if ('lava' in methods) {
         def ch_reference = channel.value( resolveLavaReference(params.lava_ref) )
         def ch_loci      = channel.value( file(params.lava_loci, checkIfExists: true) )
+        def ch_snp_list  = params.lava_snp_list
+            ? channel.value( file(params.lava_snp_list, checkIfExists: true) )
+            : channel.value([])
 
         METHOD_LAVA (
-            ch_harmonized, ch_pairs, ch_reference, ch_loci, ch_overlap,
+            ch_harmonized, ch_pairs, ch_reference, ch_loci, ch_overlap, ch_snp_list,
             params.lava_snp_set, params.lava_loci_per_chunk
         )
         ch_results = ch_results.mix( METHOD_LAVA.out.results )

@@ -37,9 +37,9 @@ apptainer exec docker://quay.io/biocontainers/ldsc:1.0.1--pyhdfd78af_2 ...  # LD
 Run on Linux, with Nextflow 25.10.6, nf-test 0.9.3, LDSC 1.0.1 (bioconda,
 Python 2.7.15), LAVA 0.1.5 (`e729a24`) on R 4.3.3:
 
-* Python: **33/33 pass** (unit + LDSC oracle + LAVA oracle)
+* Python: **41/41 pass** (unit + LDSC oracle + LAVA oracle)
 * nf-test function tests: **6/6 pass**
-* nf-test pipeline tests: **3/3 pass** (`-profile test`, `-stub`, target + joint);
+* nf-test pipeline tests: **3/3 pass** on Nextflow 25.10 and 26.10.5 (`-profile test`, `-stub`, target + joint);
   snapshot in `tests/default.nf.test.snap`
 * `-profile test` also run on Nextflow 26.10.5 (strict syntax): results identical
   to the 25.10 run at zero tolerance (66/66 rows)

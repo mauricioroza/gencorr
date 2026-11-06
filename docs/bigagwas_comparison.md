@@ -125,6 +125,18 @@ bin/compare_results.py --test biga_compare/gencorr_results.tsv --method lava --o
 `ldsc_vs_biga.txt` / `lava_vs_biga.txt` summarise the agreement;
 `*.pairs.tsv` lists every pair with both values side by side.
 
+### LAVA: use BigaGWAS' SNP set
+
+BigaGWAS runs LAVA on a HapMap3-based SNP list only. Add
+`--lava_snp_list ~/refs/w_hm3.snplist` to the gencorr LAVA run; without it the
+inputs differ (~5× more SNPs per locus) and so do the estimates.
+
+Result on the test data (bmi × depression, job 967): 32/32 loci in common,
+SNP and PC counts identical in 29/32 loci (the other 3 differ by 1–2 SNPs that
+BigaGWAS' harmonization dropped), rho median difference 1e-5, the same loci at
+p < 0.05. BigaGWAS uses LAVA 0.1.0 and gencorr 0.1.5; for continuous traits on
+the same SNPs this made no visible difference.
+
 ## 5. What agreement to expect
 
 | quantity | expectation | if it differs |

@@ -13,6 +13,9 @@ input:
   - format:
       type: string
       description: "Format name: ldsc | lava | ..."
+  - snp_list:
+      type: file
+      description: "Optional SNP-ID list (e.g. w_hm3.snplist); only these SNPs are exported. [] for all"
 output:
   - sumstats:
       type: file

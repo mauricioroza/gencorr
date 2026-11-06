@@ -41,7 +41,7 @@ Defined once in `bin/gencorr_common.py` (`RESULT_COLUMNS`) and enforced by
 | `h2_1`, `h2_2` | observed-scale SNP-h2 of each trait from its own `--h2` run | local observed h2 (`run.univ`) |
 | `h2_1_se`, `h2_2_se` | LDSC SE | NA |
 | `status` | see below | see below |
-| `extra` | JSON: `gcov_int`, `gcov_int_se`, pair-specific h2/intercept of trait2, LDSC error text, log name | JSON: `univ_p_1/2`, `h2_latent_1/2`, `r2` and its CI, `K` (#PCs), `univ_thresh`, `seed` |
+| `extra` | JSON: `gcov_int`, `gcov_int_se`, pair-specific h2/intercept of trait2, LDSC error text, log name | JSON: `univ_p_1/2`, `h2_latent_1/2`, `r2` and its CI, `K` (#PCs), `univ_thresh`, `seed`, `snp_set` (`all` or the `--lava_snp_list` file name) |
 
 Read it in R with `read.delim("gencorr_results.tsv", quote = "")` or in Python
 with `pandas.read_csv(..., sep="\t", quoting=3)`. Parse `extra` with
@@ -73,6 +73,10 @@ with `pandas.read_csv(..., sep="\t", quoting=3)`. Parse `extra` with
 
 `rows_in`, `rows_out`, the detected `column_mapping`, `z_source_counts` (how
 many Z-scores came from a Z column / P / BETA-SE), `removed` (per filter),
-`p_recomputed_from_z`, `lambda_gc`, `mean_chi2`, `median_n`, and warnings
-such as `warning_effective_n`. Look at these first when a trait behaves
+`p_recomputed_from_z`, `lambda_gc`, `mean_chi2`, `median_n`, the QC
+`thresholds` used (`min_info`, `min_maf`), where MAF came from (`maf_source`),
+how many variants without INFO/MAF were kept (`info_missing_kept`,
+`maf_missing_kept`), and warnings such as `warning_effective_n`,
+`warning_min_info`, `warning_min_maf`. Variants removed by the thresholds are
+counted in `removed` as `info_le_<t>` / `maf_le_<t>`. Look at these first when a trait behaves
 unexpectedly.
