@@ -17,7 +17,12 @@ What each file needs:
   depression StdErrLogOR -> SE (SE of log OR, as BigaGWAS expects with OR);
              keep OR, drop LogOR and Freq
   rheuma     has no SE: SE = |ln OR| / z(P), the SE implied by OR and P.
-             Variants with OR == 1 (SE undefined) are dropped.
+             OR is rounded to 2 decimals, so 10% of variants read OR = 1.00
+             (|ln OR| < 0.005). They are KEPT with SE = 0.005 / z(P), the SE at
+             the rounding bound: dropping them shifts the median Z to -0.13 and
+             LDSC munge then rejects the file. Both tools give these variants
+             Z = 0 (sign of ln 1 is 0), so this SE does not affect any estimate.
+             Only variants with P == 1 (z = 0, SE undefined) are dropped.
 
 Every file is written as tab-separated, gzipped, alleles upper-cased, columns:
   SNP [CHR BP] A1 A2 (BETA|OR) SE P N
@@ -62,8 +67,11 @@ write(dep[["SNP", "A1", "A2", "OR", "SE", "P", "N"]], "depression")
 
 rh = read("rheuma")
 z = stats.norm.isf(rh["P"] / 2)
+log_or = np.abs(np.log(rh["OR"]))
+log_or = np.where(log_or == 0, 0.005, log_or)        # OR printed as 1.00: rounding bound
 with np.errstate(divide="ignore", invalid="ignore"):
-    rh["SE"] = np.abs(np.log(rh["OR"])) / z
+    rh["SE"] = log_or / z
 keep = np.isfinite(rh["SE"]) & (rh["SE"] > 0)
-print(f"rheuma: dropped {(~keep).sum()} variants with OR == 1 or P == 1 (SE undefined)")
+print(f"rheuma: {(rh['OR'] == 1).sum()} variants with OR == 1.00 kept (SE at rounding bound); "
+      f"dropped {(~keep).sum()} with P == 1 (SE undefined)")
 write(rh.loc[keep, ["SNP", "A1", "A2", "OR", "SE", "P", "N"]], "rheuma")

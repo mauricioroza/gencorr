@@ -30,7 +30,7 @@ used as gencorr input, so both tools start from identical data.
 | `bmi_biga.txt.gz` | Body mass index | BETA | |
 | `neuro_biga.txt.gz` | Neuroticism | BETA | Z column removed: both tools derive Z from P |
 | `depression_biga.txt.gz` | Major depression | OR | SE = SE of log OR |
-| `rheuma_biga.txt.gz` | Rheumatoid arthritis | OR | SE derived from OR and P (raw file has none); 9,965 OR = 1 variants dropped |
+| `rheuma_biga.txt.gz` | Rheumatoid arthritis | OR | SE derived from OR and P (raw file has none); OR = 1.00 variants kept with SE at the rounding bound; 391 variants with P = 1 dropped |
 
 Regenerate with:
 `python3 tests/bigagwas/prepare_upload.py <LAVA vignettes/data dir> biga_upload/`
