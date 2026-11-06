@@ -1,0 +1,5 @@
+id,sumstats,n,n_cases,n_controls,pop_prev,colmap,label
+bmi,biga_upload/bmi_biga.txt.gz,,,,,,Body mass index
+neuro,biga_upload/neuro_biga.txt.gz,,,,,,Neuroticism
+depression,biga_upload/depression_biga.txt.gz,,,,,,Major depression
+rheuma,biga_upload/rheuma_biga.txt.gz,,,,,,Rheumatoid arthritis

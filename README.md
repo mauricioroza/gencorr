@@ -70,6 +70,7 @@ Details: [docs/output.md](docs/output.md).
 | [docs/usage.md](docs/usage.md) | samplesheet, parameters, reference data, running on UPPMAX |
 | [docs/output.md](docs/output.md) | every output file and column, status values |
 | [docs/validation.md](docs/validation.md) | the test layers, how to compare against BigaGWAS |
+| [docs/bigagwas_comparison.md](docs/bigagwas_comparison.md) | running the same data on BigaGWAS and comparing |
 | [docs/extending.md](docs/extending.md) | adding a new method, step by step |
 | [docs/design.md](docs/design.md) | design decisions and where results differ from BigaGWAS on purpose |
 

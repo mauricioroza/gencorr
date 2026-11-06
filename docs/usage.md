@@ -63,7 +63,7 @@ Every method analyses the same pairs.
 
 | file | where |
 |---|---|
-| European LD scores `eur_w_ld_chr/` | Broad Alkes group `eur_w_ld_chr.tar.bz2` (also mirrored on Zenodo, record 10515792) |
+| European LD scores `eur_w_ld_chr/` | Zenodo record 8182036 (`eur_w_ld_chr.tar.gz`, copy of the Alkes group archive) |
 | HapMap3 SNP list `w_hm3.snplist` | Zenodo record 7773502 (`w_hm3.snplist.gz`) |
 
 ```bash
