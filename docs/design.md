@@ -38,6 +38,7 @@ caused by input handling.
 | topic | here | why |
 |---|---|---|
 | LAVA SNP set | `pairwise` by default: each pair uses SNPs shared by its two traits | LAVA intersects SNPs across *all* loaded traits. A pair's result then depends on which other traits happen to be in the job. `--lava_snp_set joint` restores that behaviour. |
+| LAVA empty loci | skipped before `process.locus()` (`no_snps_in_locus`) | LAVA scans the full reference SNP table for every locus (~1 s each with 1000G EUR) even when the locus has no data; on sparse input this was ~40 min of a ~45 min run. Results for all other loci are identical (tested) |
 | LAVA bivariate call | `run.bivar` on exactly two traits | with more traits LAVA draws the CIs for all pairs from one joint simulation, which ties a pair's CI to the other traits |
 | LAVA seeds | seed per (locus, trait1, trait2) | results identical regardless of chunking, job order or other pairs; BigaGWAS results are not seed-reproducible |
 | LAVA sample overlap | from LDSC intercepts by default (LAVA vignette recipe, symmetric average of both intercept orders) | sample overlap biases local rg upwards; BigaGWAS has it only as an option for 2-trait jobs |

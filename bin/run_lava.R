@@ -33,6 +33,13 @@
 #   1. run.bivar() is called with exactly two phenotypes. Called with more, LAVA
 #      draws the CIs for all pairs from one joint simulation, which would tie a
 #      pair's CI to the other traits present.
+#   3. Loci without any analysis SNP are skipped BEFORE process.locus() and get
+#      status "no_snps_in_locus". process.locus() scans the whole reference SNP
+#      table (twice) for every locus, ~1 s per locus with the full 1000G EUR
+#      reference, only to return NULL for such loci; on sparse or regional input
+#      most of the 2,495 loci are empty. The count uses the same rule as LAVA
+#      (reference CHR/POS within START..STOP, intersected with analysis SNPs),
+#      so no locus that LAVA could analyse is skipped.
 #   2. Within one task, every trait listed in --info is loaded with
 #      process.input(), and LAVA keeps only SNPs present in ALL loaded traits.
 #      The Nextflow subworkflow controls this: lava_snp_set = 'pairwise' loads
@@ -130,10 +137,38 @@ input <- process.input(input.info.file = info_file, sample.overlap.file = overla
 loci <- read.loci(loci_file)
 cat("Loci in this chunk:", nrow(loci), " Pairs:", nrow(pairs), "\n")
 
+# ---- pre-count analysis SNPs per locus (note 3) ----------------------------- #
+# Same definition as process.locus(): reference SNPs with CHR == locus CHR and
+# START <= POS <= STOP, restricted to input$analysis.snps.
+n_pre <- rep(NA_integer_, nrow(loci))
+if (all(c("CHR", "START", "STOP") %in% names(loci)) && !("SNPS" %in% names(loci))) {
+    ref_info <- input$reference$snp.info
+    an <- ref_info[ref_info$SNP %in% input$analysis.snps, c("CHR", "POS")]
+    pos_by_chr <- lapply(split(an$POS, as.character(an$CHR)), sort)
+    n_pre <- vapply(seq_len(nrow(loci)), function(i) {
+        pos <- pos_by_chr[[as.character(loci$CHR[i])]]
+        if (is.null(pos)) return(0L)
+        as.integer(findInterval(loci$STOP[i], pos) - findInterval(loci$START[i] - 1, pos))
+    }, integer(1))
+    cat("Loci with analysis SNPs:", sum(n_pre > 0), "of", nrow(loci),
+        "(the others are skipped as no_snps_in_locus)\n")
+}
+t_start <- Sys.time()
+
 results <- list()
 univ_out <- list()
+n_todo <- sum(is.na(n_pre) | n_pre > 0)
+n_done <- 0
 for (i in seq_len(nrow(loci))) {
     loc <- loci[i, ]
+    if (!is.na(n_pre[i]) && n_pre[i] == 0) {
+        for (j in seq_len(nrow(pairs)))
+            results[[length(results) + 1]] <- result_row(loc, pairs$trait1[j], pairs$trait2[j],
+                                                         "no_snps_in_locus", n_snps = 0)
+        next
+    }
+    n_done <- n_done + 1
+    t_locus <- Sys.time()
     locus <- tryCatch(process.locus(loc, input), error = function(e) {
         message("locus ", loc$LOC, ": ", conditionMessage(e)); NULL
     })
@@ -141,6 +176,7 @@ for (i in seq_len(nrow(loci))) {
         for (j in seq_len(nrow(pairs)))
             results[[length(results) + 1]] <- result_row(loc, pairs$trait1[j], pairs$trait2[j],
                                                          "locus_not_processed")
+        cat(sprintf("[%d/%d] locus %s: not processed by LAVA\n", n_done, n_todo, loc$LOC))
         next
     }
     univ <- run.univ(locus)
@@ -177,6 +213,11 @@ for (i in seq_len(nrow(loci))) {
                                                      u1 = if (nrow(u1)) u1, u2 = if (nrow(u2)) u2,
                                                      bv = bv)
     }
+    # progress line, visible in the task's .command.log while it runs
+    cat(sprintf("[%d/%d] locus %s chr%s: %d SNPs, K=%d, %.1fs (elapsed %.1f min)\n",
+                n_done, n_todo, loc$LOC, loc$CHR, locus$n.snps, locus$K,
+                as.numeric(difftime(Sys.time(), t_locus, units = "secs")),
+                as.numeric(difftime(Sys.time(), t_start, units = "mins"))))
 }
 
 res <- do.call(rbind, results)

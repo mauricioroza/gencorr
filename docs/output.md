@@ -57,7 +57,8 @@ with `pandas.read_csv(..., sep="\t", quoting=3)`. Parse `extra` with
 | `univ_filtered` | lava | one or both traits have local univariate p ≥ `--lava_univ_thresh`; not tested (LAVA's standard practice) |
 | `estimate_out_of_bounds` | lava | LAVA set the estimate to NA because it exceeded `--lava_param_lim` |
 | `trait_dropped_in_locus` | lava | LAVA dropped a trait in this locus (invalid local estimates) |
-| `locus_not_processed` | lava | the locus could not be processed (e.g. no reference SNPs, < 2 PCs) |
+| `no_snps_in_locus` | lava | no SNP shared by the traits and the reference falls in the locus; skipped without calling LAVA (fast) |
+| `locus_not_processed` | lava | LAVA could not process the locus (e.g. too few SNPs or PCs) |
 | `bivar_error` | lava | `run.bivar` raised an error (message in the task log) |
 
 ## Precision

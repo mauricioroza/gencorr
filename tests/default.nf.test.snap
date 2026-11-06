@@ -44,7 +44,7 @@
                 "lava|bmi|depression|951|ok|-0.273",
                 "lava|bmi|depression|952|ok|-0.077",
                 "lava|bmi|depression|954|ok|-0.319",
-                "lava|bmi|depression|955|locus_not_processed|NA",
+                "lava|bmi|depression|955|no_snps_in_locus|NA",
                 "lava|bmi|neuro|100|univ_filtered|NA",
                 "lava|bmi|neuro|230|ok|-0.188",
                 "lava|bmi|neuro|266|ok|0.178",
@@ -54,7 +54,7 @@
                 "lava|bmi|neuro|951|ok|0.012",
                 "lava|bmi|neuro|952|ok|0.173",
                 "lava|bmi|neuro|954|ok|-0.169",
-                "lava|bmi|neuro|955|locus_not_processed|NA",
+                "lava|bmi|neuro|955|no_snps_in_locus|NA",
                 "lava|bmi|rheuma|100|ok|0.189",
                 "lava|bmi|rheuma|230|univ_filtered|NA",
                 "lava|bmi|rheuma|266|trait_dropped_in_locus|NA",
@@ -64,7 +64,7 @@
                 "lava|bmi|rheuma|951|ok|-0.345",
                 "lava|bmi|rheuma|952|ok|-0.181",
                 "lava|bmi|rheuma|954|ok|0.095",
-                "lava|bmi|rheuma|955|locus_not_processed|NA",
+                "lava|bmi|rheuma|955|no_snps_in_locus|NA",
                 "lava|depression|rheuma|100|univ_filtered|NA",
                 "lava|depression|rheuma|230|trait_dropped_in_locus|NA",
                 "lava|depression|rheuma|266|trait_dropped_in_locus|NA",
@@ -74,7 +74,7 @@
                 "lava|depression|rheuma|951|ok|-0.241",
                 "lava|depression|rheuma|952|ok|-0.363",
                 "lava|depression|rheuma|954|ok|-0.223",
-                "lava|depression|rheuma|955|locus_not_processed|NA",
+                "lava|depression|rheuma|955|no_snps_in_locus|NA",
                 "lava|neuro|depression|100|ok|-0.350",
                 "lava|neuro|depression|230|ok|-0.226",
                 "lava|neuro|depression|266|ok|0.501",
@@ -84,7 +84,7 @@
                 "lava|neuro|depression|951|ok|0.903",
                 "lava|neuro|depression|952|ok|1.000",
                 "lava|neuro|depression|954|ok|1.000",
-                "lava|neuro|depression|955|locus_not_processed|NA",
+                "lava|neuro|depression|955|no_snps_in_locus|NA",
                 "lava|neuro|rheuma|100|ok|0.372",
                 "lava|neuro|rheuma|230|univ_filtered|NA",
                 "lava|neuro|rheuma|266|trait_dropped_in_locus|NA",
@@ -94,7 +94,7 @@
                 "lava|neuro|rheuma|951|ok|-0.055",
                 "lava|neuro|rheuma|952|ok|-0.242",
                 "lava|neuro|rheuma|954|ok|-0.284",
-                "lava|neuro|rheuma|955|locus_not_processed|NA",
+                "lava|neuro|rheuma|955|no_snps_in_locus|NA",
                 "ldsc|bmi|depression|NA|ok|0.109",
                 "ldsc|bmi|neuro|NA|ok|0.141",
                 "ldsc|bmi|rheuma|NA|ok|0.035",
@@ -149,6 +149,6 @@
             "nf-test": "0.9.3",
             "nextflow": "26.10.5"
         },
-        "timestamp": "2026-11-06T12:50:07.215750708"
+        "timestamp": "2026-11-06T15:42:44.759597378"
     }
 }

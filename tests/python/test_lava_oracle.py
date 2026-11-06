@@ -102,3 +102,20 @@ def test_harmonized_input_matches_lava_reading_raw_files(lava_inputs, vignette):
     # depression: only the OR == 1 sign convention differs (see module docstring)
     np.testing.assert_allclose(m["h2_2"], m["h2_2_raw"], rtol=1e-3)
     np.testing.assert_allclose(m["rg"], m["rg_raw"], atol=1e-4, equal_nan=True)
+
+
+def test_empty_loci_are_skipped_without_changing_results(lava_inputs, vignette):
+    """Loci with no analysis SNP are skipped before process.locus() (speed: it
+    scans the whole reference per locus). Adding empty loci must not change the
+    rows of the other loci, and the empty ones get status no_snps_in_locus."""
+    d = lava_inputs
+    lines = (d / "loci.txt").read_text().splitlines()
+    # two loci with no data: chr22 is absent from the vignette reference/sumstats
+    extra = ["90001 22 20000000 21000000", "90002 22 30000000 31000000"]
+    (d / "loci_with_empty.txt").write_text("\n".join(lines + extra) + "\n")
+    base = runner(d, vignette / "g1000_test", "loci.txt", "base")
+    more = runner(d, vignette / "g1000_test", "loci_with_empty.txt", "more")
+    empty = more[more["locus"].isin(["90001", "90002"])]
+    assert set(empty["status"]) == {"no_snps_in_locus"}
+    rest = more[~more["locus"].isin(["90001", "90002"])].reset_index(drop=True)
+    pd.testing.assert_frame_equal(base.reset_index(drop=True), rest)
