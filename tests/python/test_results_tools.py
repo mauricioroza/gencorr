@@ -26,6 +26,16 @@ def test_h2_values_are_taken_verbatim_from_logs():
     assert (row.samp_prev, row.pop_prev) == pytest.approx((170756 / 500199, 0.15), abs=1e-6)
 
 
+def test_h2_table_does_not_depend_on_log_order():
+    """Nextflow stages and globs files in no guaranteed order; reading the
+    liability log first used to blank samp_prev/pop_prev."""
+    logs = [LOGS / "depression.h2.log", LOGS / "depression.h2_liab.log"]
+    fwd = parse_ldsc.collect_h2(logs)
+    rev = parse_ldsc.collect_h2(logs[::-1])
+    pd.testing.assert_frame_equal(fwd, rev)
+    assert rev.iloc[0].samp_prev == pytest.approx(170756 / 500199, abs=1e-6)
+
+
 def test_liability_conversion_matches_ldsc():
     """LDSC's liability h2 equals the Lee et al. 2011 transform of its observed h2
     (up to the 4-decimal rounding of the log), i.e. the two runs are consistent."""

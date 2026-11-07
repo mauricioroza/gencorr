@@ -14,6 +14,9 @@ BigaGWAS's slowness is rsID mapping, which this pipeline avoids by design).
 - Run git, nextflow, nf-test, docker, python **inside WSL** (`wsl.exe -d Ubuntu -- bash script.sh`).
   Windows-side git fails with "dubious ownership". Quoting through PowerShell → wsl breaks easily;
   write a small script and run it with bash instead.
+- Editing files through the Windows `\\wsl.localhost\...` path drops the executable bit: after editing
+  anything in `bin/`, run `chmod +x bin/<script>` in WSL (otherwise tasks fail with exit 126).
+- nf-test's `-c` is the nf-test config, not a Nextflow config; it cannot take `local.config`.
 - WSL has ~7.5 GB RAM: always run with `-c local.config` (resourceLimits cpus 4, memory 6.GB, time 4.h).
 - nf-test on Nextflow ≥ 26 needs `NXF_SYNTAX_PARSER=v1` (nf-test wrappers only; pipeline doesn't), e.g.
   `NXF_SYNTAX_PARSER=v1 nf-test test --tag modules_local --profile +docker`.

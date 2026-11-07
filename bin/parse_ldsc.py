@@ -100,7 +100,12 @@ def collect_h2(paths: list[Path]) -> pd.DataFrame:
         parsed = parse_h2_log(path)
         row = rows.setdefault(trait, {"trait": trait})
         if kind == "obs":
-            row.update({k: v for k, v in parsed.items() if not k.startswith("h2_liab")})
+            # The liability-only fields come from the .h2_liab.log. Skip them here
+            # so the result does not depend on which log is read first (the
+            # observed log has no --samp-prev/--pop-prev and would overwrite
+            # them with NaN).
+            liab_only = ("h2_liab", "h2_liab_se", "samp_prev", "pop_prev")
+            row.update({k: v for k, v in parsed.items() if k not in liab_only})
         else:
             row["h2_liab"] = parsed.get("h2_liab", np.nan)
             row["h2_liab_se"] = parsed.get("h2_liab_se", np.nan)
