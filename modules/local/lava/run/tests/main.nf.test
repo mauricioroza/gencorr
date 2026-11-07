@@ -1,0 +1,121 @@
+// Module test: LAVA_RUN
+// Setup: HARMONIZE_SUMSTATS -> EXPORT_SUMSTATS (lava format) on the LAVA
+// vignette bmi and neuro files. Reference: LAVA vignette g1000_test
+// (PLINK bed/bim/fam), loci: tests/data/test_10.loci. No sample overlap.
+//
+// What is snapshotted: per locus and pair, the status, number of SNPs, K
+// (number of PCs) and rho rounded to 3 decimals. rho, K and the univariate
+// estimates are deterministic; bivariate p-values and CIs are Monte Carlo
+// (seeded, see bin/run_lava.R) and can move in the last digits with the
+// R/BLAS build, so they are checked for range only.
+nextflow_process {
+
+    name "Test Process LAVA_RUN"
+    script "../main.nf"
+    process "LAVA_RUN"
+
+    tag "modules"
+    tag "modules_local"
+    tag "lava"
+    tag "lava/run"
+
+    setup {
+        run("HARMONIZE_SUMSTATS") {
+            script "../../../harmonize_sumstats/main.nf"
+            process {
+                """
+                input[0] = Channel.of(
+                    [ [ id:'bmi' ],   file("\${params.lava_test_data}/bmi.sumstats.txt",   checkIfExists: true) ],
+                    [ [ id:'neuro' ], file("\${params.lava_test_data}/neuro.sumstats.txt", checkIfExists: true) ]
+                )
+                """
+            }
+        }
+        run("EXPORT_SUMSTATS") {
+            script "../../../export_sumstats/main.nf"
+            process {
+                """
+                input[0] = HARMONIZE_SUMSTATS.out.sumstats
+                input[1] = 'lava'
+                input[2] = []
+                """
+            }
+        }
+    }
+
+    test("bmi vs neuro - 10 loci") {
+
+        when {
+            params { outdir = "$outputDir" }
+            process {
+                """
+                input[0] = EXPORT_SUMSTATS.out.sumstats
+                    .toSortedList { a, b -> a[0].id <=> b[0].id }
+                    .map { items -> [
+                        [ id:'bmi__neuro', traits: items.collect { item -> item[0] }, pairs: [ [ 'bmi', 'neuro' ] ] ],
+                        items.collect { item -> item[1] },
+                        file("${baseDir}/tests/data/test_10.loci", checkIfExists: true)
+                    ] }
+                input[1] = [ 'g1000_test', [ 'bed', 'bim', 'fam' ].collect { ext ->
+                    file("\${params.lava_test_data}/g1000_test.\${ext}", checkIfExists: true) } ]
+                input[2] = []
+                """
+            }
+        }
+
+        then {
+            def read = { f ->
+                def lines  = path(f).readLines()
+                def header = lines[0].split('\t', -1) as List
+                lines.drop(1).collect { line -> [ header, line.split('\t', -1) as List ].transpose().collectEntries() }
+            }
+            def rows = read(process.out.results[0][1])
+            def univ = read(process.out.univ[0][1])
+            def fmt  = { v -> v == 'NA' ? 'NA' : String.format('%.3f', v as double) }
+            def k    = { r -> (r.extra =~ /"K":\s*(\d+)/).with { m -> m.find() ? m.group(1) : 'NA' } }
+            def summary = rows.collect { r -> "${r.locus}|${r.trait1}|${r.trait2}|${r.status}|${r.n_snps}|K=${k(r)}|${fmt(r.rg)}" }
+            def ok   = rows.findAll { r -> r.status == 'ok' }
+            assertAll(
+                { assert process.success },
+                // one row per locus for the single pair, all with the method label
+                { assert rows.size() == 10 },
+                { assert rows.every { r -> r.method == 'lava' && r.scope == 'local' } },
+                { assert ok.size() > 0 },
+                { assert ok.every { r -> (r.p as double) > 0 && (r.p as double) <= 1 } },
+                { assert ok.every { r -> (r.rg_ci_low as double) <= (r.rg as double) && (r.rg as double) <= (r.rg_ci_high as double) } },
+                { assert univ.size() > 0 },
+                { assert snapshot(summary, process.out.versions_lava.collect { v -> v[1..2] }).match() }
+            )
+        }
+    }
+
+    test("stub") {
+
+        options "-stub"
+
+        when {
+            params { outdir = "$outputDir" }
+            process {
+                """
+                input[0] = EXPORT_SUMSTATS.out.sumstats
+                    .toSortedList { a, b -> a[0].id <=> b[0].id }
+                    .map { items -> [
+                        [ id:'bmi__neuro', traits: items.collect { item -> item[0] }, pairs: [ [ 'bmi', 'neuro' ] ] ],
+                        items.collect { item -> item[1] },
+                        file("${baseDir}/tests/data/test_10.loci", checkIfExists: true)
+                    ] }
+                input[1] = [ 'g1000_test', [ 'bed', 'bim', 'fam' ].collect { ext ->
+                    file("\${params.lava_test_data}/g1000_test.\${ext}", checkIfExists: true) } ]
+                input[2] = []
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out.results, process.out.univ).match() }
+            )
+        }
+    }
+}

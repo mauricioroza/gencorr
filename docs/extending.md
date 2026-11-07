@@ -101,6 +101,9 @@ rules to `conf/modules.config`.
 
 - [ ] Module(s) with pinned container + conda env, `versions` topic, `stub:`
 - [ ] Parser writes `RESULT_COLUMNS` only (`validate_results` passes)
+- [ ] Module test next to each new module (`modules/local/<name>/tests/main.nf.test`,
+      real-data test + `-stub` test, tags `modules`, `modules_local`, `<name>`);
+      see `modules/local/ldsc/rg/tests/` for the `setup` pattern
 - [ ] Unit tests for the parser on real tool output (`tests/python/`)
 - [ ] **Oracle test**: the tool run by hand on test data gives the same numbers
       as the pipeline (see `tests/python/test_ldsc_oracle.py` for the pattern)

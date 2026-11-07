@@ -1,0 +1,87 @@
+// Module test: MERGE_RESULTS
+// Setup: LDSC_SUMMARISE on the LDSC log fixtures (tests/python/fixtures/ldsc)
+// gives a standard results table to merge (only bmi__b1.rg.log: bmi__err.rg.log
+// re-estimates bmi vs depression and would be a duplicate on purpose).
+nextflow_process {
+
+    name "Test Process MERGE_RESULTS"
+    script "../main.nf"
+    process "MERGE_RESULTS"
+
+    tag "modules"
+    tag "modules_local"
+    tag "merge_results"
+
+    setup {
+        run("LDSC_SUMMARISE") {
+            script "../../ldsc/summarise/main.nf"
+            process {
+                """
+                input[0] = Channel.fromPath("${baseDir}/tests/python/fixtures/ldsc/*.h2*.log").collect()
+                input[1] = Channel.fromPath("${baseDir}/tests/python/fixtures/ldsc/bmi__b1.rg.log").collect()
+                """
+            }
+        }
+    }
+
+    test("one results table") {
+
+        when {
+            params { outdir = "$outputDir" }
+            process {
+                """
+                input[0] = LDSC_SUMMARISE.out.results.map { f -> [ [ id:'gencorr_results' ], [ f ] ] }
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.results[0][1].endsWith('gencorr_results.tsv') },
+                { assert snapshot(process.out.results).match() }
+            )
+        }
+    }
+
+    test("duplicated estimates are rejected") {
+
+        when {
+            params { outdir = "$outputDir" }
+            process {
+                """
+                input[0] = LDSC_SUMMARISE.out.results.map { f -> [ [ id:'gencorr_results' ], [ f, f ] ] }
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.failed },
+                { assert process.stdout.any { line -> line.toLowerCase().contains('duplicate') } ||
+                         process.stderr.any { line -> line.toLowerCase().contains('duplicate') } }
+            )
+        }
+    }
+
+    test("stub") {
+
+        options "-stub"
+
+        when {
+            params { outdir = "$outputDir" }
+            process {
+                """
+                input[0] = LDSC_SUMMARISE.out.results.map { f -> [ [ id:'gencorr_results' ], [ f ] ] }
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out.results).match() }
+            )
+        }
+    }
+}

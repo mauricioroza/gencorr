@@ -1,0 +1,59 @@
+{
+    "bmi - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "bmi"
+                    },
+                    "bmi.sumstats.gz:md5,64db87031bf25ba711821813ea3cd062"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "bmi"
+                    },
+                    "bmi.munge.log:md5,d78f894311d930c742bb858c3c7018ce"
+                ]
+            ],
+            [
+                [
+                    "LDSC_MUNGE",
+                    "ldsc",
+                    "1.0.1"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.6"
+        },
+        "timestamp": "2026-11-06T19:41:52.057698116"
+    },
+    "bmi - with merge-alleles": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "bmi"
+                    },
+                    "bmi.sumstats.gz:md5,b0ec423e5edef264505261a5aff5da7e"
+                ]
+            ],
+            "Writing summary statistics for 351471 SNPs (130393 with nonmissing beta) to bmi.sumstats.gz.",
+            [
+                [
+                    "LDSC_MUNGE",
+                    "ldsc",
+                    "1.0.1"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.6"
+        },
+        "timestamp": "2026-11-06T19:41:40.946935017"
+    }
+}

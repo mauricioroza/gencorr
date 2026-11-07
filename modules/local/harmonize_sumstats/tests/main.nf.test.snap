@@ -1,0 +1,205 @@
+{
+    "depression - binary trait, cases/controls in meta": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "depression",
+                        "n_cases": 170756,
+                        "n_controls": 329443
+                    },
+                    "depression.harmonized.tsv.gz:md5,5a12fe6369276d8d7b87f8b23f8145fd"
+                ]
+            ],
+            {
+                "id": "depression",
+                "input": "depression.sumstats.txt",
+                "rows_in": 111307,
+                "column_mapping": {
+                    "SNP": "SNP",
+                    "A1": "A1",
+                    "A2": "A2",
+                    "BETA": "LogOR",
+                    "OR": "OR",
+                    "SE": "StdErrLogOR",
+                    "P": "P",
+                    "N": "N",
+                    "EAF": "Freq"
+                },
+                "removed": {
+                    "missing_snp": 0,
+                    "non_snv_or_missing_allele": 0,
+                    "a1_equals_a2": 0,
+                    "missing_z": 0,
+                    "missing_or_nonpositive_n": 0,
+                    "duplicated_snp_all_copies": 0
+                },
+                "z_source_counts": {
+                    "p": 111307
+                },
+                "n_source": "column:N",
+                "maf_source": "EAF:Freq",
+                "thresholds": {
+                    "min_info": null,
+                    "min_maf": null
+                },
+                "p_recomputed_from_z": 0,
+                "p_floored_at_1e-300": 0,
+                "rows_out": 111307,
+                "lambda_gc": 1.7687583602784782,
+                "mean_chi2": 2.591051023844147,
+                "median_n": 500199.0
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.6"
+        },
+        "timestamp": "2026-11-06T19:36:44.592318053"
+    },
+    "bmi - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "bmi"
+                    },
+                    "bmi.harmonized.tsv.gz:md5,9e4e5d95fd0f89ecf86a2b1c650b7d01"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "bmi"
+                    },
+                    "bmi.qc.json:md5,8a80554c91d9fca8acb82f023de02f11"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.6"
+        },
+        "timestamp": "2026-11-06T19:36:54.021375487"
+    },
+    "bmi - continuous trait": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "bmi"
+                    },
+                    "bmi.harmonized.tsv.gz:md5,a08a14ddbd99a9b66592c4fc37a80837"
+                ]
+            ],
+            {
+                "id": "bmi",
+                "input": "bmi.sumstats.txt",
+                "rows_in": 152394,
+                "column_mapping": {
+                    "SNP": "SNPID_UKB",
+                    "CHR": "CHR",
+                    "BP": "BP",
+                    "A1": "A1",
+                    "A2": "A2",
+                    "BETA": "BETA",
+                    "SE": "SE",
+                    "P": "P",
+                    "N": "NMISS",
+                    "INFO": "INFO_UKB",
+                    "MAF": "MAF"
+                },
+                "removed": {
+                    "missing_snp": 0,
+                    "non_snv_or_missing_allele": 0,
+                    "a1_equals_a2": 0,
+                    "missing_z": 0,
+                    "missing_or_nonpositive_n": 0,
+                    "duplicated_snp_all_copies": 0
+                },
+                "z_source_counts": {
+                    "p": 152394
+                },
+                "n_source": "column:NMISS",
+                "maf_source": "column:MAF",
+                "thresholds": {
+                    "min_info": null,
+                    "min_maf": null
+                },
+                "p_recomputed_from_z": 0,
+                "p_floored_at_1e-300": 0,
+                "rows_out": 152394,
+                "lambda_gc": 2.617162340454468,
+                "mean_chi2": 4.894089748466962,
+                "median_n": 379478.0
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.6"
+        },
+        "timestamp": "2026-11-06T19:36:20.006605116"
+    },
+    "bmi - --min-info 0.9 --min-maf 0.05": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "bmi"
+                    },
+                    "bmi.harmonized.tsv.gz:md5,55ecc3783860bb26c8497309758fd85c"
+                ]
+            ],
+            {
+                "id": "bmi",
+                "input": "bmi.sumstats.txt",
+                "rows_in": 152394,
+                "column_mapping": {
+                    "SNP": "SNPID_UKB",
+                    "CHR": "CHR",
+                    "BP": "BP",
+                    "A1": "A1",
+                    "A2": "A2",
+                    "BETA": "BETA",
+                    "SE": "SE",
+                    "P": "P",
+                    "N": "NMISS",
+                    "INFO": "INFO_UKB",
+                    "MAF": "MAF"
+                },
+                "removed": {
+                    "missing_snp": 0,
+                    "non_snv_or_missing_allele": 0,
+                    "a1_equals_a2": 0,
+                    "missing_z": 0,
+                    "missing_or_nonpositive_n": 0,
+                    "info_le_0.9": 0,
+                    "maf_le_0.05": 71437,
+                    "duplicated_snp_all_copies": 0
+                },
+                "z_source_counts": {
+                    "p": 152394
+                },
+                "n_source": "column:NMISS",
+                "maf_source": "column:MAF",
+                "thresholds": {
+                    "min_info": 0.9,
+                    "min_maf": 0.05
+                },
+                "info_missing_kept": 0,
+                "maf_missing_kept": 0,
+                "p_recomputed_from_z": 0,
+                "p_floored_at_1e-300": 0,
+                "rows_out": 80957,
+                "lambda_gc": 4.546106046734459,
+                "mean_chi2": 7.610772138118943,
+                "median_n": 379192.0
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.6"
+        },
+        "timestamp": "2026-11-06T19:36:32.261767046"
+    }
+}

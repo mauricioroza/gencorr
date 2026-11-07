@@ -1,0 +1,107 @@
+// Module test: LDSC_RG
+// Setup: HARMONIZE_SUMSTATS -> EXPORT_SUMSTATS -> LDSC_MUNGE on two LAVA
+// vignette traits; LD scores from tests/data/ldsc (single file, prefix 'all').
+// One batch: bmi against [depression], as METHOD_LDSC builds it.
+// The snapshot holds the summary lines LDSC prints (4 significant digits).
+nextflow_process {
+
+    name "Test Process LDSC_RG"
+    script "../main.nf"
+    process "LDSC_RG"
+
+    tag "modules"
+    tag "modules_local"
+    tag "ldsc"
+    tag "ldsc/rg"
+
+    setup {
+        run("HARMONIZE_SUMSTATS") {
+            script "../../../harmonize_sumstats/main.nf"
+            process {
+                """
+                input[0] = Channel.of(
+                    [ [ id:'bmi' ], file("\${params.lava_test_data}/bmi.sumstats.txt", checkIfExists: true) ],
+                    [ [ id:'depression', n_cases:170756, n_controls:329443, pop_prev:0.15 ],
+                      file("\${params.lava_test_data}/depression.sumstats.txt", checkIfExists: true) ]
+                )
+                """
+            }
+        }
+        run("EXPORT_SUMSTATS") {
+            script "../../../export_sumstats/main.nf"
+            process {
+                """
+                input[0] = HARMONIZE_SUMSTATS.out.sumstats
+                input[1] = 'ldsc'
+                input[2] = []
+                """
+            }
+        }
+        run("LDSC_MUNGE") {
+            script "../../munge/main.nf"
+            process {
+                """
+                input[0] = EXPORT_SUMSTATS.out.sumstats
+                input[1] = file("${baseDir}/tests/data/ldsc/merge_alleles.snplist.gz", checkIfExists: true)
+                """
+            }
+        }
+    }
+
+    test("bmi vs depression") {
+
+        when {
+            params { outdir = "$outputDir" }
+            process {
+                """
+                input[0] = LDSC_MUNGE.out.sumstats
+                    .toSortedList { a, b -> a[0].id <=> b[0].id }
+                    .map { items -> [ [ id:'bmi__b1' ], items[0][1], [ items[1][1] ] ] }
+                input[1] = [ [ prefix:'all', split_by_chr:false ],
+                             file("${baseDir}/tests/data/ldsc", checkIfExists: true),
+                             file("${baseDir}/tests/data/ldsc", checkIfExists: true) ]
+                """
+            }
+        }
+
+        then {
+            def lines = path(process.out.log[0][1]).readLines()
+            def keep  = lines.findAll { line ->
+                line ==~ /^(Genetic Correlation: |Total Observed scale (h2|gencov)|Intercept: ).*/
+            }
+            assertAll(
+                { assert process.success },
+                { assert lines.any { line -> line.startsWith('Genetic Correlation: ') } },
+                // the pair is estimable: no NA / error in the summary table
+                { assert !lines.any { line -> line.contains('ERROR') } },
+                { assert snapshot(keep, process.out.versions_ldsc).match() }
+            )
+        }
+    }
+
+    test("stub") {
+
+        options "-stub"
+
+        when {
+            params { outdir = "$outputDir" }
+            process {
+                """
+                input[0] = LDSC_MUNGE.out.sumstats
+                    .toSortedList { a, b -> a[0].id <=> b[0].id }
+                    .map { items -> [ [ id:'bmi__b1' ], items[0][1], [ items[1][1] ] ] }
+                input[1] = [ [ prefix:'all', split_by_chr:false ],
+                             file("${baseDir}/tests/data/ldsc", checkIfExists: true),
+                             file("${baseDir}/tests/data/ldsc", checkIfExists: true) ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out.log, process.out.versions_ldsc).match() }
+            )
+        }
+    }
+}

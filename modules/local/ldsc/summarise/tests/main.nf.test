@@ -1,0 +1,87 @@
+// Module test: LDSC_SUMMARISE
+// Inputs: LDSC logs in tests/python/fixtures/ldsc (real LDSC 1.0.1 output for
+// the four LAVA vignette traits, also used by tests/python/test_results_tools.py).
+//   bmi__b1.rg.log   bmi vs neuro, depression, rheuma
+//   bmi__err.rg.log  a failed rg run -> status ldsc_error
+nextflow_process {
+
+    name "Test Process LDSC_SUMMARISE"
+    script "../main.nf"
+    process "LDSC_SUMMARISE"
+
+    tag "modules"
+    tag "modules_local"
+    tag "ldsc"
+    tag "ldsc/summarise"
+
+    test("h2 + rg logs") {
+
+        when {
+            params { outdir = "$outputDir" }
+            process {
+                """
+                input[0] = Channel.fromPath("${baseDir}/tests/python/fixtures/ldsc/*.h2*.log").collect()
+                input[1] = Channel.fromPath("${baseDir}/tests/python/fixtures/ldsc/*.rg.log").collect()
+                """
+            }
+        }
+
+        then {
+            def lines  = path(process.out.results[0]).readLines()
+            def header = lines[0].split('\t', -1) as List
+            def rows   = lines.drop(1).collect { line -> [ header, line.split('\t', -1) as List ].transpose().collectEntries() }
+            assertAll(
+                { assert process.success },
+                // standard results contract (bin/gencorr_common.py: RESULT_COLUMNS)
+                { assert header.take(4) == [ 'method', 'scope', 'trait1', 'trait2' ] },
+                { assert rows.every { r -> r.method == 'ldsc' && r.scope == 'global' } },
+                { assert rows.count { r -> r.status == 'ok' } == 3 },
+                { assert rows.any { r -> r.status == 'ldsc_error' } },
+                { assert snapshot(process.out.results, process.out.h2, process.out.overlap).match() }
+            )
+        }
+    }
+
+    test("h2 logs only") {
+
+        when {
+            params { outdir = "$outputDir" }
+            process {
+                """
+                input[0] = Channel.fromPath("${baseDir}/tests/python/fixtures/ldsc/*.h2*.log").collect()
+                input[1] = []
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert path(process.out.h2[0]).readLines().size() == 5 },
+                { assert snapshot(process.out.results, process.out.h2, process.out.overlap).match() }
+            )
+        }
+    }
+
+    test("stub") {
+
+        options "-stub"
+
+        when {
+            params { outdir = "$outputDir" }
+            process {
+                """
+                input[0] = Channel.fromPath("${baseDir}/tests/python/fixtures/ldsc/*.h2*.log").collect()
+                input[1] = Channel.fromPath("${baseDir}/tests/python/fixtures/ldsc/*.rg.log").collect()
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out.results, process.out.h2, process.out.overlap).match() }
+            )
+        }
+    }
+}

@@ -1,0 +1,111 @@
+// Module test: HARMONIZE_SUMSTATS
+// Inputs: LAVA vignette summary statistics (pinned commit, params.lava_test_data).
+//   bmi        continuous; BETA/SE/P, MAF, INFO_UKB, N in NMISS
+//   depression binary; LogOR/OR, lower-case alleles, N column, no CHR/BP
+// The harmonized files are written with fixed formatting and gzip mtime 0,
+// so their md5 is stable across machines.
+nextflow_process {
+
+    name "Test Process HARMONIZE_SUMSTATS"
+    script "../main.nf"
+    process "HARMONIZE_SUMSTATS"
+
+    tag "modules"
+    tag "modules_local"
+    tag "harmonize_sumstats"
+
+    test("bmi - continuous trait") {
+
+        when {
+            params { outdir = "$outputDir" }
+            process {
+                """
+                input[0] = Channel.of([ [ id:'bmi' ], file("\${params.lava_test_data}/bmi.sumstats.txt", checkIfExists: true) ])
+                """
+            }
+        }
+
+        then {
+            def qc = path(process.out.qc[0][1]).json
+            assertAll(
+                { assert process.success },
+                // header follows the harmonized contract (bin/gencorr_common.py)
+                { assert path(process.out.sumstats[0][1]).linesGzip[0] == 'SNP\tCHR\tBP\tA1\tA2\tZ\tBETA\tSE\tP\tN\tEAF\tINFO' },
+                { assert process.out.versions_python.size() == 1 },
+                { assert process.out.versions_pandas.size() == 1 },
+                { assert snapshot(process.out.sumstats, qc).match() }
+            )
+        }
+    }
+
+    test("bmi - --min-info 0.9 --min-maf 0.05") {
+
+        config "./nextflow.config"
+
+        when {
+            params { outdir = "$outputDir" }
+            process {
+                """
+                input[0] = Channel.of([ [ id:'bmi' ], file("\${params.lava_test_data}/bmi.sumstats.txt", checkIfExists: true) ])
+                """
+            }
+        }
+
+        then {
+            def qc = path(process.out.qc[0][1]).json
+            assertAll(
+                { assert process.success },
+                // MAF filter is applied and reported; it removes variants
+                { assert qc.toString().contains('0.05') },
+                { assert path(process.out.sumstats[0][1]).linesGzip.size() < 152395 },
+                { assert snapshot(process.out.sumstats, qc).match() }
+            )
+        }
+    }
+
+    test("depression - binary trait, cases/controls in meta") {
+
+        when {
+            params { outdir = "$outputDir" }
+            process {
+                """
+                input[0] = Channel.of([
+                    [ id:'depression', n_cases:170756, n_controls:329443 ],
+                    file("\${params.lava_test_data}/depression.sumstats.txt", checkIfExists: true)
+                ])
+                """
+            }
+        }
+
+        then {
+            def rows = path(process.out.sumstats[0][1]).linesGzip
+            assertAll(
+                { assert process.success },
+                // alleles upper-cased by the harmonizer
+                { assert rows.drop(1).take(100).every { line -> line.split('\t')[3] ==~ /[ACGT]/ } },
+                { assert snapshot(process.out.sumstats, path(process.out.qc[0][1]).json).match() }
+            )
+        }
+    }
+
+    test("bmi - stub") {
+
+        options "-stub"
+
+        when {
+            params { outdir = "$outputDir" }
+            process {
+                """
+                input[0] = Channel.of([ [ id:'bmi' ], file("\${params.lava_test_data}/bmi.sumstats.txt", checkIfExists: true) ])
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out.sumstats, process.out.qc).match() }
+            )
+        }
+    }
+}

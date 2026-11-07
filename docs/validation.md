@@ -12,8 +12,29 @@ short, readable scripts.
 | unit (Python) | `pytest tests/python -k "not oracle"` | harmonizer rules (column detection, Z derivation, filters, N fallback, byte-identical reruns); LDSC log parsing matches the numbers in real logs; schema checks; comparison tool | 20 s |
 | **LDSC oracle** | `pytest tests/python/test_ldsc_oracle.py` | raw file → `munge_sumstats.py` → `ldsc --rg` (what you or BigaGWAS do by hand) gives **identical** rg/se/z/p/intercepts to the pipeline route; batching pairs into one `--rg` call changes nothing | 2 min |
 | **LAVA oracle** | `pytest tests/python/test_lava_oracle.py` | `bin/run_lava.R` gives **identical** rho, CIs, p and local h2 to LAVA called as in its vignette (`tests/oracle/lava_native.R`); splitting loci into chunks changes nothing; harmonized input vs LAVA reading raw files: same SNPs/statuses, rg within 1e-4 (explained below) | 15 min |
+| module (nf-test) | `nf-test test --tag modules_local` | each of the 8 local modules on its own, with small real inputs: output layout, the numbers the tool reports (LDSC summary lines; LAVA status, n SNPs, K and rho per locus), error paths (duplicated estimates rejected), and the `stub:` block | 10 min |
 | function (nf-test) | `nf-test test subworkflows/local/utils_nfcore_gencorr_pipeline/tests/` | pair construction for all/target/pairs modes, error cases | 40 s |
 | pipeline (nf-test) | `nf-test test tests/default.nf.test --profile +apptainer` | full test profile succeeds; row counts; snapshot of every (method, pair, locus, status, rg to 3 decimals); `-stub` wiring; target + joint mode | 15 min |
+
+**Module tests** live next to each module (`modules/local/<name>/tests/main.nf.test`
+and `.snap`), as in nf-core/modules. Their inputs are the LAVA vignette files
+(pinned commit, `params.lava_test_data` in `tests/nextflow.config`),
+`tests/data/` and the LDSC log fixtures in `tests/python/fixtures/ldsc`.
+Modules that need upstream output build it in a `setup` block (for example
+`LDSC_RG` runs harmonize → export → munge first). Run a single module with
+its tag:
+
+```bash
+NXF_SYNTAX_PARSER=v1 nf-test test --tag ldsc/rg --profile +docker
+```
+
+Snapshots hold only values that are deterministic across machines: md5 of our
+own outputs (nf-test hashes `.gz` files on their uncompressed content), LDSC's
+printed summary lines, and LAVA rho rounded to 3 decimals. Tool versions in
+snapshots are the tool's own version (`ldsc 1.0.1`, `lava 0.1.5`), never the
+Python or R build, so the same snapshot holds with conda, Docker or tools on
+`PATH`. The LAVA module test runs without sample overlap, so its rho values
+differ from the pipeline snapshot, which uses the LDSC overlap matrix.
 
 **Nextflow ≥ 26 and nf-test:** the pipeline itself is written in Nextflow's
 strict syntax (`nextflow lint .` reports no errors) and runs on 26.x as is. nf-test
@@ -38,6 +59,8 @@ Run on Linux, with Nextflow 25.10.6, nf-test 0.9.3, LDSC 1.0.1 (bioconda,
 Python 2.7.15), LAVA 0.1.5 (`e729a24`) on R 4.3.3:
 
 * Python: **41/41 pass** (unit + LDSC oracle + LAVA oracle)
+* nf-test module tests: **22/22 pass** on Nextflow 25.10 and 26.10.5 (8 modules, real-data + stub tests),
+  identical snapshots with pandas 2.2.3 (container pin) and pandas 3.0.5
 * nf-test function tests: **6/6 pass**
 * nf-test pipeline tests: **3/3 pass** on Nextflow 25.10 and 26.10.5 (`-profile test`, `-stub`, target + joint);
   snapshot in `tests/default.nf.test.snap`

@@ -1,0 +1,87 @@
+// Module test: LDSC_MUNGE
+// Setup: HARMONIZE_SUMSTATS -> EXPORT_SUMSTATS (ldsc format) on the LAVA
+// vignette bmi file. Munged with the test merge-alleles list in tests/data/ldsc.
+// munge_sumstats.py writes fixed-precision output, so the munged file's md5
+// (nf-test hashes the uncompressed content) is stable for a given LDSC version.
+nextflow_process {
+
+    name "Test Process LDSC_MUNGE"
+    script "../main.nf"
+    process "LDSC_MUNGE"
+
+    tag "modules"
+    tag "modules_local"
+    tag "ldsc"
+    tag "ldsc/munge"
+
+    setup {
+        run("HARMONIZE_SUMSTATS") {
+            script "../../../harmonize_sumstats/main.nf"
+            process {
+                """
+                input[0] = Channel.of([ [ id:'bmi' ], file("\${params.lava_test_data}/bmi.sumstats.txt", checkIfExists: true) ])
+                """
+            }
+        }
+        run("EXPORT_SUMSTATS") {
+            script "../../../export_sumstats/main.nf"
+            process {
+                """
+                input[0] = HARMONIZE_SUMSTATS.out.sumstats
+                input[1] = 'ldsc'
+                input[2] = []
+                """
+            }
+        }
+    }
+
+    test("bmi - with merge-alleles") {
+
+        when {
+            params { outdir = "$outputDir" }
+            process {
+                """
+                input[0] = EXPORT_SUMSTATS.out.sumstats
+                input[1] = file("${baseDir}/tests/data/ldsc/merge_alleles.snplist.gz", checkIfExists: true)
+                """
+            }
+        }
+
+        then {
+            def munged = path(process.out.sumstats[0][1]).linesGzip
+            def log    = path(process.out.log[0][1]).readLines()
+            def kept   = log.find { line -> line.startsWith('Writing summary statistics for') }
+            assertAll(
+                { assert process.success },
+                { assert munged[0] == 'SNP\tA1\tA2\tZ\tN' },
+                { assert munged.size() > 1 },
+                // LDSC's own INFO filter ran on the INFO column we passed on
+                { assert log.any { line -> line.contains('INFO <= 0.9') } },
+                { assert process.out.versions_ldsc.size() == 1 },
+                { assert snapshot(process.out.sumstats, kept, process.out.versions_ldsc).match() }
+            )
+        }
+    }
+
+    test("bmi - stub") {
+
+        options "-stub"
+
+        when {
+            params { outdir = "$outputDir" }
+            process {
+                """
+                input[0] = EXPORT_SUMSTATS.out.sumstats
+                input[1] = []
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out.sumstats, process.out.log, process.out.versions_ldsc).match() }
+            )
+        }
+    }
+}

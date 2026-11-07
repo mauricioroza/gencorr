@@ -1,0 +1,82 @@
+{
+    "bmi vs neuro - 10 loci": {
+        "content": [
+            [
+                "100|bmi|neuro|univ_filtered|2685|K=323|NA",
+                "230|bmi|neuro|ok|4438|K=338|-0.165",
+                "266|bmi|neuro|ok|3244|K=325|0.193",
+                "374|bmi|neuro|ok|4449|K=366|0.202",
+                "464|bmi|neuro|ok|4862|K=317|0.412",
+                "950|bmi|neuro|ok|3066|K=198|-0.574",
+                "951|bmi|neuro|ok|2527|K=135|0.032",
+                "952|bmi|neuro|ok|4979|K=175|0.191",
+                "954|bmi|neuro|ok|3107|K=74|-0.156",
+                "955|bmi|neuro|no_snps_in_locus|0|K=NA|NA"
+            ],
+            [
+                [
+                    "lava",
+                    "0.1.5"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.6"
+        },
+        "timestamp": "2026-11-06T19:49:32.105486976"
+    },
+    "stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "bmi__neuro",
+                        "traits": [
+                            {
+                                "id": "bmi"
+                            },
+                            {
+                                "id": "neuro"
+                            }
+                        ],
+                        "pairs": [
+                            [
+                                "bmi",
+                                "neuro"
+                            ]
+                        ]
+                    },
+                    "bmi__neuro.test_10.lava.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "bmi__neuro",
+                        "traits": [
+                            {
+                                "id": "bmi"
+                            },
+                            {
+                                "id": "neuro"
+                            }
+                        ],
+                        "pairs": [
+                            [
+                                "bmi",
+                                "neuro"
+                            ]
+                        ]
+                    },
+                    "bmi__neuro.test_10.lava_univ.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.6"
+        },
+        "timestamp": "2026-11-06T19:49:48.679661248"
+    }
+}

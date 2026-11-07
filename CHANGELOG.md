@@ -9,6 +9,7 @@ Initial version.
 
 ### Added
 
+- nf-test module tests for all 8 local modules (`modules/local/*/tests/`), each with a real-data test and a stub test; run with `nf-test test --tag modules_local`.
 - LAVA: loci without shared SNPs are skipped up front (`no_snps_in_locus`), and each analysed locus logs a progress line with timing; results unchanged.
 
 - `--min_info` / `--min_maf`: optional variant QC in harmonization, applied to all methods (LDSC munge rule: remove value <= threshold; missing kept; warning when the column is absent).

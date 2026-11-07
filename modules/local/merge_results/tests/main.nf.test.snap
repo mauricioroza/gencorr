@@ -1,0 +1,36 @@
+{
+    "one results table": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "gencorr_results"
+                    },
+                    "gencorr_results.tsv:md5,407884a6d0e8e76ddcda3f91b5929ab8"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.6"
+        },
+        "timestamp": "2026-11-06T19:46:15.574097633"
+    },
+    "stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "gencorr_results"
+                    },
+                    "gencorr_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.6"
+        },
+        "timestamp": "2026-11-06T19:46:29.849127097"
+    }
+}

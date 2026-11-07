@@ -8,7 +8,7 @@ Nextflow pipeline built on the nf-core template.
 * **Pluggable**: every method reads the same harmonized inputs and writes the
   same results table, so adding HDL, SumHer, Popcorn, HDL-L … is one subworkflow
   ([docs/extending.md](docs/extending.md)).
-* **Testable**: 33 Python tests + 6 nf-test function tests + 3 pipeline tests,
+* **Testable**: 41 Python tests + 22 nf-test module tests + 6 function tests + 3 pipeline tests,
   including *oracle* tests that check the pipeline reproduces LDSC and LAVA
   run directly ([docs/validation.md](docs/validation.md)).
 

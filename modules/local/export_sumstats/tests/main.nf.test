@@ -1,0 +1,127 @@
+// Module test: EXPORT_SUMSTATS
+// Setup: HARMONIZE_SUMSTATS on the LAVA vignette bmi file.
+// Checks the two method layouts (bin/export_sumstats.py: FORMATS) and the
+// optional --snp-list restriction (here: the test merge-alleles list).
+nextflow_process {
+
+    name "Test Process EXPORT_SUMSTATS"
+    script "../main.nf"
+    process "EXPORT_SUMSTATS"
+
+    tag "modules"
+    tag "modules_local"
+    tag "export_sumstats"
+
+    setup {
+        run("HARMONIZE_SUMSTATS") {
+            script "../../harmonize_sumstats/main.nf"
+            process {
+                """
+                input[0] = Channel.of([ [ id:'bmi' ], file("\${params.lava_test_data}/bmi.sumstats.txt", checkIfExists: true) ])
+                """
+            }
+        }
+    }
+
+    test("bmi - ldsc format") {
+
+        when {
+            params { outdir = "$outputDir" }
+            process {
+                """
+                input[0] = HARMONIZE_SUMSTATS.out.sumstats
+                input[1] = 'ldsc'
+                input[2] = []
+                """
+            }
+        }
+
+        then {
+            def out    = process.out.sumstats[0][1]
+            def header = path(out).linesGzip[0]
+            assertAll(
+                { assert process.success },
+                { assert out.endsWith('bmi.ldsc.tsv.gz') },
+                // INFO is passed on so munge can apply its own INFO filter
+                // (bmi has MAF but no EAF, so there is no FRQ column)
+                { assert header == 'SNP\tA1\tA2\tZ\tP\tN\tINFO' },
+                { assert snapshot(process.out.sumstats).match() }
+            )
+        }
+    }
+
+    test("bmi - lava format") {
+
+        when {
+            params { outdir = "$outputDir" }
+            process {
+                """
+                input[0] = HARMONIZE_SUMSTATS.out.sumstats
+                input[1] = 'lava'
+                input[2] = []
+                """
+            }
+        }
+
+        then {
+            def out    = process.out.sumstats[0][1]
+            def header = path(out).readLines()[0]
+            assertAll(
+                { assert process.success },
+                { assert out.endsWith('bmi.lava.tsv') },
+                { assert header == 'SNP\tA1\tA2\tZ\tN' },
+                { assert snapshot(process.out.sumstats).match() }
+            )
+        }
+    }
+
+    test("bmi - lava format restricted to a SNP list") {
+
+        when {
+            params { outdir = "$outputDir" }
+            process {
+                """
+                input[0] = HARMONIZE_SUMSTATS.out.sumstats
+                input[1] = 'lava'
+                input[2] = file("${baseDir}/tests/data/ldsc/merge_alleles.snplist.gz", checkIfExists: true)
+                """
+            }
+        }
+
+        then {
+            def keep = path("${baseDir}/tests/data/ldsc/merge_alleles.snplist.gz").linesGzip.drop(1)
+                .collect { line -> line.split(/\s+/)[0].toLowerCase() } as Set
+            def snps = path(process.out.sumstats[0][1]).readLines().drop(1)
+                .collect { line -> line.split('\t')[0].toLowerCase() }
+            assertAll(
+                { assert process.success },
+                { assert snps.size() > 0 },
+                { assert snps.count { s -> !(s in keep) } == 0 },
+                { assert snapshot(process.out.sumstats).match() }
+            )
+        }
+    }
+
+    test("bmi - stub") {
+
+        options "-stub"
+
+        when {
+            params { outdir = "$outputDir" }
+            process {
+                """
+                input[0] = HARMONIZE_SUMSTATS.out.sumstats
+                input[1] = 'lava'
+                input[2] = []
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out.sumstats).match() }
+            )
+        }
+    }
+}

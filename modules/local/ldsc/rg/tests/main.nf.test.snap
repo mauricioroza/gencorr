@@ -1,0 +1,51 @@
+{
+    "bmi vs depression": {
+        "content": [
+            [
+                "Total Observed scale h2: 0.0122 (0.0038)",
+                "Intercept: 1.2817 (0.1348)",
+                "Total Observed scale h2: 0.0027 (0.0003)",
+                "Intercept: 1.0133 (0.0403)",
+                "Total Observed scale gencov: 0.0006 (0.0004)",
+                "Intercept: 0.0596 (0.0476)",
+                "Genetic Correlation: 0.1093 (0.069)"
+            ],
+            [
+                [
+                    "LDSC_RG",
+                    "ldsc",
+                    "1.0.1"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.6"
+        },
+        "timestamp": "2026-11-06T19:44:15.423555828"
+    },
+    "stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "bmi__b1"
+                    },
+                    "bmi__b1.rg.log:md5,d78f894311d930c742bb858c3c7018ce"
+                ]
+            ],
+            [
+                [
+                    "LDSC_RG",
+                    "ldsc",
+                    "1.0.1"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.6"
+        },
+        "timestamp": "2026-11-06T19:44:27.004424834"
+    }
+}

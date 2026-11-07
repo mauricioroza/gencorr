@@ -1,0 +1,53 @@
+{
+    "stub": {
+        "content": [
+            [
+                [
+                    "ldsc",
+                    "1.0.1"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.6"
+        },
+        "timestamp": "2026-11-06T19:43:41.156748734"
+    },
+    "bmi + depression - observed and liability scale": {
+        "content": [
+            [
+                "Total Observed scale h2: 0.0082 (0.0023)",
+                "Lambda GC: 2.6166",
+                "Mean Chi^2: 4.9058",
+                "Intercept: 1.3137 (0.0356)",
+                "Ratio: 0.0803 (0.0091)"
+            ],
+            [
+                "Total Observed scale h2: 0.0023 (0.0003)",
+                "Lambda GC: 1.8324",
+                "Mean Chi^2: 2.7253",
+                "Intercept: 1.1224 (0.0403)",
+                "Ratio: 0.0709 (0.0234)"
+            ],
+            [
+                "Total Liability scale h2: 0.0031 (0.0004)",
+                "Lambda GC: 1.8324",
+                "Mean Chi^2: 2.7253",
+                "Intercept: 1.1224 (0.0403)",
+                "Ratio: 0.0709 (0.0234)"
+            ],
+            [
+                [
+                    "ldsc",
+                    "1.0.1"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.6"
+        },
+        "timestamp": "2026-11-06T19:43:28.82656653"
+    }
+}

@@ -1,0 +1,70 @@
+{
+    "bmi - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "bmi"
+                    },
+                    "bmi.lava.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.6"
+        },
+        "timestamp": "2026-11-06T19:39:39.505638888"
+    },
+    "bmi - ldsc format": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "bmi"
+                    },
+                    "bmi.ldsc.tsv.gz:md5,424fd0d0eeaef82c18f3453bd187f60e"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.6"
+        },
+        "timestamp": "2026-11-06T19:38:58.368698755"
+    },
+    "bmi - lava format restricted to a SNP list": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "bmi"
+                    },
+                    "bmi.lava.tsv:md5,bba060778ab6c9274be9783fb9ed8089"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.6"
+        },
+        "timestamp": "2026-11-06T19:39:29.651287525"
+    },
+    "bmi - lava format": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "bmi"
+                    },
+                    "bmi.lava.tsv:md5,bba060778ab6c9274be9783fb9ed8089"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.6"
+        },
+        "timestamp": "2026-11-06T19:39:13.45564812"
+    }
+}

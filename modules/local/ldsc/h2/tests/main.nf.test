@@ -1,0 +1,117 @@
+// Module test: LDSC_H2
+// Setup: HARMONIZE_SUMSTATS -> EXPORT_SUMSTATS -> LDSC_MUNGE on two LAVA
+// vignette traits; LD scores from tests/data/ldsc (single file, prefix 'all').
+//   bmi        continuous: one run, observed scale only
+//   depression binary with cases, controls and pop_prev: a second run on the
+//              liability scale (<id>.h2_liab.log)
+// The snapshot holds the summary lines LDSC prints (4 significant digits).
+nextflow_process {
+
+    name "Test Process LDSC_H2"
+    script "../main.nf"
+    process "LDSC_H2"
+
+    tag "modules"
+    tag "modules_local"
+    tag "ldsc"
+    tag "ldsc/h2"
+
+    setup {
+        run("HARMONIZE_SUMSTATS") {
+            script "../../../harmonize_sumstats/main.nf"
+            process {
+                """
+                input[0] = Channel.of(
+                    [ [ id:'bmi' ], file("\${params.lava_test_data}/bmi.sumstats.txt", checkIfExists: true) ],
+                    [ [ id:'depression', n_cases:170756, n_controls:329443, pop_prev:0.15 ],
+                      file("\${params.lava_test_data}/depression.sumstats.txt", checkIfExists: true) ]
+                )
+                """
+            }
+        }
+        run("EXPORT_SUMSTATS") {
+            script "../../../export_sumstats/main.nf"
+            process {
+                """
+                input[0] = HARMONIZE_SUMSTATS.out.sumstats
+                input[1] = 'ldsc'
+                input[2] = []
+                """
+            }
+        }
+        run("LDSC_MUNGE") {
+            script "../../munge/main.nf"
+            process {
+                """
+                input[0] = EXPORT_SUMSTATS.out.sumstats
+                input[1] = file("${baseDir}/tests/data/ldsc/merge_alleles.snplist.gz", checkIfExists: true)
+                """
+            }
+        }
+    }
+
+    test("bmi + depression - observed and liability scale") {
+
+        when {
+            params { outdir = "$outputDir" }
+            process {
+                """
+                input[0] = LDSC_MUNGE.out.sumstats
+                input[1] = [ [ prefix:'all', split_by_chr:false ],
+                             file("${baseDir}/tests/data/ldsc", checkIfExists: true),
+                             file("${baseDir}/tests/data/ldsc", checkIfExists: true) ]
+                """
+            }
+        }
+
+        then {
+            // one entry per trait; a trait's log(s) as a list, sorted by name
+            def logs = process.out.log.collectEntries { entry ->
+                [ (entry[0].id): (entry[1] instanceof List ? entry[1] : [ entry[1] ]).sort { f -> f.toString() } ]
+            }
+            def summary = { f ->
+                path(f).readLines().findAll { line ->
+                    line ==~ /^(Total (Observed|Liability) scale h2|Lambda GC|Mean Chi\^2|Intercept|Ratio).*/
+                }
+            }
+            assertAll(
+                { assert process.success },
+                { assert logs.keySet() == [ 'bmi', 'depression' ] as Set },
+                { assert logs.bmi.size() == 1 },
+                { assert logs.depression.collect { f -> new File(f.toString()).name } == [ 'depression.h2.log', 'depression.h2_liab.log' ] },
+                { assert summary(logs.depression[1]).any { line -> line.startsWith('Total Liability scale h2') } },
+                { assert snapshot(
+                    summary(logs.bmi[0]),
+                    summary(logs.depression[0]),
+                    summary(logs.depression[1]),
+                    process.out.versions_ldsc.collect { v -> v[1..2] }.unique()
+                ).match() }
+            )
+        }
+    }
+
+    test("stub") {
+
+        options "-stub"
+
+        when {
+            params { outdir = "$outputDir" }
+            process {
+                """
+                input[0] = LDSC_MUNGE.out.sumstats
+                input[1] = [ [ prefix:'all', split_by_chr:false ],
+                             file("${baseDir}/tests/data/ldsc", checkIfExists: true),
+                             file("${baseDir}/tests/data/ldsc", checkIfExists: true) ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.log.size() == 2 },
+                { assert snapshot(process.out.versions_ldsc.collect { v -> v[1..2] }.unique()).match() }
+            )
+        }
+    }
+}
