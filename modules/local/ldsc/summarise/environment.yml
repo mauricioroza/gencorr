@@ -8,5 +8,5 @@ channels:
 dependencies:
   - conda-forge::numpy=2.2.2
   - conda-forge::pandas=2.2.3
-  - conda-forge::python=3.12.8
+  - conda-forge::python=3.12.3
   - conda-forge::scipy=1.15.1

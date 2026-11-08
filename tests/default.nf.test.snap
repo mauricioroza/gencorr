@@ -1,6 +1,47 @@
 {
     "-profile test": {
         "content": [
+            {
+                "EXPORT_SUMSTATS": {
+                    "pandas": "2.2.3",
+                    "python": "3.12.3"
+                },
+                "HARMONIZE_SUMSTATS": {
+                    "numpy": "2.2.2",
+                    "pandas": "2.2.3",
+                    "python": "3.12.3",
+                    "scipy": "1.15.1"
+                },
+                "LAVA_RUN": {
+                    "lava": "0.1.5",
+                    "r-base": "4.4.2"
+                },
+                "LDSC_H2": {
+                    "ldsc": "1.0.1"
+                },
+                "LDSC_MUNGE": {
+                    "ldsc": "1.0.1"
+                },
+                "LDSC_RG": {
+                    "ldsc": "1.0.1"
+                },
+                "LDSC_SUMMARISE": {
+                    "numpy": "2.2.2",
+                    "pandas": "2.2.3",
+                    "python": "3.12.3"
+                },
+                "MERGE_ALL": {
+                    "pandas": "2.2.3",
+                    "python": "3.12.3"
+                },
+                "MERGE_RESULTS": {
+                    "pandas": "2.2.3",
+                    "python": "3.12.3"
+                },
+                "Workflow": {
+                    "mauricioroza/gencorr": "v0.1.0dev"
+                }
+            },
             [
                 "gencorr_results.tsv",
                 "harmonized",
@@ -145,10 +186,10 @@
                 "median_n": 379478.0
             }
         ],
+        "timestamp": "2026-11-08T12:47:37.523919575",
         "meta": {
-            "nf-test": "0.9.3",
+            "nf-test": "0.9.5",
             "nextflow": "26.10.5"
-        },
-        "timestamp": "2026-11-06T15:42:44.759597378"
+        }
     }
 }

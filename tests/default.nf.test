@@ -31,6 +31,9 @@ nextflow_pipeline {
                 { assert rows.count { it.method == 'lava' } == 60 },
                 { assert rows.findAll { it.method == 'ldsc' }.every { it.status == 'ok' } },
                 { assert snapshot(
+                    // tool versions from the "versions" topic (nf-core template);
+                    // pinned identically in the container and environment.yml files
+                    removeNextflowVersion("$outputDir/pipeline_info/gencorr_software_versions.yml"),
                     stable_path,
                     summary,
                     path("$outputDir/ldsc/gencorr.sample_overlap.txt"),

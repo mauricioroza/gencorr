@@ -10,7 +10,9 @@
 #   - rocker/r-ver:4.4.2 pins R and points CRAN at a dated Posit Package Manager
 #     snapshot, so data.table / matrixsampling / cpp11 versions are frozen.
 #   - LAVA is installed from an exact Git commit (it is not on CRAN/conda).
-#   - Python packages are pinned with ==.
+#   - Python packages are pinned with ==. Python itself is Ubuntu 24.04's
+#     python3 (3.12.3); the modules' environment.yml files pin the same
+#     python=3.12.3 so conda and container runs report identical versions.
 #
 # Build and push (from the repository root):
 #   docker build -t ghcr.io/mauricioroza/gencorr-tools:0.1.0 containers/gencorr-tools

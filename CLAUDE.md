@@ -50,8 +50,15 @@ BigaGWAS's slowness is rsID mapping, which this pipeline avoids by design).
 ## Testing / validation (docs/validation.md, docs/bigagwas_comparison.md)
 
 - Principle: oracle tests — the reference is always the original tool run directly.
-- Python unit + oracle: 41 tests (`tests/`). nf-test: module (22, in the pending patch), function (6),
+- Python unit + oracle: 43 tests (`tests/python`; 6 oracle tests skip unless LDSC/LAVA are on PATH).
+  Run with the venv active: `source ~/venvs/gencorr/bin/activate && pytest tests/python` (scripts are
+  called as `python3`, so the venv must be first on PATH). nf-test: module (22), function (6),
   pipeline (3: `-profile test`, `-stub`, target + joint).
+- nf-core tools 4.2.1 is in `~/venvs/gencorr`: `nf-core pipelines lint`, `nf-core modules lint --all --local`
+  (run from the repo root). Module warnings about the private container, custom meta keys, underscores in
+  names and `process_single`+`process_long` are expected for this private pipeline.
+- Test data is downloaded from raw.githubusercontent.com on every pipeline test; GitHub can throttle it
+  (seen 2026-11-07, ~150 KB/s), which makes Nextflow hang on staging. Check speed with curl first.
 - nf-test snapshots must contain only machine-independent values (identical under pandas 2.2.3 and 3.0.5).
 - BigaGWAS comparison kit: `tests/bigagwas/`. Jobs 966/967/971/972 agree (differences explained:
   SNP set, LAVA version, Monte Carlo noise, OR==1 sign handling in LAVA's own reader).
@@ -64,13 +71,15 @@ BigaGWAS's slowness is rsID mapping, which this pipeline avoids by design).
 - LAVA is "All rights reserved": the image `ghcr.io/mauricioroza/gencorr-tools:0.1.0` must stay private.
 - Commits authored as `Mauricio Roza <113365401+mauricioroza@users.noreply.github.com>`.
 
-## Status (as of 2026-11-07)
+## Status (as of 2026-11-08)
 
-- Done and pushed: everything through "LAVA: skip loci without shared SNPs" (dev/master/TEMPLATE in sync
-  with origin; author rewrite already applied).
-- Module nf-tests patch applied on dev (commit "Add nf-test module tests for all local modules");
-  not yet pushed and not yet run locally.
-- nf-test is not installed in WSL yet; full nf-test suite not yet confirmed inside Docker.
+- On dev and pushed: module nf-tests; parse_ldsc log-order fix (samp_prev/pop_prev were NA when the
+  .h2_liab.log was read first); local modules aligned with nf-core specs ($args, full version reporting,
+  nf-core-format meta.yml, dependency tags). `nf-core modules lint`: 0 failures.
+- Full suite passes locally in Docker (nf-test 0.9.5, Nextflow 26.10.5): 22 module, 6 function,
+  3 pipeline tests; pytest 37 passed / 6 skipped. CI still pins NFT_VER 0.9.4.
+- Remaining nf-core gaps (warnings only): no meta.yml/tests for subworkflows method_ldsc/method_lava;
+  nf-core utils subworkflows have updates; template TODOs; manifest.diagram; ro-crate.
 - Pipeline not yet run in the published container on CI (image only local). No real genome-wide run yet.
 - BigaGWAS's own LAVA scripts (specific_lava.R, 2traits.R, lava_pgc.R) are not public, so its settings are
   partly unknown.
