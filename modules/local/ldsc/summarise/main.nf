@@ -21,15 +21,18 @@ process LDSC_SUMMARISE {
     path "gencorr.ldsc.tsv"          , emit: results
     path "gencorr.ldsc_h2.tsv"       , emit: h2
     path "gencorr.sample_overlap.txt", emit: overlap
-    tuple val("${task.process}"), val('pandas'), eval("python3 -c 'import pandas; print(pandas.__version__)'"), emit: versions_pandas, topic: versions
+    tuple val("${task.process}"), val('python'), eval("python3 -c 'import platform; print(platform.python_version())'"), emit: versions_python, topic: versions
+    tuple val("${task.process}"), val('pandas'), eval("python3 -c 'import pandas; print(pandas.__version__)'")          , emit: versions_pandas, topic: versions
+    tuple val("${task.process}"), val('numpy'),  eval("python3 -c 'import numpy; print(numpy.__version__)'")            , emit: versions_numpy, topic: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
-    def rg = rg_logs ? "--rg-logs ${rg_logs}" : ''
+    def args = task.ext.args ?: ''
+    def rg   = rg_logs ? "--rg-logs ${rg_logs}" : ''
     """
-    parse_ldsc.py --h2-logs ${h2_logs} ${rg} --out gencorr
+    parse_ldsc.py --h2-logs ${h2_logs} ${rg} --out gencorr ${args}
     """
 
     stub:

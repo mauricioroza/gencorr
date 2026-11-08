@@ -1,33 +1,83 @@
 name: "ldsc_rg"
-description: "Cross-trait LDSC for trait1 against a batch of traits (ldsc --rg trait1,a,b,...)"
+description: Cross-trait LDSC genetic correlation of one trait against a batch of
+  traits in a single call (ldsc.py --rg trait1,traitA,traitB,...)
 keywords:
   - ldsc
+  - gwas
   - genetic correlation
+tools:
+  - ldsc:
+      description: LD Score Regression, for SNP heritability and genetic
+        correlation from GWAS summary statistics
+      homepage: "https://github.com/bulik/ldsc"
+      documentation: "https://github.com/bulik/ldsc/wiki"
+      tool_dev_url: "https://github.com/bulik/ldsc"
+      doi: "10.1038/ng.3406"
+      licence: ["GPL-3.0-only"]
+      identifier: ""
+      args_id: "$args"
 input:
-  - meta:
-      type: map
-      description: "Batch meta: id (<trait1>__bN), trait1, traits2"
-  - sumstats1:
-      type: file
-      description: "trait1 .sumstats.gz"
-  - others:
-      type: file
-      description: "Partner .sumstats.gz files"
-  - ld:
-      type: map
-      description: "LD meta"
-  - ref_ld:
-      type: directory
-      description: "Reference LD scores"
-  - w_ld:
-      type: directory
-      description: "Regression-weight LD scores"
+  - - meta:
+        type: map
+        description: Batch meta map; id names the batch, e.g. [ id:'bmi__b1' ]
+    - sumstats1:
+        type: file
+        description: Munged summary statistics of the first trait of every pair
+        pattern: "*.sumstats.gz"
+        ontologies:
+          - edam: "http://edamontology.org/format_3475" # TSV
+    - others:
+        type: file
+        description: Munged summary statistics of the partner traits in this batch
+        pattern: "*.sumstats.gz"
+        ontologies:
+          - edam: "http://edamontology.org/format_3475" # TSV
+  - - ld:
+        type: map
+        description: LD score meta map; prefix is the file prefix inside the
+          directories, split_by_chr selects --ref-ld-chr/--w-ld-chr. e.g.
+          [ prefix:'', split_by_chr:true ]
+    - ref_ld:
+        type: directory
+        description: Directory with the reference LD scores (e.g. eur_w_ld_chr)
+    - w_ld:
+        type: directory
+        description: Directory with the regression-weight LD scores (often the
+          same as ref_ld)
 output:
-  - log:
-      type: file
-      description: "<batch>.rg.log"
-  - versions:
-      type: tuple
-      description: (process, tool, version) emitted to the "versions" topic
+  log:
+    - - meta:
+          type: map
+          description: Batch meta map, as given
+      - ${meta.id}.rg.log:
+          type: file
+          description: LDSC --rg log with rg, se, z, p and the h2/gencov
+            intercepts for every pair in the batch
+          pattern: "*.rg.log"
+          ontologies:
+            - edam: "http://edamontology.org/format_2330" # Textual format
+  versions_ldsc:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - ldsc:
+          type: string
+          description: The name of the tool
+      - "grep -m1 -o 'Version [0-9.]*' ${meta.id}.rg.log | cut -d' ' -f2":
+          type: eval
+          description: The expression to obtain the version of the tool
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - ldsc:
+          type: string
+          description: The name of the tool
+      - "grep -m1 -o 'Version [0-9.]*' ${meta.id}.rg.log | cut -d' ' -f2":
+          type: eval
+          description: The expression to obtain the version of the tool
 authors:
-  - "MR"
+  - "@mauricioroza"
+maintainers:
+  - "@mauricioroza"

@@ -1,36 +1,120 @@
 name: "lava_run"
-description: "LAVA univariate + bivariate local genetic correlation for one locus chunk and a group of trait pairs"
+description: LAVA univariate and bivariate local genetic correlation for one
+  chunk of loci and a group of trait pairs (bin/run_lava.R)
 keywords:
   - lava
+  - gwas
   - local genetic correlation
+  - heritability
+tools:
+  - lava:
+      description: LAVA (Local Analysis of [co]Variant Association), local genetic
+        correlation and heritability from GWAS summary statistics
+      homepage: "https://github.com/josefin-werme/LAVA"
+      documentation: "https://github.com/josefin-werme/LAVA/tree/main/vignettes"
+      tool_dev_url: "https://github.com/josefin-werme/LAVA"
+      doi: "10.1038/s41588-022-01017-y"
+      licence: ["All rights reserved"]
+      identifier: ""
+      args_id: "$args"
 input:
-  - meta:
-      type: map
-      description: "Group meta: id, traits (list of trait metas), pairs (list of [id1, id2])"
-  - sumstats:
-      type: file
-      description: "<id>.lava.tsv for every trait in the group"
-  - loci:
-      type: file
-      description: "Locus chunk (LOC CHR START STOP)"
-  - ref_prefix:
-      type: string
-      description: "Basename of the LD reference prefix"
-  - reference:
-      type: file
-      description: "All LD reference files"
+  - - meta:
+        type: map
+        description: |
+          Group meta map: id, traits (list of trait meta maps with id and
+          optional n_cases, n_controls, pop_prev) and pairs (list of [id1, id2]).
+          e.g. [ id:'bmi__neuro', traits:[ [id:'bmi'], [id:'neuro'] ], pairs:[ ['bmi','neuro'] ] ]
+    - sumstats:
+        type: file
+        description: Summary statistics in the 'lava' export layout, one per trait
+          in the group, named <trait id>.lava.tsv
+        pattern: "*.lava.tsv"
+        ontologies:
+          - edam: "http://edamontology.org/format_3475" # TSV
+    - loci:
+        type: file
+        description: Chunk of the locus definition file (LOC CHR START STOP)
+        pattern: "*"
+        ontologies:
+          - edam: "http://edamontology.org/format_2330" # Textual format
+  - - ref_prefix:
+        type: string
+        description: Common prefix of the LD reference files (e.g. 'g1000_eur')
+    - reference:
+        type: file
+        description: All LD reference files (PLINK bed/bim/fam, or LAVA's LD
+          format), staged together under ref_prefix
+        pattern: "*"
+        ontologies: []
   - overlap:
       type: file
-      description: "Sample-overlap matrix; [] for none"
+      description: Sample-overlap matrix from LDSC_SUMMARISE; pass [] for none
+      pattern: "*.txt"
+      ontologies:
+        - edam: "http://edamontology.org/format_2330" # Textual format
 output:
-  - results:
-      type: file
-      description: "<group>.<chunk>.lava.tsv (standard results)"
-  - univ:
-      type: file
-      description: "<group>.<chunk>.lava_univ.tsv (local h2 per locus and trait)"
-  - versions:
-      type: tuple
-      description: (process, tool, version) emitted to the "versions" topic
+  results:
+    - - meta:
+          type: map
+          description: Group meta map, as given
+      - ${prefix}.lava.tsv:
+          type: file
+          description: Standard results table with one local rg row per pair and
+            locus, including the status of loci that were not estimated
+          pattern: "*.lava.tsv"
+          ontologies:
+            - edam: "http://edamontology.org/format_3475" # TSV
+  univ:
+    - - meta:
+          type: map
+          description: Group meta map, as given
+      - ${prefix}.lava_univ.tsv:
+          type: file
+          description: Local univariate heritability and p-value per locus and trait
+          pattern: "*.lava_univ.tsv"
+          ontologies:
+            - edam: "http://edamontology.org/format_3475" # TSV
+  versions_lava:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - lava:
+          type: string
+          description: The name of the tool
+      - "Rscript -e 'cat(as.character(packageVersion(\"LAVA\")))'":
+          type: eval
+          description: The expression to obtain the version of the tool
+  versions_r:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - r-base:
+          type: string
+          description: The name of the tool
+      - "Rscript -e 'cat(as.character(getRversion()))'":
+          type: eval
+          description: The expression to obtain the version of the tool
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - lava:
+          type: string
+          description: The name of the tool
+      - "Rscript -e 'cat(as.character(packageVersion(\"LAVA\")))'":
+          type: eval
+          description: The expression to obtain the version of the tool
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - r-base:
+          type: string
+          description: The name of the tool
+      - "Rscript -e 'cat(as.character(getRversion()))'":
+          type: eval
+          description: The expression to obtain the version of the tool
 authors:
-  - "MR"
+  - "@mauricioroza"
+maintainers:
+  - "@mauricioroza"

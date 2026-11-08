@@ -1,27 +1,91 @@
 name: "export_sumstats"
-description: "Write a harmonized file in the column layout a method expects (formats defined in bin/export_sumstats.py)"
+description: Write a harmonized summary statistics file in the column layout one
+  method expects (formats defined in bin/export_sumstats.py FORMATS)
 keywords:
   - gwas
+  - summary statistics
   - format conversion
+tools:
+  - gencorr:
+      description: gencorr helper scripts (bin/export_sumstats.py; Python with pandas)
+      homepage: "https://github.com/mauricioroza/gencorr"
+      documentation: "https://github.com/mauricioroza/gencorr/blob/dev/docs/extending.md"
+      licence: ["MIT"]
+      identifier: ""
+      args_id: "$args"
 input:
-  - meta:
-      type: map
-      description: "Trait meta (id)"
-  - harmonized:
-      type: file
-      description: "<id>.harmonized.tsv.gz"
+  - - meta:
+        type: map
+        description: Trait meta map, e.g. [ id:'bmi' ]
+    - harmonized:
+        type: file
+        description: Harmonized summary statistics from HARMONIZE_SUMSTATS
+        pattern: "*.harmonized.tsv.gz"
+        ontologies:
+          - edam: "http://edamontology.org/format_3475" # TSV
   - format:
       type: string
-      description: "Format name: ldsc | lava | ..."
+      description: Name of the output layout, a key of FORMATS in
+        bin/export_sumstats.py (e.g. 'ldsc' or 'lava')
   - snp_list:
       type: file
-      description: "Optional SNP-ID list (e.g. w_hm3.snplist); only these SNPs are exported. [] for all"
+      description: Optional list of SNP IDs (e.g. HapMap3 w_hm3.snplist); only
+        these SNPs are exported. Pass [] to export all
+      pattern: "*"
+      ontologies: []
 output:
-  - sumstats:
-      type: file
-      description: "<id>.<format>.tsv[.gz]"
-  - versions:
-      type: tuple
-      description: (process, tool, version) emitted to the "versions" topic
+  sumstats:
+    - - meta:
+          type: map
+          description: Trait meta map, as given
+      - ${meta.id}.${format}.tsv*:
+          type: file
+          description: Summary statistics in the requested method's column layout
+            (gzipped for compressed formats)
+          pattern: "*.tsv{,.gz}"
+          ontologies:
+            - edam: "http://edamontology.org/format_3475" # TSV
+  versions_python:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - python:
+          type: string
+          description: The name of the tool
+      - "python3 -c 'import platform; print(platform.python_version())'":
+          type: eval
+          description: The expression to obtain the version of the tool
+  versions_pandas:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - pandas:
+          type: string
+          description: The name of the tool
+      - "python3 -c 'import pandas; print(pandas.__version__)'":
+          type: eval
+          description: The expression to obtain the version of the tool
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - python:
+          type: string
+          description: The name of the tool
+      - "python3 -c 'import platform; print(platform.python_version())'":
+          type: eval
+          description: The expression to obtain the version of the tool
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - pandas:
+          type: string
+          description: The name of the tool
+      - "python3 -c 'import pandas; print(pandas.__version__)'":
+          type: eval
+          description: The expression to obtain the version of the tool
 authors:
-  - "MR"
+  - "@mauricioroza"
+maintainers:
+  - "@mauricioroza"

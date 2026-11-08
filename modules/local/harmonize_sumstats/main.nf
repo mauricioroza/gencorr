@@ -24,6 +24,8 @@ process HARMONIZE_SUMSTATS {
     tuple val(meta), path("${prefix}.qc.json")          , emit: qc
     tuple val("${task.process}"), val('python'), eval("python3 -c 'import platform; print(platform.python_version())'"), emit: versions_python, topic: versions
     tuple val("${task.process}"), val('pandas'), eval("python3 -c 'import pandas; print(pandas.__version__)'")          , emit: versions_pandas, topic: versions
+    tuple val("${task.process}"), val('numpy'),  eval("python3 -c 'import numpy; print(numpy.__version__)'")            , emit: versions_numpy, topic: versions
+    tuple val("${task.process}"), val('scipy'),  eval("python3 -c 'import scipy; print(scipy.__version__)'")            , emit: versions_scipy, topic: versions
 
     when:
     task.ext.when == null || task.ext.when

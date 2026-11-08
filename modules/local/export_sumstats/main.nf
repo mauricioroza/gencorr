@@ -24,18 +24,21 @@ process EXPORT_SUMSTATS {
     output:
     tuple val(meta), path("${meta.id}.${format}.tsv*"), emit: sumstats
     tuple val("${task.process}"), val('python'), eval("python3 -c 'import platform; print(platform.python_version())'"), emit: versions_python, topic: versions
+    tuple val("${task.process}"), val('pandas'), eval("python3 -c 'import pandas; print(pandas.__version__)'")          , emit: versions_pandas, topic: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
+    def args     = task.ext.args ?: ''
     def restrict = snp_list ? "--snp-list ${snp_list}" : ''
     """
     export_sumstats.py \\
         --input ${harmonized} \\
         --format ${format} \\
         --out ${meta.id}.${format}.tsv \\
-        ${restrict}
+        ${restrict} \\
+        ${args}
     """
 
     stub:

@@ -1,27 +1,82 @@
 name: "ldsc_munge"
-description: "LDSC munge_sumstats.py on the LDSC export of a harmonized file"
+description: Run LDSC munge_sumstats.py on the LDSC export of a harmonized file,
+  optionally aligning to a --merge-alleles SNP list
 keywords:
   - ldsc
+  - gwas
+  - summary statistics
   - munge
+tools:
+  - ldsc:
+      description: LD Score Regression, for SNP heritability and genetic
+        correlation from GWAS summary statistics
+      homepage: "https://github.com/bulik/ldsc"
+      documentation: "https://github.com/bulik/ldsc/wiki"
+      tool_dev_url: "https://github.com/bulik/ldsc"
+      doi: "10.1038/ng.3211"
+      licence: ["GPL-3.0-only"]
+      identifier: ""
+      args_id: "$args"
 input:
-  - meta:
-      type: map
-      description: "Trait meta (id)"
-  - sumstats:
-      type: file
-      description: "<id>.ldsc.tsv.gz"
+  - - meta:
+        type: map
+        description: Trait meta map, e.g. [ id:'bmi' ]
+    - sumstats:
+        type: file
+        description: Summary statistics in the 'ldsc' export layout (SNP A1 A2 Z P N)
+        pattern: "*.ldsc.tsv*"
+        ontologies:
+          - edam: "http://edamontology.org/format_3475" # TSV
   - merge_alleles:
       type: file
-      description: "Optional SNP list for --merge-alleles (e.g. w_hm3.snplist); [] for none"
+      description: Optional SNP list with alleles for --merge-alleles (normally
+        HapMap3 w_hm3.snplist); pass [] for none
+      pattern: "*.snplist*"
+      ontologies: []
 output:
-  - sumstats:
-      type: file
-      description: "<id>.sumstats.gz"
-  - log:
-      type: file
-      description: "<id>.munge.log"
-  - versions:
-      type: tuple
-      description: (process, tool, version) emitted to the "versions" topic
+  sumstats:
+    - - meta:
+          type: map
+          description: Trait meta map, as given
+      - ${meta.id}.sumstats.gz:
+          type: file
+          description: Munged summary statistics (SNP A1 A2 Z N) ready for ldsc.py
+          pattern: "*.sumstats.gz"
+          ontologies:
+            - edam: "http://edamontology.org/format_3475" # TSV
+            - edam: "http://edamontology.org/format_3989" # GZIP format
+  log:
+    - - meta:
+          type: map
+          description: Trait meta map, as given
+      - ${meta.id}.munge.log:
+          type: file
+          description: munge_sumstats.py log with the SNPs removed per QC step
+          pattern: "*.munge.log"
+          ontologies:
+            - edam: "http://edamontology.org/format_2330" # Textual format
+  versions_ldsc:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - ldsc:
+          type: string
+          description: The name of the tool
+      - "grep -m1 -o 'Version [0-9.]*' ${meta.id}.munge.log | cut -d' ' -f2":
+          type: eval
+          description: The expression to obtain the version of the tool
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - ldsc:
+          type: string
+          description: The name of the tool
+      - "grep -m1 -o 'Version [0-9.]*' ${meta.id}.munge.log | cut -d' ' -f2":
+          type: eval
+          description: The expression to obtain the version of the tool
 authors:
-  - "MR"
+  - "@mauricioroza"
+maintainers:
+  - "@mauricioroza"

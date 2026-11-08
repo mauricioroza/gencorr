@@ -17,15 +17,17 @@ process MERGE_RESULTS {
 
     output:
     tuple val(meta), path("${prefix}.tsv"), emit: results
-    tuple val("${task.process}"), val('pandas'), eval("python3 -c 'import pandas; print(pandas.__version__)'"), emit: versions_pandas, topic: versions
+    tuple val("${task.process}"), val('python'), eval("python3 -c 'import platform; print(platform.python_version())'"), emit: versions_python, topic: versions
+    tuple val("${task.process}"), val('pandas'), eval("python3 -c 'import pandas; print(pandas.__version__)'")          , emit: versions_pandas, topic: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
-    prefix = task.ext.prefix ?: "${meta.id}"
+    def args = task.ext.args ?: ''
+    prefix   = task.ext.prefix ?: "${meta.id}"
     """
-    merge_results.py --out ${prefix}.tsv ${tables}
+    merge_results.py --out ${prefix}.tsv ${args} ${tables}
     """
 
     stub:

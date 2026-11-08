@@ -1,22 +1,82 @@
 name: "merge_results"
-description: "Concatenate, validate (RESULT_COLUMNS, no duplicate estimates) and sort standard results tables"
+description: Concatenate standard gencorr results tables, validate them against
+  RESULT_COLUMNS, reject duplicated estimates and sort
 keywords:
+  - genetic correlation
   - results
   - merge
   - validation
+tools:
+  - gencorr:
+      description: gencorr helper scripts (bin/merge_results.py; Python with pandas)
+      homepage: "https://github.com/mauricioroza/gencorr"
+      documentation: "https://github.com/mauricioroza/gencorr/blob/dev/docs/output.md"
+      licence: ["MIT"]
+      identifier: ""
+      args_id: "$args"
 input:
-  - meta:
-      type: map
-      description: "Output meta (id = output name)"
-  - tables:
-      type: file
-      description: "Standard results tables"
+  - - meta:
+        type: map
+        description: Output meta map; id is the output file name, e.g. [ id:'gencorr_results' ]
+    - tables:
+        type: file
+        description: Standard results tables (one row per method, trait pair and
+          locus) to combine
+        pattern: "*.tsv"
+        ontologies:
+          - edam: "http://edamontology.org/format_3475" # TSV
 output:
-  - results:
-      type: file
-      description: "<id>.tsv"
-  - versions:
-      type: tuple
-      description: (process, tool, version) emitted to the "versions" topic
+  results:
+    - - meta:
+          type: map
+          description: Output meta map, as given
+      - ${prefix}.tsv:
+          type: file
+          description: One validated, sorted results table with all input rows
+          pattern: "*.tsv"
+          ontologies:
+            - edam: "http://edamontology.org/format_3475" # TSV
+  versions_python:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - python:
+          type: string
+          description: The name of the tool
+      - "python3 -c 'import platform; print(platform.python_version())'":
+          type: eval
+          description: The expression to obtain the version of the tool
+  versions_pandas:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - pandas:
+          type: string
+          description: The name of the tool
+      - "python3 -c 'import pandas; print(pandas.__version__)'":
+          type: eval
+          description: The expression to obtain the version of the tool
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - python:
+          type: string
+          description: The name of the tool
+      - "python3 -c 'import platform; print(platform.python_version())'":
+          type: eval
+          description: The expression to obtain the version of the tool
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - pandas:
+          type: string
+          description: The name of the tool
+      - "python3 -c 'import pandas; print(pandas.__version__)'":
+          type: eval
+          description: The expression to obtain the version of the tool
 authors:
-  - "MR"
+  - "@mauricioroza"
+maintainers:
+  - "@mauricioroza"

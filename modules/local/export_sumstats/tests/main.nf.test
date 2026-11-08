@@ -11,6 +11,7 @@ nextflow_process {
     tag "modules"
     tag "modules_local"
     tag "export_sumstats"
+    tag "harmonize_sumstats"
 
     setup {
         run("HARMONIZE_SUMSTATS") {

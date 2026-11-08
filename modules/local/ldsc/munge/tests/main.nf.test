@@ -13,6 +13,8 @@ nextflow_process {
     tag "modules_local"
     tag "ldsc"
     tag "ldsc/munge"
+    tag "harmonize_sumstats"
+    tag "export_sumstats"
 
     setup {
         run("HARMONIZE_SUMSTATS") {
