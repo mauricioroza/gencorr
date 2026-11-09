@@ -37,7 +37,7 @@ It was built to replace [BigaGWAS](https://bigagwas.org) for routine analyses:
 
 ## How it works
 
-![gencorr metro map: GWAS summary statistics are harmonized, then run through LDSC (global rg) and LAVA (local rg, corrected with LDSC's sample-overlap matrix), and merged into gencorr_results.tsv](docs/images/gencorr_metro_map.svg)
+![gencorr metro map: GWAS summary statistics (with an optional rsID map) are harmonized, then same-ancestry pairs run through LDSC and SumHer (global rg) and LAVA (local rg, corrected with LDSC's sample-overlap matrix), EUR × EAS pairs through Popcorn (cross-ancestry rg), and everything is merged into gencorr_results.tsv](docs/images/gencorr_metro_map.svg)
 
 1. **Harmonize** each GWAS once: column names are detected automatically
    (SNP/rsid/MarkerName, A1/effect_allele, BETA/OR/LogOR, SE, P, Z, N, …),
