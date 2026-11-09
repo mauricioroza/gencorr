@@ -10,6 +10,14 @@ What it does, in order (every step is counted in the QC report):
     (COLUMN_SYNONYMS below); --colmap overrides any automatic choice.
  3. Normalise IDs and alleles: upper-case alleles, "rs" IDs lower-cased,
     "chr" prefix stripped from chromosomes.
+ 3b. Optional rsID mapping (--rsid-map): rows whose SNP ID is not an rsID
+    (e.g. "1:12345:A:G", or no SNP column at all) get the rsID of the variant
+    at the same CHR + BP with the same two alleles (either order, or the
+    complementary strand) in the map. The map must be on the build of the
+    file's positions; no liftover is needed because every method matches
+    variants by rsID and takes positions from its own reference. Rows that
+    still have no rsID are dropped (counted as "no_rsid_after_mapping").
+    Without a map, the QC report warns when most IDs are not rsIDs.
  4. Derive BETA from OR (BETA = ln OR) when only OR is given.
  5. Choose the signed Z-score per variant, by priority (default --z-priority):
        z        an explicit Z column
@@ -30,8 +38,8 @@ What it does, in order (every step is counted in the QC report):
  9. Recompute P from Z where P is missing or 0, and write the harmonized table
     plus a JSON QC report with counts and the median-chi2 lambda (lambda_GC).
 
-It does NOT lift over genome builds or impute missing columns from a reference
-panel. Without --min-info/--min-maf, thresholds are left to each method (LDSC
+It does NOT lift over genome builds (not needed, see 3b) or impute missing
+columns from a reference panel. Without --min-info/--min-maf, thresholds are left to each method (LDSC
 applies its own INFO > 0.9 / MAF > 0.01) so results stay comparable with
 running the tools directly.
 """
@@ -84,6 +92,8 @@ EFFECTIVE_N_NAMES = {"neff", "n_eff"}
 VALID_ALLELES = set("ACGT")
 AMBIGUOUS_PAIRS = {frozenset("AT"), frozenset("CG")}
 RS_PATTERN = re.compile(r"^rs\d+$", re.IGNORECASE)
+COMPLEMENT = str.maketrans("ACGT", "TGCA")
+NON_RSID_WARN_FRACTION = 0.5   # warn when fewer than this share of IDs are rsIDs
 CHISQ_MEDIAN_1DF = stats.chi2.ppf(0.5, 1)  # 0.4549...
 MIN_P = 1e-300  # floor so very strong signals are not lost to underflow
 
@@ -107,6 +117,11 @@ def parse_args(argv=None):
                    help="remove variants with INFO <= this value (default: off)")
     p.add_argument("--min-maf", type=float, default=None,
                    help="remove variants with MAF <= this value (default: off)")
+    p.add_argument("--rsid-map", default=None,
+                   help="CHR/BP/allele -> rsID table on the build of the file's positions: "
+                        "a PLINK .bim, or a table with CHR, BP, SNP (and A1, A2) columns")
+    p.add_argument("--build", default=None,
+                   help="genome build of the file's positions (only used in messages)")
     return p.parse_args(argv)
 
 
@@ -170,6 +185,81 @@ def parse_overrides(text: str) -> dict[str, str]:
     return out
 
 
+def read_rsid_map(path: Path) -> pd.DataFrame:
+    """Load a CHR/BP(/A1/A2) -> rsID table. A PLINK .bim (CHR SNP cM BP A1 A2, no
+    header) is recognised by its extension; anything else needs a header with
+    CHR, BP and SNP columns (same synonyms as the summary statistics, so e.g.
+    '#CHROM POS ID REF ALT' works) and optionally A1/A2. Only rsID rows are kept."""
+    name = path.name.lower()
+    if name.endswith((".bim", ".bim.gz")):
+        df = pd.read_csv(path, sep=r"\s+", header=None, dtype=str, compression="infer",
+                         names=["CHR", "SNP", "CM", "BP", "A1", "A2"]).drop(columns="CM")
+    else:
+        raw = read_table(path)
+        lower = {c.strip().lower(): c for c in raw.columns}
+        pick = {}
+        for std in ("CHR", "BP", "SNP", "A1", "A2"):
+            for syn in COLUMN_SYNONYMS[std]:
+                if syn in lower:
+                    pick[std] = lower[syn]
+                    break
+        missing = [c for c in ("CHR", "BP", "SNP") if c not in pick]
+        if missing:
+            die(f"rsID map {path.name}: no {'/'.join(missing)} column (header: {list(raw.columns)})")
+        if ("A1" in pick) != ("A2" in pick):
+            pick.pop("A1", None)
+            pick.pop("A2", None)
+        df = pd.DataFrame({std: raw[src] for std, src in pick.items()})
+    df["CHR"] = df["CHR"].str.strip().str.replace(r"^chr", "", regex=True, case=False)
+    df["BP"] = pd.to_numeric(df["BP"], errors="coerce")
+    df["SNP"] = df["SNP"].str.strip().str.lower()
+    df = df[df["SNP"].str.match(RS_PATTERN, na=False) & df["BP"].notna()].copy()
+    df["BP"] = df["BP"].astype("int64")
+    for allele in ("A1", "A2"):
+        if allele in df.columns:
+            df[allele] = df[allele].str.strip().str.upper()
+    if df.empty:
+        die(f"rsID map {path.name}: no rows with an rsID and a position")
+    return df.reset_index(drop=True)
+
+
+def _allele_pair(a1: pd.Series, a2: pd.Series) -> pd.Series:
+    """Order-independent allele pair, e.g. (G, A) and (A, G) -> 'A/G'."""
+    a1, a2 = a1.fillna(""), a2.fillna("")
+    return a1.where(a1 < a2, a2) + "/" + a2.where(a1 < a2, a1)
+
+
+def assign_rsids(out: pd.DataFrame, rsid_map: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
+    """Give rows without an rsID the rsID at the same CHR + BP with the same
+    alleles (either order, or the complementary strand). If the map has no
+    alleles, match on position only, skipping positions with several rsIDs."""
+    need = ~out["SNP"].str.match(RS_PATTERN, na=False)
+    info = {"rows_without_rsid": int(need.sum()), "mapped": 0}
+    q = out.loc[need & out["CHR"].notna() & out["BP"].notna(), ["CHR", "BP", "A1", "A2"]]
+    if not q.empty:
+        pos = q["CHR"].astype(str) + ":" + q["BP"].astype("int64").astype(str)
+        mpos = rsid_map["CHR"].astype(str) + ":" + rsid_map["BP"].astype(str)
+        if {"A1", "A2"} <= set(rsid_map.columns):
+            mkey = mpos + ":" + _allele_pair(rsid_map["A1"], rsid_map["A2"])
+            lut = pd.Series(rsid_map["SNP"].to_numpy(), index=mkey.to_numpy())
+            lut = lut[~lut.index.duplicated(keep="first")]
+            fwd = pos + ":" + _allele_pair(q["A1"], q["A2"])
+            rev = pos + ":" + _allele_pair(q["A1"].str.translate(COMPLEMENT),
+                                           q["A2"].str.translate(COMPLEMENT))
+            hit = fwd.map(lut).combine_first(rev.map(lut))
+            info["matched_by"] = "chr, position and alleles (either order or strand)"
+        else:
+            unique = ~mpos.duplicated(keep=False)
+            lut = pd.Series(rsid_map.loc[unique, "SNP"].to_numpy(), index=mpos[unique].to_numpy())
+            hit = pos.map(lut)
+            info["matched_by"] = "chr and position (map has no alleles; positions with several rsIDs skipped)"
+        hit = hit.dropna()
+        out.loc[hit.index, "SNP"] = hit
+        info["mapped"] = int(len(hit))
+    info["unmatched"] = info["rows_without_rsid"] - info["mapped"]
+    return out, info
+
+
 def to_num(series: pd.Series | None) -> pd.Series | None:
     """Numeric parse; always float so later NaN/float assignments are safe even
     when a column happens to contain only whole numbers (e.g. P = 0)."""
@@ -184,18 +274,24 @@ def to_num(series: pd.Series | None) -> pd.Series | None:
 def harmonize(raw: pd.DataFrame, mapping: dict[str, str], *, n=None, n_cases=None,
               n_controls=None, z_priority=("z", "p", "beta_se"),
               drop_ambiguous=False, min_info=None,
-              min_maf=None) -> tuple[pd.DataFrame, dict]:
+              min_maf=None, rsid_map=None, rsid_map_name=None,
+              build=None) -> tuple[pd.DataFrame, dict]:
     qc: dict = {"rows_in": int(len(raw)), "column_mapping": mapping, "removed": {}}
 
     def col(name):
         return raw[mapping[name]] if name in mapping else None
 
-    for required in ("SNP", "A1", "A2"):
+    for required in ("A1", "A2"):
         if required not in mapping:
             die(f"no {required} column found (header: {list(raw.columns)}); use --colmap")
+    if "SNP" not in mapping and (rsid_map is None or "CHR" not in mapping or "BP" not in mapping):
+        die(f"no SNP column found (header: {list(raw.columns)}). Give an rsID column "
+            "(--colmap SNP=<column>), or CHR and BP columns plus an rsID map for the "
+            "file's build (--rsid_map_grch37 / --rsid_map_grch38)")
 
     out = pd.DataFrame(index=raw.index)
-    out["SNP"] = col("SNP").str.strip()
+    out["SNP"] = (col("SNP").str.strip() if "SNP" in mapping
+                  else pd.Series(pd.NA, index=raw.index, dtype="object"))
     is_rs = out["SNP"].str.match(RS_PATTERN, na=False)
     out.loc[is_rs, "SNP"] = out.loc[is_rs, "SNP"].str.lower()
 
@@ -206,6 +302,17 @@ def harmonize(raw: pd.DataFrame, mapping: dict[str, str], *, n=None, n_cases=Non
 
     out["A1"] = col("A1").str.strip().str.upper()
     out["A2"] = col("A2").str.strip().str.upper()
+
+    # ---- rsIDs: every method matches variants by rsID ---------------------- #
+    share_rs = float(is_rs.mean()) if len(out) else 1.0
+    if rsid_map is not None:
+        out, mapping_info = assign_rsids(out, rsid_map)
+        qc["rsid_mapping"] = {"map": rsid_map_name, "build": build, **mapping_info}
+    elif share_rs < NON_RSID_WARN_FRACTION:
+        qc["warning_non_rsid"] = (
+            f"only {share_rs:.0%} of SNP IDs are rsIDs. LDSC and LAVA match variants by "
+            "rsID, so the others will not be analysed. Provide an rsID map for this "
+            f"file's build ({build or 'GRCh37'}): --rsid_map_grch37 or --rsid_map_grch38")
 
     beta = to_num(col("BETA"))
     odds = to_num(col("OR"))
@@ -282,6 +389,8 @@ def harmonize(raw: pd.DataFrame, mapping: dict[str, str], *, n=None, n_cases=Non
         qc["removed"][reason] = int(mask.sum())
         out = out.loc[~mask]
 
+    if rsid_map is not None:
+        drop(~out["SNP"].str.match(RS_PATTERN, na=False), "no_rsid_after_mapping")
     drop(out["SNP"].isna() | (out["SNP"] == ""), "missing_snp")
     drop(~out["A1"].isin(VALID_ALLELES) | ~out["A2"].isin(VALID_ALLELES),
          "non_snv_or_missing_allele")
@@ -330,14 +439,21 @@ def main(argv=None):
     args = parse_args(argv)
     raw = read_table(Path(args.input))
     mapping = map_columns(list(raw.columns), parse_overrides(args.colmap))
+    rsid_map = read_rsid_map(Path(args.rsid_map)) if args.rsid_map else None
     harmonized, qc = harmonize(
         raw, mapping, n=args.n, n_cases=args.n_cases, n_controls=args.n_controls,
         z_priority=tuple(x.strip() for x in args.z_priority.split(",") if x.strip()),
         drop_ambiguous=args.drop_ambiguous, min_info=args.min_info,
-        min_maf=args.min_maf)
-    for key in ("warning_min_info", "warning_min_maf", "warning_effective_n"):
+        min_maf=args.min_maf, rsid_map=rsid_map,
+        rsid_map_name=Path(args.rsid_map).name if args.rsid_map else None,
+        build=args.build)
+    for key in ("warning_min_info", "warning_min_maf", "warning_effective_n", "warning_non_rsid"):
         if key in qc:
             print(f"WARNING ({args.id}): {qc[key]}", file=sys.stderr)
+    if "rsid_mapping" in qc:
+        m = qc["rsid_mapping"]
+        print(f"{args.id}: rsIDs assigned to {m['mapped']} of {m['rows_without_rsid']} variants "
+              f"without one ({m['map']}, {m['build']}); {m['unmatched']} dropped", file=sys.stderr)
     qc = {"id": args.id, "input": Path(args.input).name, **qc}
     if qc["rows_out"] == 0:
         die(f"{args.id}: no variants left after harmonization; see QC: {json.dumps(qc)}")

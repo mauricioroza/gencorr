@@ -146,8 +146,11 @@ JSON `extra` column with `jsonlite::fromJSON`.
 
 ## Good to know
 
-* **Genome build:** summary statistics must be on the build of the references
-  and loci (GRCh37 for the defaults). The pipeline does not lift over.
+* **Genome build:** variants are matched by rsID, so summary statistics on
+  GRCh37 or GRCh38 work without liftover if they have rsIDs. Files without
+  rsIDs (`1:12345:A:G`-style IDs) get them from an rsID map for their build:
+  set `build` in the samplesheet and `--rsid_map_grch37` / `--rsid_map_grch38`
+  ([details](docs/usage.md#genome-build-and-rsids)).
 * **Ancestry:** use LD scores and a LAVA reference matching your GWAS ancestry.
   For European data the LAVA authors recommend their UK Biobank reference over
   1000 Genomes.
@@ -161,7 +164,7 @@ JSON `extra` column with `jsonlite::fromJSON`.
 
 ## Testing
 
-43 Python tests, 22 nf-test module tests, 6 function tests and 3 pipeline
+54 Python tests, 23 nf-test module tests, 6 function tests and 3 pipeline
 tests, including *oracle* tests that run LDSC and LAVA directly and check that
 the pipeline gives the same numbers. `nf-core pipelines lint` and
 `nf-core modules lint` report no failures. How to run them:

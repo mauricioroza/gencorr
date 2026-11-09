@@ -92,6 +92,10 @@ many Z-scores came from a Z column / P / BETA-SE), `removed` (per filter),
 `thresholds` used (`min_info`, `min_maf`), where MAF came from (`maf_source`),
 how many variants without INFO/MAF were kept (`info_missing_kept`,
 `maf_missing_kept`), and warnings such as `warning_effective_n`,
-`warning_min_info`, `warning_min_maf`. Variants removed by the thresholds are
-counted in `removed` as `info_le_<t>` / `maf_le_<t>`. Look at these first when a trait behaves
+`warning_min_info`, `warning_min_maf`, `warning_non_rsid` (most SNP IDs are
+not rsIDs and no rsID map was given). Variants removed by the thresholds are
+counted in `removed` as `info_le_<t>` / `maf_le_<t>`. With an rsID map,
+`rsid_mapping` gives the map file, the build, `rows_without_rsid`, `mapped`,
+`unmatched` and how variants were matched, and `removed.no_rsid_after_mapping`
+counts the variants dropped because no rsID was found. Look at these first when a trait behaves
 unexpectedly.

@@ -82,12 +82,13 @@ version, or run them on a machine with LDSC and LAVA installed.
 
 ## Status of the test suite (v0.1.0dev)
 
-**2026-11-08, in Docker** (`--profile +docker`, `gencorr-tools:0.1.0` + LDSC
+**2026-11-09, in Docker** (`--profile +docker`, `gencorr-tools:0.1.0` + LDSC
 biocontainer), Nextflow 26.10.5, nf-test 0.9.5, WSL2 Ubuntu:
 
-* nf-test module tests: **22/22 pass**; function tests **6/6**; pipeline tests
-  **3/3** (`-profile test`, `-stub`, target + joint), all with `--ci`
-* Python: **37 pass, 6 skipped** (oracle tests: LDSC/LAVA not on `PATH`)
+* nf-test module tests: **23/23 pass** (incl. rsID mapping of a GRCh38-style
+  file); function tests **6/6**; pipeline tests **3/3** (`-profile test`,
+  `-stub`, target + joint), all with `--ci`
+* Python: **48 pass, 6 skipped** (oracle tests: LDSC/LAVA not on `PATH`)
 * `nf-core pipelines lint`: 0 failures; `nf-core modules lint --all --local`: 0 failures
   (remaining warnings are expected for a private pipeline: private container
   registry, custom meta keys, underscores in local module names)

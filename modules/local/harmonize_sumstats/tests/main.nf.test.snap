@@ -51,11 +51,11 @@
                 "median_n": 500199.0
             }
         ],
+        "timestamp": "2026-11-06T19:36:44.592318053",
         "meta": {
             "nf-test": "0.9.3",
             "nextflow": "25.10.6"
-        },
-        "timestamp": "2026-11-06T19:36:44.592318053"
+        }
     },
     "bmi - stub": {
         "content": [
@@ -76,11 +76,77 @@
                 ]
             ]
         ],
+        "timestamp": "2026-11-06T19:36:54.021375487",
         "meta": {
             "nf-test": "0.9.3",
             "nextflow": "25.10.6"
-        },
-        "timestamp": "2026-11-06T19:36:54.021375487"
+        }
+    },
+    "GRCh38 file without rsIDs - rsID map (.bim)": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "grch38",
+                        "build": "GRCh38"
+                    },
+                    "grch38.harmonized.tsv.gz:md5,835655ed7e846d4b9edf20d7ef829e1e"
+                ]
+            ],
+            {
+                "id": "grch38",
+                "input": "gwas_grch38.tsv",
+                "rows_in": 5,
+                "column_mapping": {
+                    "SNP": "variant_id",
+                    "CHR": "chromosome",
+                    "BP": "base_pair_location",
+                    "A1": "effect_allele",
+                    "A2": "other_allele",
+                    "BETA": "beta",
+                    "SE": "standard_error",
+                    "P": "p_value",
+                    "N": "n"
+                },
+                "removed": {
+                    "no_rsid_after_mapping": 1,
+                    "missing_snp": 0,
+                    "non_snv_or_missing_allele": 0,
+                    "a1_equals_a2": 0,
+                    "missing_z": 0,
+                    "missing_or_nonpositive_n": 0,
+                    "duplicated_snp_all_copies": 0
+                },
+                "rsid_mapping": {
+                    "map": "map_grch38.bim",
+                    "build": "GRCh38",
+                    "rows_without_rsid": 4,
+                    "mapped": 3,
+                    "matched_by": "chr, position and alleles (either order or strand)",
+                    "unmatched": 1
+                },
+                "z_source_counts": {
+                    "p": 5
+                },
+                "n_source": "column:n",
+                "maf_source": null,
+                "thresholds": {
+                    "min_info": null,
+                    "min_maf": null
+                },
+                "p_recomputed_from_z": 0,
+                "p_floored_at_1e-300": 0,
+                "rows_out": 4,
+                "lambda_gc": 9.455577981040467,
+                "mean_chi2": 8.650865293608627,
+                "median_n": 10000.0
+            }
+        ],
+        "timestamp": "2026-11-08T23:50:32.048632055",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.5"
+        }
     },
     "bmi - continuous trait": {
         "content": [
@@ -134,11 +200,11 @@
                 "median_n": 379478.0
             }
         ],
+        "timestamp": "2026-11-06T19:36:20.006605116",
         "meta": {
             "nf-test": "0.9.3",
             "nextflow": "25.10.6"
-        },
-        "timestamp": "2026-11-06T19:36:20.006605116"
+        }
     },
     "bmi - --min-info 0.9 --min-maf 0.05": {
         "content": [
@@ -196,10 +262,10 @@
                 "median_n": 379192.0
             }
         ],
+        "timestamp": "2026-11-06T19:36:32.261767046",
         "meta": {
             "nf-test": "0.9.3",
             "nextflow": "25.10.6"
-        },
-        "timestamp": "2026-11-06T19:36:32.261767046"
+        }
     }
 }

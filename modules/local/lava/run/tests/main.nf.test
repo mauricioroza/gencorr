@@ -27,8 +27,8 @@ nextflow_process {
             process {
                 """
                 input[0] = Channel.of(
-                    [ [ id:'bmi' ],   file("\${params.lava_test_data}/bmi.sumstats.txt",   checkIfExists: true) ],
-                    [ [ id:'neuro' ], file("\${params.lava_test_data}/neuro.sumstats.txt", checkIfExists: true) ]
+                    [ [ id:'bmi' ],   file("\${params.lava_test_data}/bmi.sumstats.txt",   checkIfExists: true), [] ],
+                    [ [ id:'neuro' ], file("\${params.lava_test_data}/neuro.sumstats.txt", checkIfExists: true), [] ]
                 )
                 """
             }

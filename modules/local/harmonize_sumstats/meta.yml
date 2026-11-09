@@ -19,8 +19,9 @@ input:
   - - meta:
         type: map
         description: |
-          Trait meta map. id is required; n, n_cases, n_controls and colmap
-          (JSON column mapping) are optional. e.g. [ id:'bmi', n:500000 ]
+          Trait meta map. id is required; n, n_cases, n_controls, colmap
+          (column mapping) and build (GRCh37 or GRCh38) are optional.
+          e.g. [ id:'bmi', n:500000 ]
     - sumstats:
         type: file
         description: Raw GWAS summary statistics for one trait, one variant per
@@ -28,6 +29,14 @@ input:
         pattern: "*.{txt,tsv,csv}{,.gz}"
         ontologies:
           - edam: "http://edamontology.org/format_3475" # TSV
+    - rsid_map:
+        type: file
+        description: Optional chromosome/position/allele to rsID table on the
+          build of the file's positions (PLINK .bim, or a table with CHR, BP, SNP
+          and optionally A1, A2 columns). Used only for rows whose SNP ID is not
+          an rsID. Pass [] for none
+        pattern: "*"
+        ontologies: []
 output:
   sumstats:
     - - meta:

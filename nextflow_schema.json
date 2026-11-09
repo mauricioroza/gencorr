@@ -112,6 +112,20 @@
                     "description": "Remove variants with minor allele frequency <= this value, for all methods. 0 = off (default).",
                     "help_text": "MAF is taken from a MAF column, or computed as min(EAF, 1-EAF). Variants without a value are kept. Ignored, with a warning in the QC report, for files with neither column.",
                     "default": 0
+                },
+                "rsid_map_grch37": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "rsID map for GRCh37 traits whose SNP IDs are not rsIDs: a PLINK .bim (e.g. the 1000G g1000_eur.bim) or a table with CHR, BP, SNP (and A1, A2) columns.",
+                    "help_text": "Used only for rows without an rsID (e.g. 'chr:pos:ref:alt' IDs, or files with no SNP column). Matched on chromosome, position and alleles (either order or strand). Unmatched rows are dropped and counted in the QC report. No liftover is needed: every method matches variants by rsID."
+                },
+                "rsid_map_grch38": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "rsID map for traits with build = GRCh38 in the samplesheet; same format as --rsid_map_grch37, with GRCh38 positions.",
+                    "help_text": "E.g. a 1000 Genomes GRCh38 .bim, or a CHR/POS/ID/REF/ALT table extracted from dbSNP for GRCh38."
                 }
             }
         },

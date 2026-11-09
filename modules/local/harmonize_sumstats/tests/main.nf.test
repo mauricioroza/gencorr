@@ -20,7 +20,7 @@ nextflow_process {
             params { outdir = "$outputDir" }
             process {
                 """
-                input[0] = Channel.of([ [ id:'bmi' ], file("\${params.lava_test_data}/bmi.sumstats.txt", checkIfExists: true) ])
+                input[0] = Channel.of([ [ id:'bmi' ], file("\${params.lava_test_data}/bmi.sumstats.txt", checkIfExists: true), [] ])
                 """
             }
         }
@@ -46,7 +46,7 @@ nextflow_process {
             params { outdir = "$outputDir" }
             process {
                 """
-                input[0] = Channel.of([ [ id:'bmi' ], file("\${params.lava_test_data}/bmi.sumstats.txt", checkIfExists: true) ])
+                input[0] = Channel.of([ [ id:'bmi' ], file("\${params.lava_test_data}/bmi.sumstats.txt", checkIfExists: true), [] ])
                 """
             }
         }
@@ -71,7 +71,7 @@ nextflow_process {
                 """
                 input[0] = Channel.of([
                     [ id:'depression', n_cases:170756, n_controls:329443 ],
-                    file("\${params.lava_test_data}/depression.sumstats.txt", checkIfExists: true)
+                    file("\${params.lava_test_data}/depression.sumstats.txt", checkIfExists: true), []
                 ])
                 """
             }
@@ -88,6 +88,36 @@ nextflow_process {
         }
     }
 
+    test("GRCh38 file without rsIDs - rsID map (.bim)") {
+
+        when {
+            params { outdir = "$outputDir" }
+            process {
+                """
+                input[0] = Channel.of([
+                    [ id:'grch38', build:'GRCh38' ],
+                    file("${baseDir}/tests/data/rsid_map/gwas_grch38.tsv", checkIfExists: true),
+                    file("${baseDir}/tests/data/rsid_map/map_grch38.bim", checkIfExists: true)
+                ])
+                """
+            }
+        }
+
+        then {
+            def qc   = path(process.out.qc[0][1]).json
+            def snps = path(process.out.sumstats[0][1]).linesGzip.drop(1).collect { line -> line.split('\t')[0] }
+            assertAll(
+                { assert process.success },
+                // direct match, swapped alleles, opposite strand; existing rsID kept; unmatched dropped
+                { assert snps == [ 'rs101', 'rs102', 'rs103', 'rs99' ] },
+                { assert qc.rsid_mapping.build == 'GRCh38' },
+                { assert qc.rsid_mapping.mapped == 3 && qc.rsid_mapping.unmatched == 1 },
+                { assert qc.removed.no_rsid_after_mapping == 1 },
+                { assert snapshot(process.out.sumstats, qc).match() }
+            )
+        }
+    }
+
     test("bmi - stub") {
 
         options "-stub"
@@ -96,7 +126,7 @@ nextflow_process {
             params { outdir = "$outputDir" }
             process {
                 """
-                input[0] = Channel.of([ [ id:'bmi' ], file("\${params.lava_test_data}/bmi.sumstats.txt", checkIfExists: true) ])
+                input[0] = Channel.of([ [ id:'bmi' ], file("\${params.lava_test_data}/bmi.sumstats.txt", checkIfExists: true), [] ])
                 """
             }
         }

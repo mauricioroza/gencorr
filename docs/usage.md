@@ -12,7 +12,50 @@ CSV, one row per trait. Only `id` and `sumstats` are required.
 | `n_cases`, `n_controls` | binary traits. Used for N when missing, for LAVA's case/control model and for LDSC liability h2 |
 | `pop_prev` | population prevalence (binary traits). Adds liability-scale h2 (LDSC) and LAVA `h2_latent` |
 | `colmap` | manual column mapping, e.g. `Z=STAT,N=NMISS` (standard=source) |
+| `build` | `GRCh37` (default) or `GRCh38`: build of the file's positions. Only used to pick the rsID map for variants without an rsID (see [Genome build and rsIDs](#genome-build-and-rsids)) |
 | `label` | free-text display name (not used in computation) |
+
+### Genome build and rsIDs
+
+Every method matches variants **by rsID** and takes positions from its own
+reference (LDSC LD scores, LAVA LD reference). The positions in your file are
+never used for the analysis, so:
+
+* **A file with rsIDs works on any build**, GRCh37 or GRCh38, without liftover.
+  GWAS Catalog harmonised files (`hm_rsid`) are recognised automatically.
+* **A file without rsIDs** (SNP IDs like `1:12345:A:G`, `chr1_12345_G_A`, or no
+  SNP column at all) needs an **rsID map** for its build. The harmonizer then
+  gives each such variant the rsID at the same chromosome and position with the
+  same two alleles (either order, or the complementary strand). Variants that
+  find no match are dropped and counted in `harmonized/<id>.qc.json`
+  (`rsid_mapping`, `removed.no_rsid_after_mapping`).
+
+| | GRCh37 files | GRCh38 files |
+|---|---|---|
+| samplesheet `build` | empty or `GRCh37` | `GRCh38` |
+| map parameter | `--rsid_map_grch37` | `--rsid_map_grch38` |
+| ready-made map | the 1000 Genomes PLINK reference you use for LAVA: `--rsid_map_grch37 /refs/g1000_eur/g1000_eur.bim` | a GRCh38 `.bim` (e.g. 1000 Genomes high-coverage), or a table extracted from dbSNP |
+
+A map is a PLINK `.bim`, or a table (tab/comma/space separated, optionally
+gzipped) with a header containing CHR, BP and SNP columns and optionally A1/A2.
+The usual names are recognised, so `#CHROM POS ID REF ALT` works, e.g. from a
+VCF with rsIDs in the ID column (split multi-allelic sites first so each row
+has one ALT allele):
+
+```bash
+bcftools norm -m -snps variants_GRCh38.vcf.gz -Ou \
+  | bcftools query -i 'TYPE="snp" && ID~"^rs"' -f '%CHROM\t%POS\t%ID\t%REF\t%ALT\n' \
+  | awk 'BEGIN{print "#CHROM\tPOS\tID\tREF\tALT"} {print}' | gzip > rsid_map_grch38.tsv.gz
+```
+
+Chromosomes must be named like in your summary statistics (`1`…`22` or
+`chr1`…; a `chr` prefix is ignored). NCBI's dbSNP VCFs use RefSeq accessions
+(`NC_000001.11`), so rename those first (`bcftools annotate --rename-chrs`).
+
+Without alleles, matching uses chromosome + position only and skips positions
+that carry several rsIDs. Only rows without an rsID are looked up; existing
+rsIDs are never changed. Without a map, the QC report and the task log warn
+when fewer than half of a file's IDs are rsIDs.
 
 ### Column detection
 
@@ -91,8 +134,10 @@ All files starting with the prefix are staged, so keep the reference in its own
 directory.
 
 Loci: the default `--lava_loci` is LAVA's 2,495 GRCh37 blocks (fetched from the
-pinned LAVA commit). **Your summary statistics must be on the same build as the
-reference and loci (GRCh37 for the defaults).** The pipeline does not lift over.
+pinned LAVA commit). **The locus file and the LAVA reference must be on the same
+build** (both GRCh37 by default), because LAVA assigns SNPs to loci by the
+reference's positions. Your summary statistics can be on any build as long as
+they have rsIDs (see [Genome build and rsIDs](#genome-build-and-rsids)).
 
 ## 4. Important parameters
 
@@ -109,6 +154,7 @@ reference and loci (GRCh37 for the defaults).** The pipeline does not lift over.
 | `--min_info` | `0` (off) | remove variants with INFO ≤ value, for all methods (see 4a) |
 | `--min_maf` | `0` (off) | remove variants with MAF ≤ value, for all methods (see 4a) |
 | `--lava_snp_list` | none (all SNPs) | run LAVA only on the SNP IDs in this list, e.g. `w_hm3.snplist` (see 4b) |
+| `--rsid_map_grch37`, `--rsid_map_grch38` | none | rsID maps for files without rsIDs, per samplesheet `build` (see [Genome build and rsIDs](#genome-build-and-rsids)) |
 | `--save_harmonized` / `--save_intermediates` | `false` | publish intermediate files |
 
 `nextflow run mauricioroza/gencorr --help --show_hidden` lists everything.

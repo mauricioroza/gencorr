@@ -17,6 +17,7 @@ Initial version.
 - `--min_info` / `--min_maf`: optional variant QC in harmonization, applied to all methods (LDSC munge rule: remove value <= threshold; missing kept; warning when the column is absent).
 - `--lava_snp_list`: restrict LAVA to a SNP-ID list (e.g. `w_hm3.snplist`), as BigaGWAS does; recorded in `extra.snp_set`.
 - LAVA: loci without shared SNPs are skipped up front (`no_snps_in_locus`), and each analysed locus logs a progress line with timing; results unchanged.
+- rsID mapping for summary statistics without rsIDs (e.g. GRCh38 `chr:pos:ref:alt` IDs, or no SNP column): samplesheet column `build` (`GRCh37`/`GRCh38`) and `--rsid_map_grch37` / `--rsid_map_grch38` (PLINK `.bim` or CHR/BP/SNP/A1/A2 table); matched by chromosome, position and alleles, no liftover needed. Without a map, the QC report warns when most IDs are not rsIDs.
 - `bin/compare_results.py` for comparison with BigaGWAS or other runs.
 - BigaGWAS comparison kit (`tests/bigagwas/`, `docs/bigagwas_comparison.md`); LDSC and LAVA reproduce BigaGWAS jobs 966, 967, 971 and 972.
 - Tests: Python unit + oracle tests against LDSC and LAVA; nf-test module tests for all 8 local modules (real-data + stub), function and pipeline tests.
@@ -28,5 +29,7 @@ Initial version.
 - Module conda environments pin `python=3.12.3`, the Python the `gencorr-tools` image ships (was 3.12.8), so conda and container runs report the same versions.
 
 ### Fixed
+
+- `tests/data/` (test LD scores, samplesheet, loci) was never committed because `.gitignore` ignored every `data/` folder; `-profile test` and the nf-tests failed on a fresh clone. The rule now ignores only a top-level `/data/`.
 
 - `gencorr.ldsc_h2.tsv`: `samp_prev` / `pop_prev` of binary traits were NA when a trait's `.h2_liab.log` happened to be read before its `.h2.log` (file order is not guaranteed).

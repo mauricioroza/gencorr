@@ -51,6 +51,12 @@
                 "errorMessage": "colmap must look like 'Z=STAT,N=NMISS' (standard=source, comma-separated)",
                 "meta": ["colmap"]
             },
+            "build": {
+                "type": "string",
+                "enum": ["GRCh37", "GRCh38"],
+                "errorMessage": "build must be GRCh37 or GRCh38 (genome build of the file's positions; default GRCh37). Only used to pick the rsID map for variants without an rsID.",
+                "meta": ["build"]
+            },
             "label": {
                 "type": "string",
                 "errorMessage": "label is a free-text display name",

@@ -21,7 +21,7 @@ nextflow_process {
             script "../../../harmonize_sumstats/main.nf"
             process {
                 """
-                input[0] = Channel.of([ [ id:'bmi' ], file("\${params.lava_test_data}/bmi.sumstats.txt", checkIfExists: true) ])
+                input[0] = Channel.of([ [ id:'bmi' ], file("\${params.lava_test_data}/bmi.sumstats.txt", checkIfExists: true), [] ])
                 """
             }
         }

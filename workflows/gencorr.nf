@@ -34,7 +34,17 @@ workflow GENCORR {
     //
     // 1. Harmonize all summary statistics
     //
-    HARMONIZE_SUMSTATS ( ch_samplesheet )
+    //    Traits whose IDs are not rsIDs get them from the rsID map for their
+    //    build (samplesheet column 'build', default GRCh37). No liftover: every
+    //    method matches variants by rsID and uses its reference's positions.
+    def rsid_maps = [
+        GRCh37: params.rsid_map_grch37 ? file(params.rsid_map_grch37, checkIfExists: true) : [],
+        GRCh38: params.rsid_map_grch38 ? file(params.rsid_map_grch38, checkIfExists: true) : [],
+    ]
+    def ch_harmonize_in = ch_samplesheet.map { meta, sumstats ->
+        [ meta, sumstats, rsid_maps[meta.build ?: 'GRCh37'] ]
+    }
+    HARMONIZE_SUMSTATS ( ch_harmonize_in )
     def ch_harmonized = HARMONIZE_SUMSTATS.out.sumstats
 
     //

@@ -50,7 +50,7 @@ BigaGWAS's slowness is rsID mapping, which this pipeline avoids by design).
 ## Testing / validation (docs/validation.md, docs/bigagwas_comparison.md)
 
 - Principle: oracle tests — the reference is always the original tool run directly.
-- Python unit + oracle: 43 tests (`tests/python`; 6 oracle tests skip unless LDSC/LAVA are on PATH).
+- Python unit + oracle: 54 tests (`tests/python`; 6 oracle tests skip unless LDSC/LAVA are on PATH).
   Run with the venv active: `source ~/venvs/gencorr/bin/activate && pytest tests/python` (scripts are
   called as `python3`, so the venv must be first on PATH). nf-test: module (22), function (6),
   pipeline (3: `-profile test`, `-stub`, target + joint).
@@ -76,8 +76,13 @@ BigaGWAS's slowness is rsID mapping, which this pipeline avoids by design).
 - On dev and pushed: module nf-tests; parse_ldsc log-order fix (samp_prev/pop_prev were NA when the
   .h2_liab.log was read first); local modules aligned with nf-core specs ($args, full version reporting,
   nf-core-format meta.yml, dependency tags). `nf-core modules lint`: 0 failures.
-- Full suite passes locally in Docker (nf-test 0.9.5, Nextflow 26.10.5): 22 module, 6 function,
-  3 pipeline tests; pytest 37 passed / 6 skipped. CI still pins NFT_VER 0.9.4.
+- Full suite passes locally in Docker (nf-test 0.9.5, Nextflow 26.10.5): 23 module, 6 function,
+  3 pipeline tests; pytest 48 passed / 6 skipped. CI still pins NFT_VER 0.9.4.
+- Genome builds: all methods match variants by rsID and take positions from their references, so
+  sumstats need rsIDs, not a particular build. Files without rsIDs get them from an rsID map
+  (samplesheet `build`, `--rsid_map_grch37/38`; `.bim` or CHR/BP/SNP/A1/A2 table). No liftover.
+- `tests/data/` is committed (`.gitignore` ignores only top-level `/data/`); it was missing on
+  GitHub before 2026-11-09.
 - Remaining nf-core gaps (warnings only): no meta.yml/tests for subworkflows method_ldsc/method_lava;
   nf-core utils subworkflows have updates; template TODOs; manifest.diagram; ro-crate.
 - Pipeline not yet run in the published container on CI (image only local). No real genome-wide run yet.

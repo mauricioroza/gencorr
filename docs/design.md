@@ -64,8 +64,12 @@ caused by input handling.
 
 ## Things intentionally not done (yet)
 
-* **Liftover**: inputs must match the reference build (GRCh37 for the defaults).
-  A liftover step would slot in before harmonization.
+* **Liftover**: not needed. Every method matches variants by rsID and takes
+  positions from its own reference, so files with rsIDs work on any build.
+  Files without rsIDs get them from an rsID map on their own build
+  (`--rsid_map_grch37/38`), by chromosome, position and alleles. BigaGWAS
+  instead lifts every upload to GRCh38, assigns rsIDs from dbSNP, aligns alleles
+  to a reference VCF and lifts back to GRCh37; that is most of its run time.
 * **Allele alignment to a reference panel** in the harmonizer: LDSC aligns via
   `--merge-alleles`, and LAVA aligns to its LD reference itself.
 * **Multivariate LAVA** (partial correlation, multiple regression): the runner
