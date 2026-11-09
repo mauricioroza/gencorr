@@ -1,4 +1,4 @@
-# karlssonlab/gencorr: Output
+# mauricioroza/gencorr: Output
 
 ## Introduction
 

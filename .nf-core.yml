@@ -39,11 +39,11 @@ lint:
     - nfcore_template_badge
 
 template:
-  org: karlssonlab
+  org: mauricioroza
   name: gencorr
   description: Global (LDSC) and local (LAVA) genetic correlation from GWAS summary
     statistics, with a pluggable method interface
-  author: MR, KarlssonLaboratory (ACES, Stockholm University)
+  author: MR, Genis
   version: 0.1.0dev
   force: true
   outdir: /home/claude/work/gencorr

@@ -1,4 +1,4 @@
-# karlssonlab/gencorr: Citations
+# mauricioroza/gencorr: Citations
 
 ## [nf-core](https://pubmed.ncbi.nlm.nih.gov/32055031/)
 

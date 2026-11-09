@@ -1,5 +1,5 @@
 name: Feature request
-description: Suggest an idea for the karlssonlab/gencorr pipeline
+description: Suggest an idea for the mauricioroza/gencorr pipeline
 labels: enhancement
 body:
   - type: textarea

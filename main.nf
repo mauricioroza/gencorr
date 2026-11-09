@@ -1,9 +1,9 @@
 #!/usr/bin/env nextflow
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    karlssonlab/gencorr
+    mauricioroza/gencorr
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Github : https://github.com/karlssonlab/gencorr
+    Github : https://github.com/mauricioroza/gencorr
 ----------------------------------------------------------------------------------------
 */
 
@@ -25,7 +25,7 @@ include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_genc
 //
 // WORKFLOW: Run main analysis pipeline depending on type of input
 //
-workflow KARLSSONLAB_GENCORR {
+workflow MAURICIOROZA_GENCORR {
 
     take:
     samplesheet // channel: samplesheet read in from --input
@@ -67,7 +67,7 @@ workflow {
     //
     // WORKFLOW: Run main workflow
     //
-    KARLSSONLAB_GENCORR (
+    MAURICIOROZA_GENCORR (
         PIPELINE_INITIALISATION.out.samplesheet
     )
     //
