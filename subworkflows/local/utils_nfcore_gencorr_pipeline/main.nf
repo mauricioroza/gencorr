@@ -13,6 +13,7 @@ include { paramsSummaryMap          } from 'plugin/nf-schema'
 include { samplesheetToList         } from 'plugin/nf-schema'
 include { paramsHelp                } from 'plugin/nf-schema'
 include { completionSummary         } from '../../nf-core/utils_nfcore_pipeline'
+include { logColours                } from '../../nf-core/utils_nfcore_pipeline'
 include { UTILS_NFCORE_PIPELINE     } from '../../nf-core/utils_nfcore_pipeline'
 include { UTILS_NEXTFLOW_PIPELINE   } from '../../nf-core/utils_nextflow_pipeline'
 
@@ -67,7 +68,7 @@ workflow PIPELINE_INITIALISATION {
     //
     // Validate parameters and generate parameter summary to stdout
     //
-    def before_text = ""
+    def before_text = gencorrLogo(monochrome_logs)
     def after_text = ""
     command = "nextflow run ${workflow.manifest.name} -profile <docker/singularity/.../institute> --input samplesheet.csv --outdir <OUTDIR> --methods ldsc,lava"
     UTILS_NFSCHEMA_PLUGIN (
@@ -151,6 +152,24 @@ workflow PIPELINE_COMPLETION {
 //
 // Drop null / empty-list meta values produced by empty samplesheet cells
 //
+//
+// Start-up banner, printed before the parameter summary and the --help text.
+// Plain ASCII so it renders in any terminal and in cluster log files.
+//
+def gencorrLogo(monochrome_logs = true) {
+    def c   = logColours(monochrome_logs) as Map
+    def art = [
+        '   __ _  ___ _ __   ___ ___  _ __ _ __',
+        '  / _` |/ _ \\ \'_ \\ / __/ _ \\| \'__| \'__|',
+        ' | (_| |  __/ | | | (_| (_) | |  | |',
+        '  \\__, |\\___|_| |_|\\___\\___/|_|  |_|',
+    ]
+    def lines = art.collect { line -> "${c.green}${line}${c.reset}".toString() }
+    lines << "${c.green}  |___/${c.reset}   ${c.dim}global + local genetic correlation${c.reset}".toString()
+    lines << "  ${c.bold}${workflow.manifest.name} ${workflow.manifest.version}${c.reset}".toString()
+    return '\n' + lines.join('\n') + "\n${c.dim}${'-' * 60}${c.reset}\n"
+}
+
 def cleanMeta(Map meta) {
     return meta.findAll { _k, v -> v != null && v != [] && v != '' }
 }
