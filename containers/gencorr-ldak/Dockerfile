@@ -8,6 +8,7 @@
 #
 # Build (from the repository root):
 #   docker build -t ghcr.io/mauricioroza/gencorr-ldak:6.1 containers/gencorr-ldak
+# Published: docker pull ghcr.io/mauricioroza/gencorr-ldak:6.1
 # =============================================================================
 FROM mambaorg/micromamba:1.5.10
 

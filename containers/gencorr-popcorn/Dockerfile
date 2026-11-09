@@ -10,6 +10,7 @@
 #
 # Build (from the repository root):
 #   docker build -t ghcr.io/mauricioroza/gencorr-popcorn:1.0.0-20a29e8 containers/gencorr-popcorn
+# Published: docker pull ghcr.io/mauricioroza/gencorr-popcorn:1.0.0-20a29e8
 # =============================================================================
 FROM python:3.11.11-slim-bookworm
 

@@ -79,12 +79,12 @@ BigaGWAS's slowness is rsID mapping, which this pipeline avoids by design).
 - Full suite passes locally in Docker (nf-test 0.9.5, Nextflow 26.10.5): 31 module, 6 function,
   5 pipeline tests; pytest 60 passed / 6 skipped. CI still pins NFT_VER 0.9.4.
 - Popcorn (`--methods popcorn`, cross-ancestry pairs only; registry `cross_ancestry: true`): image
-  `ghcr.io/mauricioroza/gencorr-popcorn:1.0.0-20a29e8` built locally (GPL-3.0; not pushed). Needs
+  `ghcr.io/mauricioroza/gencorr-popcorn:1.0.0-20a29e8` (GPL-3.0; pushed to ghcr.io 2026-11-09). Needs
   numpy<1.24 (np.bool) and six (pysnptools). Popcorn's p tests rg<1 -> kept in extra; `p` = rg!=0.
   Container-only (conda_ok false). Test data: Popcorn repo test files at the pinned commit + score file
   tests/data/popcorn. `.git/info/exclude` hides samplesheet_*.csv: add test samplesheets with `git add -f`.
-- SumHer (LDAK 6.1, `--methods sumher`): image `ghcr.io/mauricioroza/gencorr-ldak:6.1` built locally
-  from containers/gencorr-ldak (GPL-3.0, may be public; not pushed yet). LDAK 6 writes `SE` not `SD`,
+- SumHer (LDAK 6.1, `--methods sumher`): image `ghcr.io/mauricioroza/gencorr-ldak:6.1`
+  from containers/gencorr-ldak (GPL-3.0; pushed to ghcr.io 2026-11-09). LDAK 6 writes `SE` not `SD`,
   can't read gzipped tagging files (module gunzips), defaults to multiplicative-inflation model (we pass
   `--genomic-control NO` like BigaGWAS). LDAK's pre-computed tagging files use GRCh37 CHR:BP names ->
   `--sumher_snp_positions`. `--calc-tagging` needs ~9 GB RAM by default: use `--bit-size 400` in WSL.
@@ -98,7 +98,12 @@ BigaGWAS's slowness is rsID mapping, which this pipeline avoids by design).
   GitHub before 2026-11-09.
 - Remaining nf-core gaps (warnings only): no meta.yml/tests for subworkflows method_ldsc/method_lava;
   nf-core utils subworkflows have updates; template TODOs; manifest.diagram; ro-crate.
-- Pipeline not yet run in the published container on CI (image only local). No real genome-wide run yet.
+- Images on ghcr.io (2026-11-09): gencorr-ldak:6.1 (47 MB compressed) and gencorr-popcorn:1.0.0-20a29e8
+  (225 MB); both were created private (GitHub default) and may be made public by the user (GPL-3.0).
+  gencorr-tools:0.1.0 is NOT on ghcr.io (only local) and must stay private when pushed (LAVA).
+  Pushing needs `gh auth refresh -s write:packages` + `gh auth token | docker login ghcr.io -u mauricioroza
+  --password-stdin`, run by the user in the Ubuntu terminal (not sudo, not PowerShell).
+- Pipeline not yet run in the published containers on CI. No real genome-wide run yet.
 - BigaGWAS's own LAVA scripts (specific_lava.R, 2traits.R, lava_pgc.R) are not public, so its settings are
   partly unknown.
 

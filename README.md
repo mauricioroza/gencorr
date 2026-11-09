@@ -71,7 +71,11 @@ or log in to ghcr.io with access to it:
 docker build -t ghcr.io/mauricioroza/gencorr-tools:0.1.0 containers/gencorr-tools
 ```
 
-LDSC comes from the public BioContainers image and needs no setup.
+LDSC comes from the public BioContainers image and needs no setup. The
+SumHer and Popcorn images (`ghcr.io/mauricioroza/gencorr-ldak:6.1`,
+`ghcr.io/mauricioroza/gencorr-popcorn:1.0.0-20a29e8`, both GPL-3.0) are
+published on ghcr.io and pulled automatically; their recipes are in
+[containers/](containers/).
 
 **3. Check your setup** on the bundled test data (4 traits, 6 pairs, a few minutes):
 
