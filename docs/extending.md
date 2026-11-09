@@ -17,7 +17,7 @@ workflow METHOD_X {
     ch_pairs        // [ meta1, meta2 ]              the pairs to analyse
     ...             // the method's own reference data
     main:
-    EXPORT_SUMSTATS ( ch_harmonized, 'x' )           // 1. format for the tool
+    EXPORT_SUMSTATS ( ch_harmonized, 'x', [] )       // 1. format for the tool ([] = no SNP list)
     X_RUN ( ... )                                    // 2. run the tool
     X_PARSE ( ... )                                  // 3. -> standard results table
     emit:
@@ -47,8 +47,12 @@ FORMATS["sumher"] = {
 
 Copy `modules/local/ldsc/rg/main.nf` as a template. Keep:
 `tag`, `label`, `conda`, `container` (pin an exact version; LDAK 6 is on
-bioconda as `ldak6`), the `versions` topic line, `ext.args`, and a `stub:`
-block. The command is the one from BigaGWAS'
+bioconda as `ldak6`), one `versions_<tool>` output on the `versions` topic for
+**every** tool the module calls, `task.ext.args` passed to the tool, a `stub:`
+block, and a `meta.yml` in the current nf-core format (copy
+`modules/local/ldsc/rg/meta.yml`: `tools:` with `args_id`, inputs/outputs
+matching the channels 1:1, `versions_*` outputs and a `topics:` section).
+The command is the one from BigaGWAS'
 `static/shell/specific_sumher.sh`:
 
 ```bash
@@ -99,11 +103,15 @@ rules to `conf/modules.config`.
 
 ## Checklist before merging a new method
 
-- [ ] Module(s) with pinned container + conda env, `versions` topic, `stub:`
+- [ ] Module(s) with pinned container + conda env (same versions as the
+      container), `versions_<tool>` topic output per tool, `task.ext.args`, `stub:`,
+      nf-core-format `meta.yml`
 - [ ] Parser writes `RESULT_COLUMNS` only (`validate_results` passes)
 - [ ] Module test next to each new module (`modules/local/<name>/tests/main.nf.test`,
-      real-data test + `-stub` test, tags `modules`, `modules_local`, `<name>`);
+      real-data test + `-stub` test, tags `modules`, `modules_local`, `<name>`, plus
+      the tag of every module it runs in `setup`);
       see `modules/local/ldsc/rg/tests/` for the `setup` pattern
+- [ ] `nf-core modules lint --all --local` and `nf-core pipelines lint`: no failures
 - [ ] Unit tests for the parser on real tool output (`tests/python/`)
 - [ ] **Oracle test**: the tool run by hand on test data gives the same numbers
       as the pipeline (see `tests/python/test_ldsc_oracle.py` for the pattern)

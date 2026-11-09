@@ -8,9 +8,12 @@ Nextflow pipeline built on the nf-core template.
 * **Pluggable**: every method reads the same harmonized inputs and writes the
   same results table, so adding HDL, SumHer, Popcorn, HDL-L … is one subworkflow
   ([docs/extending.md](docs/extending.md)).
-* **Testable**: 41 Python tests + 22 nf-test module tests + 6 function tests + 3 pipeline tests,
+* **Testable**: 43 Python tests + 22 nf-test module tests + 6 function tests + 3 pipeline tests,
   including *oracle* tests that check the pipeline reproduces LDSC and LAVA
   run directly ([docs/validation.md](docs/validation.md)).
+* **Checked against BigaGWAS**: on the same data and settings, LDSC rg is
+  identical and LAVA rho agrees to 1e-5–1e-7
+  ([docs/bigagwas_comparison.md](docs/bigagwas_comparison.md#6-results-on-the-test-jobs)).
 
 ```
  samplesheet.csv ─► HARMONIZE_SUMSTATS ─┬─► METHOD_LDSC ── munge ─ h2 ─ rg ─► ldsc table ─┐
@@ -51,7 +54,8 @@ when needed. See [docs/usage.md](docs/usage.md) for pair modes (`all`,
 
 ## Outputs
 
-`results/gencorr_results.tsv`: one row per (method, trait pair, locus):
+`results/gencorr_results.tsv`: one row per (method, trait pair, locus); main
+columns shown (all columns in [docs/output.md](docs/output.md)):
 
 | method | scope | trait1 | trait2 | locus | rg | rg_se | rg_ci_low | rg_ci_high | p | h2_1 | h2_2 | status | extra |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|

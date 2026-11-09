@@ -114,6 +114,15 @@ column for each trait name (`trait1`, `trait2`) and the locus ID, then map the
 columns BigaGWAS uses (look at the header first; LAVA's own names are `locus`,
 `phen1`, `phen2`, `rho`, `rho.lower`, `rho.upper`, `p`):
 
+BigaGWAS' `<job>_out_bivar.txt` is comma-separated and uses the trait names
+typed in the job; convert and map them first, e.g.:
+
+```bash
+sed 's/,/\t/g' 971_out_bivar.txt > biga_lava.tsv
+printf 'reference_name,gencorr_id\ntype_II_diabetes,t2d\ncoronary_heart_disease,chd\n' > names.csv
+# then add --trait-map names.csv to the command below
+```
+
 ```bash
 bin/compare_results.py --test biga_compare/gencorr_results.tsv --method lava --only-ok \
     --reference biga_lava.tsv --reference-format custom \
@@ -131,11 +140,9 @@ BigaGWAS runs LAVA on a HapMap3-based SNP list only. Add
 `--lava_snp_list ~/refs/w_hm3.snplist` to the gencorr LAVA run; without it the
 inputs differ (~5× more SNPs per locus) and so do the estimates.
 
-Result on the test data (bmi × depression, job 967): 32/32 loci in common,
-SNP and PC counts identical in 29/32 loci (the other 3 differ by 1–2 SNPs that
-BigaGWAS' harmonization dropped), rho median difference 1e-5, the same loci at
-p < 0.05. BigaGWAS uses LAVA 0.1.0 and gencorr 0.1.5; for continuous traits on
-the same SNPs this made no visible difference.
+With the list, gencorr reproduces BigaGWAS' LAVA results (section 6).
+BigaGWAS uses LAVA 0.1.0 and gencorr 0.1.5; for continuous traits on the same
+SNPs this made no visible difference.
 
 ## 5. What agreement to expect
 
@@ -148,3 +155,25 @@ the same SNPs this made no visible difference.
 
 Differences that are not explained by this table are worth reporting, either
 to us or to the BigaGWAS team.
+
+## 6. Results on the test jobs
+
+gencorr run with BigaGWAS' references and settings (sections 3–4, LAVA with
+`--lava_snp_list w_hm3.snplist`), compared with `bin/compare_results.py`.
+Jobs 971/972 were re-checked on 2026-11-08 against all 2,495 standard loci
+(**PASS**, tolerances as in section 4); 966/967 are from the first comparison
+(42 vignette loci).
+
+| BigaGWAS job | traits | method | result |
+|---|---|---|---|
+| 966 | bmi × depression | LDSC | rg 0.1154 (gencorr) vs 0.1153; BigaGWAS' harmonization used 4 fewer SNPs |
+| 967 | bmi × depression | LAVA | 32/32 loci in common; SNPs and PCs identical in 29/32 (3 differ by 1–2 SNPs BigaGWAS dropped); rho median difference 1e-5; same loci at p < 0.05 |
+| 971 | T2D × CHD | LAVA | same 8 loci tested; SNPs and PCs identical 8/8; rho within 1e-7; same 2 loci at p < 0.05 (1126, 1801); log10 p within 0.005, CI bounds within 0.019 (Monte Carlo); univariate h2 identical (63/63 locus × trait) |
+| 972 | T2D × CHD | LDSC | identical: rg 0.3476, se 0.0796, z 4.3684, p 1.2518e-05, 2,937 SNPs; h2, intercepts and gencov identical in both logs |
+
+Without the HapMap3 list (gencorr's default, all SNPs), LAVA rho on job 967
+correlates r = 0.92 with BigaGWAS; the difference is entirely the SNP set.
+
+The T2D (ieu-a-25) and CHD (ieu-a-9) example files are Metabochip
+(regional) data, not genome-wide. They test that the computations agree, but
+the LDSC estimates themselves are not meaningful (e.g. T2D h2 = 5.6).

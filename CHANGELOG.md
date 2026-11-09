@@ -9,17 +9,24 @@ Initial version.
 
 ### Added
 
-- nf-test module tests for all 8 local modules (`modules/local/*/tests/`), each with a real-data test and a stub test; run with `nf-test test --tag modules_local`.
-- LAVA: loci without shared SNPs are skipped up front (`no_snps_in_locus`), and each analysed locus logs a progress line with timing; results unchanged.
-
-- `--min_info` / `--min_maf`: optional variant QC in harmonization, applied to all methods (LDSC munge rule: remove value <= threshold; missing kept; warning when the column is absent).
-- `--lava_snp_list`: restrict LAVA to a SNP-ID list (e.g. `w_hm3.snplist`), as BigaGWAS does; recorded in `extra.snp_set`.
-- BigaGWAS comparison kit (`tests/bigagwas/`, `docs/bigagwas_comparison.md`); LDSC and LAVA reproduce BigaGWAS on the test data.
-
 - Harmonization of GWAS summary statistics from common layouts into one format, with per-trait QC reports.
 - LDSC 1.0.1: munge, observed + liability h2, batched cross-trait rg, sample-overlap matrix.
 - LAVA 0.1.5 (`e729a24`): univariate + bivariate local rg, loci split into chunks, per-(locus, pair) seeds, `pairwise`/`joint` SNP sets, LDSC-based sample-overlap correction.
 - One standard results table for all methods, validated on merge; explicit `status` for missing estimates.
 - Pair modes `all`, `target`, `pairs`.
+- `--min_info` / `--min_maf`: optional variant QC in harmonization, applied to all methods (LDSC munge rule: remove value <= threshold; missing kept; warning when the column is absent).
+- `--lava_snp_list`: restrict LAVA to a SNP-ID list (e.g. `w_hm3.snplist`), as BigaGWAS does; recorded in `extra.snp_set`.
+- LAVA: loci without shared SNPs are skipped up front (`no_snps_in_locus`), and each analysed locus logs a progress line with timing; results unchanged.
 - `bin/compare_results.py` for comparison with BigaGWAS or other runs.
-- Tests: Python unit + oracle tests against LDSC and LAVA, nf-test function and pipeline tests.
+- BigaGWAS comparison kit (`tests/bigagwas/`, `docs/bigagwas_comparison.md`); LDSC and LAVA reproduce BigaGWAS jobs 966, 967, 971 and 972.
+- Tests: Python unit + oracle tests against LDSC and LAVA; nf-test module tests for all 8 local modules (real-data + stub), function and pipeline tests.
+
+### Changed
+
+- Local modules follow the nf-core module specification: `task.ext.args` in every module, a `versions_<tool>` topic output for every tool used, `meta.yml` in the current nf-core format, test tags for modules run in `setup`. `nf-core modules lint` and `nf-core pipelines lint` report no failures.
+- The pipeline test snapshots `pipeline_info/gencorr_software_versions.yml`.
+- Module conda environments pin `python=3.12.3`, the Python the `gencorr-tools` image ships (was 3.12.8), so conda and container runs report the same versions.
+
+### Fixed
+
+- `gencorr.ldsc_h2.tsv`: `samp_prev` / `pop_prev` of binary traits were NA when a trait's `.h2_liab.log` happened to be read before its `.h2.log` (file order is not guaranteed).

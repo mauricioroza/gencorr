@@ -37,7 +37,7 @@ caused by input handling.
 
 | topic | here | why |
 |---|---|---|
-| LAVA SNP set | `pairwise` by default: each pair uses SNPs shared by its two traits | LAVA intersects SNPs across *all* loaded traits. A pair's result then depends on which other traits happen to be in the job. `--lava_snp_set joint` restores that behaviour. |
+| LAVA SNP intersection | `pairwise` by default: each pair uses SNPs shared by its two traits | LAVA intersects SNPs across *all* loaded traits. A pair's result then depends on which other traits happen to be in the job. `--lava_snp_set joint` restores that behaviour. |
 | LAVA empty loci | skipped before `process.locus()` (`no_snps_in_locus`) | LAVA scans the full reference SNP table for every locus (~1 s each with 1000G EUR) even when the locus has no data; on sparse input this was ~40 min of a ~45 min run. Results for all other loci are identical (tested) |
 | LAVA bivariate call | `run.bivar` on exactly two traits | with more traits LAVA draws the CIs for all pairs from one joint simulation, which ties a pair's CI to the other traits |
 | LAVA seeds | seed per (locus, trait1, trait2) | results identical regardless of chunking, job order or other pairs; BigaGWAS results are not seed-reproducible |
@@ -46,13 +46,17 @@ caused by input handling.
 | LDSC liability h2 | second `--h2` run with prevalences; both scales reported from LDSC itself | LDSC prints only the liability value when prevalences are given |
 | OR = 1 variants | Z = 0 | LAVA's raw reader gives them sign −1 |
 | gzip outputs | written with mtime 0 | byte-identical reruns, stable checksums |
-| LAVA SNP set | all SNPs by default; HapMap3 (or any list) with `--lava_snp_list` | BigaGWAS restricts LAVA to a HapMap3-based list (~16k of ~100k SNPs on the test data). With the same list gencorr reproduces BigaGWAS' rho to ~1e-5; the default follows the LAVA authors, who do not filter |
-| LAVA version | 0.1.5 | BigaGWAS runs 0.1.0. On identical SNPs, continuous traits, the estimates matched to 5 decimals; binary traits differ by design (0.1.5 changed the binary model) |
+| LAVA SNP list | all SNPs by default; HapMap3 (or any list) with `--lava_snp_list` | BigaGWAS restricts LAVA to a HapMap3-based list (~16k of ~100k SNPs on the test data). With the same list gencorr reproduces BigaGWAS' rho to ~1e-5; the default follows the LAVA authors, who do not filter |
+| LAVA version | 0.1.5 | BigaGWAS runs 0.1.0. On identical SNPs, continuous traits, the estimates matched to 5–7 decimals; binary traits differ by design (0.1.5 changed the binary model) |
+| LAVA case/control | used when `n_cases`/`n_controls` are given | BigaGWAS' 2-trait form treats every trait as continuous |
 
 ## Reproducibility
 
 * Every tool version is pinned: LDSC by bioconda build, LAVA by Git commit,
   R packages by a dated CRAN snapshot (rocker), Python packages by `==`.
+  Python itself is the image's Ubuntu 24.04 `python3` (3.12.3), and the
+  modules' `environment.yml` files pin the same versions, so conda and
+  container runs report identical software versions.
 * `pipeline_info/gencorr_software_versions.yml` records the versions actually
   used by each process. `params_*.json` records the parameters.
 * Test data are fetched from a pinned LAVA commit; derived LD scores are

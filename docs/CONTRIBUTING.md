@@ -149,4 +149,21 @@ If you update images or graphics, follow the nf-core [style guidelines](https://
 
 ## Pipeline specific contribution guidelines
 
-<!-- TODO nf-core: Add any pipeline specific contribution guidelines here, such as coding styles, procedures, checklists etc. -->
+- **New methods** follow [extending.md](extending.md): read only the harmonized
+  columns, write only `RESULT_COLUMNS`, and tick the checklist there (including an
+  oracle test against the tool run directly).
+- **Numbers come from the tools**: every value in the results table must be
+  parsed from the tool's own output; anything without a standard column goes
+  into the JSON `extra` column.
+- **Keep runs byte-reproducible**: gzip with mtime 0, fixed number formatting,
+  explicit seeds. A change that alters results must update the snapshots in the
+  same commit, with the diff reviewed.
+- **Strict syntax**: `nextflow lint .` must report no errors (no implicit `it`,
+  no `switch`/`for` in workflow code, unused closure parameters prefixed `_`).
+- **Before opening a PR**: `pytest tests/python`, `NXF_SYNTAX_PARSER=v1 nf-test test
+  --profile +docker --ci`, `nf-core pipelines lint` and
+  `nf-core modules lint --all --local` (see [validation.md](validation.md)).
+- **Pin versions in both places**: a tool version changed in a container must
+  be changed in the module's `environment.yml` too, and vice versa.
+- **Private image**: LAVA's licence is "All rights reserved"; do not publish
+  `gencorr-tools` images or copy LAVA code into this repository.

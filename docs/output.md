@@ -61,6 +61,20 @@ with `pandas.read_csv(..., sep="\t", quoting=3)`. Parse `extra` with
 | `locus_not_processed` | lava | LAVA could not process the locus (e.g. too few SNPs or PCs) |
 | `bivar_error` | lava | `run.bivar` raised an error (message in the task log) |
 
+## `lava/gencorr.lava_univ.tsv`
+
+One row per (locus, trait) that LAVA processed:
+
+| column | meaning |
+|---|---|
+| `locus`, `chr`, `start`, `stop` | locus ID and coordinates |
+| `phenotype` | trait ID |
+| `h2_obs` | local observed-scale h2 (`run.univ`) |
+| `h2_latent` | local liability-scale h2; only for binary traits with `pop_prev` (else NA) |
+| `p` | univariate p-value (compared with `--lava_univ_thresh`) |
+| `n_snps`, `K` | SNPs in the locus and number of PCs LAVA kept |
+| `loaded_traits` | traits loaded together in that LAVA call (`;`-separated): the pair with `pairwise`, all traits with `joint` |
+
 ## Precision
 
 * LDSC values are copied from LDSC's logs, which print 4 decimals. That is
