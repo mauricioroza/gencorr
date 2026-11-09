@@ -35,14 +35,7 @@ It was built to replace [BigaGWAS](https://bigagwas.org) for routine analyses:
 
 ## How it works
 
-```
- samplesheet.csv ─► HARMONIZE_SUMSTATS ─┬─► METHOD_LDSC ── munge ─ h2 ─ rg ─► ldsc table ─┐
- (any common GWAS      (one format,      │                          └─► sample overlap ──┐ │
-  column layout)        QC report)       │                                               ▼ │
-                                         └─► METHOD_LAVA ── loci split into chunks ─► lava table
-                                                                                          │
-                                         gencorr_results.tsv  ◄── MERGE (schema-checked) ◄┘
-```
+![gencorr metro map: GWAS summary statistics are harmonized, then run through LDSC (global rg) and LAVA (local rg, corrected with LDSC's sample-overlap matrix), and merged into gencorr_results.tsv](docs/images/gencorr_metro_map.svg)
 
 1. **Harmonize** each GWAS once: column names are detected automatically
    (SNP/rsid/MarkerName, A1/effect_allele, BETA/OR/LogOR, SE, P, Z, N, …),
@@ -52,6 +45,13 @@ It was built to replace [BigaGWAS](https://bigagwas.org) for routine analyses:
    the sample-overlap matrix from its intercepts.
 3. **LAVA** tests every pair in each of LAVA's 2,495 GRCh37 loci, corrected for
    sample overlap by default.
+
+   *Sample overlap* means the original GWAS shared participants (e.g. UK Biobank
+   in both). Their estimation errors are then correlated, which inflates rg.
+   LDSC's cross-trait intercepts measure this from the summary statistics alone
+   (no individual-level data needed); LDSC corrects itself, and gencorr passes
+   the intercepts to LAVA as its overlap matrix (`--lava_overlap ldsc`; `none`
+   to switch off).
 4. **Merge** checks every table against one schema and writes
    `gencorr_results.tsv`.
 
