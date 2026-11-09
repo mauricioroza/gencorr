@@ -278,7 +278,7 @@
                 "sumher_tagfile": {
                     "type": "string",
                     "description": "LDAK tagging file for EUR traits, plain or gzipped (e.g. LDAK-Thin HapMap3 GBR: ldak.thin.hapmap.gbr.tagging).",
-                    "help_text": "Pre-computed tagging files are at dougspeed.com (Pre-computed Tagging Files); LDAK recommends the LDAK-Thin model for genetic correlation. Those files name predictors CHR:BP (GRCh37), so also set --sumher_snp_positions.",
+                    "help_text": "Pre-computed tagging files are at dougspeed.com (Pre-computed Tagging Files); LDAK recommends the LDAK-Thin model for genetic correlation. Current releases name predictors by rsID (nothing else to set); older releases and BigaGWAS' copies use CHR:BP (GRCh37): then also set --sumher_snp_positions.",
                     "format": "file-path",
                     "exists": true
                 },
@@ -290,7 +290,7 @@
                 },
                 "sumher_snp_positions": {
                     "type": "string",
-                    "description": "rsID to GRCh37 position table (PLINK .bim such as g1000_eur.bim, or a CHR/BP/SNP table). When given, SumHer input names variants CHR:BP, as LDAK's pre-computed tagging files do; otherwise rsIDs.",
+                    "description": "rsID to GRCh37 position table (PLINK .bim such as g1000_eur.bim, or a CHR/BP/SNP table). When given, SumHer input names variants CHR:BP; otherwise rsIDs. Only for tagging files with CHR:BP names (older LDAK releases); current pre-computed files use rsIDs.",
                     "format": "file-path",
                     "exists": true
                 },

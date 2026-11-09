@@ -52,7 +52,12 @@ def test_failed_ldak_run_is_reported_not_dropped():
     r = ps.parse_pair(SUMHER / "empty__depression.log", SUMHER / "empty__depression.cors")
     assert r["status"] == "sumher_error"
     assert pd.isna(r["rg"]) and pd.isna(r["p"])
-    assert "contains summary statistics for none" in json.loads(r["extra"])["error"]
+    extra = json.loads(r["extra"])
+    assert "contains summary statistics for none" in extra["error"]
+    # no SNP of 'empty' is in the tagging file; LDAK stopped before checking
+    # depression, so its count is unknown (not the size of the tagging file)
+    assert extra["n_snps_1"] == 0
+    assert extra["n_snps_2"] is None
 
 
 def test_cli_writes_standard_table(tmp_path):

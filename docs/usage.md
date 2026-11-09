@@ -171,14 +171,23 @@ than LDSC. It needs an LDAK **tagging file** per ancestry:
 
 ```bash
 --methods ldsc,lava,sumher \
---sumher_tagfile /refs/ldak/ldak.thin.hapmap.gbr.tagging.gz \
---sumher_snp_positions /refs/g1000_eur/g1000_eur.bim      # GRCh37 rsID -> position
+--sumher_tagfile /refs/ldak/ldak.thin.hapmap.gbr.tagging.gz
 ```
 
-LDAK's pre-computed tagging files name SNPs `CHR:BP` (GRCh37), not rsIDs, so
-gencorr renames each variant using `--sumher_snp_positions` (any GRCh37 rsID →
-position table: the 1000 Genomes `.bim` you use for LAVA works). Leave it out
-only for a tagging file you made yourself with rsID names. Options are those
+SNP names in your data must match those in the tagging file. Check them with
+`zcat ldak.thin.hapmap.gbr.tagging.gz | head -3`:
+
+* **rsIDs** (`rs3094315`): the current pre-computed files (checked November
+  2026). Nothing else to set.
+* **`CHR:BP`** (`1:752566`): older releases (the files BigaGWAS uses) and
+  tagging files you made from a `CHR:BP`-named reference. Add
+  `--sumher_snp_positions` with a GRCh37 rsID → position table (the 1000
+  Genomes `.bim` you use for LAVA works, or a `CHR BP SNP` table), and gencorr
+  renames each variant to `CHR:BP`.
+
+With the wrong choice no SNP matches, and the pair gets `status = sumher_error`
+with LDAK's message "contains summary statistics for none of the … predictors"
+in `extra.error`. Options are those
 of BigaGWAS: `--check-sums NO --allow-ambiguous YES`, `--sumher_cutoff 0.01`,
 `--sumher_genomic_control false` (LDAK 6's own default models multiplicative
 inflation instead; set `true` for that).
@@ -241,7 +250,7 @@ they have rsIDs (see [Genome build and rsIDs](#genome-build-and-rsids)).
 | `--min_maf` | `0` (off) | remove variants with MAF ≤ value, for all methods (see 4a) |
 | `--lava_snp_list` | none (all SNPs) | run LAVA only on the SNP IDs in this list, e.g. `w_hm3.snplist` (see 4b) |
 | `--sumher_tagfile`, `--sumher_tagfile_eas` | none | LDAK tagging files for SumHer (EUR, EAS) |
-| `--sumher_snp_positions` | none | GRCh37 rsID → position table; SumHer variants named `CHR:BP` as in LDAK's tagging files |
+| `--sumher_snp_positions` | none | GRCh37 rsID → position table; SumHer variants named `CHR:BP`. Only for tagging files with `CHR:BP` names (older LDAK releases); current pre-computed files use rsIDs |
 | `--sumher_cutoff`, `--sumher_genomic_control` | `0.01`, `false` | LDAK `--cutoff`, `--genomic-control` (BigaGWAS defaults) |
 | `--popcorn_cfile` | none | Popcorn score file for EUR × EAS pairs |
 | `--popcorn_cfile_ancestries` | `EUR,EAS` | populations of the score file, in order |

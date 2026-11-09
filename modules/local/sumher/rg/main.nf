@@ -14,7 +14,7 @@
  * meta    : [ id: '<trait1>__<trait2>', trait1, trait2, ancestry ]
  * sumstats: SumHer-format files named <trait id>.sumher.tsv
  * tagfile : LDAK tagging file (plain or .gz) whose predictor names match the
- *           summary statistics (rsIDs, or CHR:BP for LDAK's pre-computed files)
+ *           summary statistics (rsIDs, or CHR:BP for older LDAK tagging files)
  */
 process SUMHER_RG {
     tag "${meta.id}"

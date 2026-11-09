@@ -9,8 +9,8 @@
  *
  * snp_list (optional, [] for none): keep only these SNP IDs (e.g. w_hm3.snplist).
  *   For format 'sumher' it is instead an rsID -> position table (PLINK .bim or
- *   CHR/BP/SNP table): variants are then named CHR:BP, as LDAK's pre-computed
- *   tagging files expect.
+ *   CHR/BP/SNP table): variants are then named CHR:BP, for tagging files with
+ *   CHR:BP names (older LDAK releases; current ones use rsIDs).
  */
 process EXPORT_SUMSTATS {
     tag "${meta.id}:${format}"

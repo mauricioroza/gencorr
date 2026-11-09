@@ -86,8 +86,8 @@ BigaGWAS's slowness is rsID mapping, which this pipeline avoids by design).
 - SumHer (LDAK 6.1, `--methods sumher`): image `ghcr.io/mauricioroza/gencorr-ldak:6.1`
   from containers/gencorr-ldak (GPL-3.0; pushed to ghcr.io 2026-11-09). LDAK 6 writes `SE` not `SD`,
   can't read gzipped tagging files (module gunzips), defaults to multiplicative-inflation model (we pass
-  `--genomic-control NO` like BigaGWAS). LDAK's pre-computed tagging files use GRCh37 CHR:BP names ->
-  `--sumher_snp_positions`. `--calc-tagging` needs ~9 GB RAM by default: use `--bit-size 400` in WSL.
+  `--genomic-control NO` like BigaGWAS). LDAK's current pre-computed tagging files (downloaded 2026-11-09)
+  use rsIDs; older ones (BigaGWAS) use GRCh37 CHR:BP -> `--sumher_snp_positions` only for those. `--calc-tagging` needs ~9 GB RAM by default: use `--bit-size 400` in WSL.
 - Ancestry: samplesheet `ancestry` (EUR default, EAS); refs `--ldsc_ld[_eas]`, `--ldsc_w_ld[_eas]`,
   `--lava_ref[_eas]` (see ancestryParam/traitAncestry in utils subworkflow). Same-ancestry pairs only go
   to methods; cross-ancestry pairs become `cross_ancestry` rows (gencorr.nf crossAncestryRow).

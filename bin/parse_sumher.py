@@ -57,11 +57,17 @@ def read_cors(path: Path) -> dict[str, tuple[float, float]]:
 
 def snps_used(log_text: str, sumstats_name: str) -> float:
     """Predictors of the tagging file found in one trait's summary statistics
-    ('contains summary statistics for only X of the Y predictors'); all Y when
-    LDAK did not warn."""
-    m = re.search(rf"{re.escape(sumstats_name)} contains summary statistics for only (\d+) of (?:the )?(\d+)", log_text)
+    ('contains summary statistics for only X of the Y predictors'); 0 for
+    'none of the Y'; all Y when LDAK did not warn. Unknown (NaN) when LDAK
+    stopped with an error before reporting on this file."""
+    name = re.escape(sumstats_name)
+    m = re.search(rf"{name} contains summary statistics for only (\d+) of (?:the )?(\d+)", log_text)
     if m:
         return float(m.group(1))
+    if re.search(rf"{name} contains summary statistics for none of", log_text):
+        return 0.0
+    if re.search(r"^Error", log_text, re.MULTILINE):
+        return np.nan
     m = re.search(r"Reading details for (\d+) predictors from", log_text)
     return float(m.group(1)) if m else np.nan
 
