@@ -1,6 +1,7 @@
 .nextflow*
 work/
-data/
+# top-level data folder only: tests/data/ holds the test profile's inputs and must be committed
+/data/
 results/
 .DS_Store
 testing/
