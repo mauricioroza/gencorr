@@ -12,8 +12,35 @@ CSV, one row per trait. Only `id` and `sumstats` are required.
 | `n_cases`, `n_controls` | binary traits. Used for N when missing, for LAVA's case/control model and for LDSC liability h2 |
 | `pop_prev` | population prevalence (binary traits). Adds liability-scale h2 (LDSC) and LAVA `h2_latent` |
 | `colmap` | manual column mapping, e.g. `Z=STAT,N=NMISS` (standard=source) |
+| `ancestry` | `EUR` (default) or `EAS`: ancestry of the GWAS. Selects the LD references and decides which pairs LDSC and LAVA analyse (see [Ancestry](#ancestry)) |
 | `build` | `GRCh37` (default) or `GRCh38`: build of the file's positions. Only used to pick the rsID map for variants without an rsID (see [Genome build and rsIDs](#genome-build-and-rsids)) |
 | `label` | free-text display name (not used in computation) |
+
+### Ancestry
+
+LDSC and LAVA model the LD between nearby variants, and LD differs between
+populations, so each needs an LD reference of the **same ancestry as the GWAS**.
+They also assume **both traits of a pair come from one population**.
+
+| pair | what happens |
+|---|---|
+| EUR × EUR | LDSC with `--ldsc_ld`, LAVA with `--lava_ref` |
+| EAS × EAS | LDSC with `--ldsc_ld_eas` (`--ldsc_w_ld_eas`), LAVA with `--lava_ref_eas` |
+| EUR × EAS | not estimated: one row per method with `status = cross_ancestry` (a cross-ancestry method such as Popcorn is needed) |
+
+A reference is only required if some pair needs it: a run where every trait is
+EAS needs only the `_eas` references. `--ldsc_merge_alleles` (HapMap3) and
+`--lava_loci` are shared by all ancestries; the default LAVA loci were defined
+from European LD and are commonly reused for other ancestries.
+
+References for EAS: the LDSC authors' 1000 Genomes East Asian LD scores
+(`eas_ldscores/`, from the same archive as `eur_w_ld_chr/`), and a 1000 Genomes
+EAS PLINK reference for LAVA (linked from LAVA's `REFERENCE.md`). With
+`--lava_snp_set joint`, traits are loaded together per ancestry.
+
+This matches BigaGWAS' "European GWAS / East Asian GWAS" option for LDSC
+(it switches `eur_w_ld_chr` ↔ `eas_ldscores`). BigaGWAS does not offer LAVA for
+East Asian traits; gencorr does when `--lava_ref_eas` is given.
 
 ### Genome build and rsIDs
 
@@ -154,6 +181,7 @@ they have rsIDs (see [Genome build and rsIDs](#genome-build-and-rsids)).
 | `--min_info` | `0` (off) | remove variants with INFO ≤ value, for all methods (see 4a) |
 | `--min_maf` | `0` (off) | remove variants with MAF ≤ value, for all methods (see 4a) |
 | `--lava_snp_list` | none (all SNPs) | run LAVA only on the SNP IDs in this list, e.g. `w_hm3.snplist` (see 4b) |
+| `--ldsc_ld_eas`, `--ldsc_w_ld_eas`, `--lava_ref_eas` | none | references for traits with `ancestry = EAS` (see [Ancestry](#ancestry)) |
 | `--rsid_map_grch37`, `--rsid_map_grch38` | none | rsID maps for files without rsIDs, per samplesheet `build` (see [Genome build and rsIDs](#genome-build-and-rsids)) |
 | `--save_harmonized` / `--save_intermediates` | `false` | publish intermediate files |
 

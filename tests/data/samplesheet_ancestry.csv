@@ -1,0 +1,5 @@
+id,sumstats,n,n_cases,n_controls,pop_prev,colmap,ancestry,label
+bmi,https://raw.githubusercontent.com/josefin-werme/LAVA/e729a245f7b6923967a96804fbf5246eadf2d6c6/vignettes/data/bmi.sumstats.txt,,,,,,EUR,Body mass index
+neuro,https://raw.githubusercontent.com/josefin-werme/LAVA/e729a245f7b6923967a96804fbf5246eadf2d6c6/vignettes/data/neuro.sumstats.txt,,,,,,EAS,Neuroticism (labelled EAS for the test)
+depression,https://raw.githubusercontent.com/josefin-werme/LAVA/e729a245f7b6923967a96804fbf5246eadf2d6c6/vignettes/data/depression.sumstats.txt,,170756,329443,0.15,,,Major depression
+rheuma,https://raw.githubusercontent.com/josefin-werme/LAVA/e729a245f7b6923967a96804fbf5246eadf2d6c6/vignettes/data/rheuma.sumstats.txt,,14361,43923,0.005,,EAS,Rheumatoid arthritis (labelled EAS for the test)

@@ -27,13 +27,14 @@
 include { EXPORT_SUMSTATS } from '../../../modules/local/export_sumstats'
 include { LAVA_RUN        } from '../../../modules/local/lava/run'
 include { MERGE_RESULTS   } from '../../../modules/local/merge_results'
+include { traitAncestry   } from '../utils_nfcore_gencorr_pipeline'
 
 workflow METHOD_LAVA {
 
     take:
     ch_harmonized    // channel: [ meta, harmonized ]
-    ch_pairs         // channel: [ meta1, meta2 ]
-    ch_reference     // value channel: [ prefix, [ reference files ] ]
+    ch_pairs         // channel: [ meta1, meta2 ]  (same-ancestry pairs only)
+    ch_reference     // channel: [ ancestry, prefix, [ reference files ] ], one per ancestry
     ch_loci          // value channel: locus file (LOC CHR START STOP)
     ch_overlap       // value channel: sample-overlap matrix, or [] for none
     ch_snp_list      // value channel: SNP list to restrict LAVA input to, or [] for all SNPs
@@ -49,18 +50,25 @@ workflow METHOD_LAVA {
         .toList()
         .map    { list -> list.collectEntries() }
 
-    // Trait groups: [ id, traits: [ metas ], pairs: [ [id1, id2], ... ] ]
+    // Trait groups: [ id, traits: [ metas ], pairs: [ [id1, id2], ... ], ancestry ]
+    // Pairs are same-ancestry, so every group has one ancestry and one reference.
     def ch_groups
     if (snp_set == 'joint') {
+        // one joint group per ancestry ('joint' when there is only one)
         ch_groups = ch_pairs
-            .toList()
-            .map { pairs ->
-                def traits = pairs.collectMany { pair -> pair }.unique { m -> m.id }.sort { m -> m.id }
-                [ id: 'joint', traits: traits, pairs: pairs.collect { pair -> [ pair[0].id, pair[1].id ] } ]
+            .map        { m1, m2 -> [ traitAncestry(m1), [ m1, m2 ] ] }
+            .groupTuple ( by: 0 )
+            .toList     ()
+            .flatMap    { per_ancestry ->
+                per_ancestry.collect { anc, pairs ->
+                    def traits = pairs.collectMany { pair -> pair }.unique { m -> m.id }.sort { m -> m.id }
+                    [ id: per_ancestry.size() == 1 ? 'joint' : "joint_${anc}".toString(), traits: traits,
+                      pairs: pairs.collect { pair -> [ pair[0].id, pair[1].id ] }, ancestry: anc ]
+                }
             }
     } else {
         ch_groups = ch_pairs.map { m1, m2 ->
-            [ id: "${m1.id}__${m2.id}", traits: [ m1, m2 ], pairs: [ [ m1.id, m2.id ] ] ]
+            [ id: "${m1.id}__${m2.id}", traits: [ m1, m2 ], pairs: [ [ m1.id, m2.id ] ], ancestry: traitAncestry(m1) ]
         }
     }
 
@@ -73,7 +81,16 @@ workflow METHOD_LAVA {
         .map    { group, fmap -> [ group, group.traits.collect { m -> fmap[m.id] } ] }
         .combine( ch_chunks )                                // [ group, files, chunk ]
 
-    LAVA_RUN ( ch_tasks, ch_reference, ch_overlap )
+    // each task with its ancestry's LD reference
+    def ch_lava_in = ch_tasks
+        .map      { group, files, chunk -> [ group.ancestry, group, files, chunk ] }
+        .combine  ( ch_reference.map { anc, prefix, ref_files -> [ anc, [ prefix, ref_files ] ] }, by: 0 )
+        .multiMap { _anc, group, files, chunk, ref ->
+            task: [ group, files, chunk ]
+            ref:  ref
+        }
+
+    LAVA_RUN ( ch_lava_in.task, ch_lava_in.ref, ch_overlap )
 
     MERGE_RESULTS (
         LAVA_RUN.out.results

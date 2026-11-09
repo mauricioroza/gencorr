@@ -14,7 +14,7 @@ short, readable scripts.
 | **LAVA oracle** | `pytest tests/python/test_lava_oracle.py` | `bin/run_lava.R` gives **identical** rho, CIs, p and local h2 to LAVA called as in its vignette (`tests/oracle/lava_native.R`); splitting loci into chunks changes nothing; harmonized input vs LAVA reading raw files: same SNPs/statuses, rg within 1e-4 (explained below) | 15 min |
 | module (nf-test) | `nf-test test --tag modules_local` | each of the 8 local modules on its own, with small real inputs: output layout, the numbers the tool reports (LDSC summary lines; LAVA status, n SNPs, K and rho per locus), error paths (duplicated estimates rejected), and the `stub:` block | 10 min |
 | function (nf-test) | `nf-test test subworkflows/local/utils_nfcore_gencorr_pipeline/tests/` | pair construction for all/target/pairs modes, error cases | 40 s |
-| pipeline (nf-test) | `nf-test test tests/default.nf.test --profile +apptainer` | full test profile succeeds; row counts; snapshot of every (method, pair, locus, status, rg to 3 decimals) and of the software versions; `-stub` wiring; target + joint mode | 15 min |
+| pipeline (nf-test) | `nf-test test tests/default.nf.test --profile +apptainer` | full test profile succeeds; row counts; snapshot of every (method, pair, locus, status, rg to 3 decimals) and of the software versions; `-stub` wiring; mixed-ancestry routing (same-ancestry pairs estimated, cross-ancestry pairs `cross_ancestry`, joint LAVA groups per ancestry); target + joint mode | 20 min |
 | nf-core lint | `nf-core pipelines lint` and `nf-core modules lint --all --local` | template conformance; every module's `meta.yml` matches its channels (official schema) | 1 min |
 
 ### Running the Python tests
@@ -86,8 +86,8 @@ version, or run them on a machine with LDSC and LAVA installed.
 biocontainer), Nextflow 26.10.5, nf-test 0.9.5, WSL2 Ubuntu:
 
 * nf-test module tests: **23/23 pass** (incl. rsID mapping of a GRCh38-style
-  file); function tests **6/6**; pipeline tests **3/3** (`-profile test`,
-  `-stub`, target + joint), all with `--ci`
+  file); function tests **6/6**; pipeline tests **4/4** (`-profile test`,
+  `-stub`, mixed EUR + EAS ancestry, target + joint), all with `--ci`
 * Python: **48 pass, 6 skipped** (oracle tests: LDSC/LAVA not on `PATH`)
 * `nf-core pipelines lint`: 0 failures; `nf-core modules lint --all --local`: 0 failures
   (remaining warnings are expected for a private pipeline: private container

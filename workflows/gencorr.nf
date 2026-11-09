@@ -17,6 +17,7 @@ include { MERGE_RESULTS as MERGE_ALL  } from '../modules/local/merge_results'
 include { METHOD_LDSC                 } from '../subworkflows/local/method_ldsc'
 include { METHOD_LAVA                 } from '../subworkflows/local/method_lava'
 include { softwareVersionsToYAML      } from '../subworkflows/nf-core/utils_nfcore_pipeline'
+include { traitAncestry; ancestryParam; methodRegistry } from '../subworkflows/local/utils_nfcore_gencorr_pipeline'
 
 workflow GENCORR {
 
@@ -48,19 +49,39 @@ workflow GENCORR {
     def ch_harmonized = HARMONIZE_SUMSTATS.out.sumstats
 
     //
+    // Ancestry (samplesheet column, default EUR): LDSC and LAVA assume both traits
+    // come from one population, so they get same-ancestry pairs, each with its
+    // ancestry's references. Cross-ancestry pairs are kept in the results with
+    // status 'cross_ancestry' (a cross-ancestry method such as Popcorn is needed).
+    //
+    def ch_pairs_split = ch_pairs.branch { m1, m2 ->
+        same:  traitAncestry(m1) == traitAncestry(m2)
+        cross: true
+    }
+    def ch_same_pairs = ch_pairs_split.same
+    ch_results = ch_results.mix(
+        ch_pairs_split.cross
+            .flatMap { m1, m2 -> methods.collect { m -> crossAncestryRow(m, m1, m2) } }
+            .collectFile( name: 'gencorr.cross_ancestry.tsv', seed: resultHeader() + '\n',
+                          newLine: true, sort: true )
+    )
+
+    //
     // 2a. LDSC (global)
     //
     if ('ldsc' in methods) {
-        def ch_ld = channel.value([
-            [ prefix: params.ldsc_ld_prefix ?: '', split_by_chr: params.ldsc_ld_split_by_chr ],
-            file(params.ldsc_ld, checkIfExists: true),
-            file(params.ldsc_w_ld ?: params.ldsc_ld, checkIfExists: true)
-        ])
+        // one entry per ancestry with LD scores: [ ancestry, ld_meta, ref_ld_dir, w_ld_dir ]
+        def ch_ld = channel.fromList( ['EUR', 'EAS'].findAll { a -> params[ancestryParam('ldsc_ld', a)] }.collect { a ->
+            [ a,
+              [ prefix: params.ldsc_ld_prefix ?: '', split_by_chr: params.ldsc_ld_split_by_chr ],
+              file(params[ancestryParam('ldsc_ld', a)], checkIfExists: true),
+              file(params[ancestryParam('ldsc_w_ld', a)] ?: params[ancestryParam('ldsc_ld', a)], checkIfExists: true) ]
+        } )
         def ch_merge_alleles = params.ldsc_merge_alleles
             ? channel.value(file(params.ldsc_merge_alleles, checkIfExists: true))
             : channel.value([])
 
-        METHOD_LDSC ( ch_harmonized, ch_pairs, ch_ld, ch_merge_alleles, params.ldsc_rg_batch_size )
+        METHOD_LDSC ( ch_harmonized, ch_same_pairs, ch_ld, ch_merge_alleles, params.ldsc_rg_batch_size )
         ch_results = ch_results.mix( METHOD_LDSC.out.results )
 
         if (params.lava_overlap == 'ldsc') {
@@ -75,14 +96,17 @@ workflow GENCORR {
     // 2b. LAVA (local)
     //
     if ('lava' in methods) {
-        def ch_reference = channel.value( resolveLavaReference(params.lava_ref) )
+        // one entry per ancestry with a reference: [ ancestry, prefix, [ files ] ]
+        def ch_reference = channel.fromList( ['EUR', 'EAS'].findAll { a -> params[ancestryParam('lava_ref', a)] }.collect { a ->
+            [ a ] + resolveLavaReference(params[ancestryParam('lava_ref', a)])
+        } )
         def ch_loci      = channel.value( file(params.lava_loci, checkIfExists: true) )
         def ch_snp_list  = params.lava_snp_list
             ? channel.value( file(params.lava_snp_list, checkIfExists: true) )
             : channel.value([])
 
         METHOD_LAVA (
-            ch_harmonized, ch_pairs, ch_reference, ch_loci, ch_overlap, ch_snp_list,
+            ch_harmonized, ch_same_pairs, ch_reference, ch_loci, ch_overlap, ch_snp_list,
             params.lava_snp_set, params.lava_loci_per_chunk
         )
         ch_results = ch_results.mix( METHOD_LAVA.out.results )
@@ -136,6 +160,26 @@ workflow GENCORR {
     FUNCTIONS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+
+//
+// Header of the standard results table (bin/gencorr_common.py RESULT_COLUMNS;
+// MERGE_RESULTS validates every table against it, so a mismatch fails loudly).
+//
+def resultHeader() {
+    return ['method', 'scope', 'trait1', 'trait2', 'locus', 'chr', 'start', 'stop', 'n_snps',
+            'rg', 'rg_se', 'rg_ci_low', 'rg_ci_high', 'z', 'p', 'h2_1', 'h2_1_se', 'h2_2', 'h2_2_se',
+            'status', 'extra'].join('\t')
+}
+
+//
+// One results row for a pair the method cannot estimate because the two traits
+// have different ancestry.
+//
+def crossAncestryRow(String method, Map m1, Map m2) {
+    def extra = "{\"ancestry_1\": \"${traitAncestry(m1)}\", \"ancestry_2\": \"${traitAncestry(m2)}\"}"
+    def cells = [ method, methodRegistry()[method].scope, m1.id, m2.id ] + (['NA'] * 15) + [ 'cross_ancestry', extra ]
+    return cells.join('\t')
+}
 
 //
 // LAVA reference = a prefix, e.g. /refs/g1000_eur (PLINK) or /refs/lava-ukb-v1.1

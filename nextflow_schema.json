@@ -163,6 +163,19 @@
                     "format": "file-path",
                     "exists": true
                 },
+                "ldsc_ld_eas": {
+                    "type": "string",
+                    "description": "LD scores for traits with ancestry = EAS in the samplesheet (e.g. the LDSC authors' eas_ldscores/). --ldsc_ld is used for EUR traits.",
+                    "help_text": "Same layout as --ldsc_ld (one file per chromosome with --ldsc_ld_split_by_chr). Only needed when at least one pair has two EAS traits.",
+                    "format": "directory-path",
+                    "exists": true
+                },
+                "ldsc_w_ld_eas": {
+                    "type": "string",
+                    "description": "Regression-weight LD scores for EAS traits (default: --ldsc_ld_eas).",
+                    "format": "directory-path",
+                    "exists": true
+                },
                 "ldsc_rg_batch_size": {
                     "type": "integer",
                     "description": "Maximum number of traits compared with one trait1 in a single ldsc --rg call. Batching does not change estimates.",
@@ -181,6 +194,11 @@
                     "type": "string",
                     "description": "LD reference prefix: PLINK (<prefix>.bed/.bim/.fam) or LAVA LD format (e.g. lava-ukb-v1.1).",
                     "help_text": "For European-ancestry data the LAVA authors recommend their UK Biobank LD reference over 1000 Genomes (1000G can inflate type I error)."
+                },
+                "lava_ref_eas": {
+                    "type": "string",
+                    "description": "LD reference prefix for traits with ancestry = EAS (e.g. a 1000 Genomes EAS PLINK reference). --lava_ref is used for EUR traits.",
+                    "help_text": "Only needed when at least one pair has two EAS traits. The default locus file (--lava_loci) was defined from European LD and is shared by all ancestries."
                 },
                 "lava_loci": {
                     "type": "string",

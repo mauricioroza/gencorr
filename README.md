@@ -151,9 +151,12 @@ JSON `extra` column with `jsonlite::fromJSON`.
   rsIDs (`1:12345:A:G`-style IDs) get them from an rsID map for their build:
   set `build` in the samplesheet and `--rsid_map_grch37` / `--rsid_map_grch38`
   ([details](docs/usage.md#genome-build-and-rsids)).
-* **Ancestry:** use LD scores and a LAVA reference matching your GWAS ancestry.
-  For European data the LAVA authors recommend their UK Biobank reference over
-  1000 Genomes.
+* **Ancestry:** set `ancestry` (`EUR` default, `EAS`) per trait in the
+  samplesheet. Each same-ancestry pair runs with that ancestry's references
+  (`--ldsc_ld`/`--lava_ref` for EUR, `--ldsc_ld_eas`/`--lava_ref_eas` for EAS);
+  EUR × EAS pairs are reported with status `cross_ancestry`
+  ([details](docs/usage.md#ancestry)). For European data the LAVA authors
+  recommend their UK Biobank reference over 1000 Genomes.
 * **conda:** LAVA has no conda package, so `-profile conda` works only with
   `--methods ldsc`.
 * **Clusters:** see [docs/usage.md § UPPMAX](docs/usage.md#5-running-on-uppmax-pelle)

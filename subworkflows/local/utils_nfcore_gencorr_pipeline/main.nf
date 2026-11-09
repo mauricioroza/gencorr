@@ -22,14 +22,27 @@ include { UTILS_NEXTFLOW_PIPELINE   } from '../../nf-core/utils_nextflow_pipelin
     METHOD REGISTRY
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     Every method the pipeline can run, with the parameters it needs.
+    ancestry_params are per-ancestry references: the plain name is the EUR
+    reference, '<name>_eas' the EAS one (see ancestryParam()). They are required
+    only for ancestries that have at least one same-ancestry pair.
     To add a method: add an entry here, a subworkflow under subworkflows/local/,
     and one line in workflows/gencorr.nf. See docs/extending.md.
 */
 def methodRegistry() {
     return [
-        ldsc: [ scope: 'global', required_params: ['ldsc_ld'],             conda_ok: true  ],
-        lava: [ scope: 'local',  required_params: ['lava_ref', 'lava_loci'], conda_ok: false ],
+        ldsc: [ scope: 'global', required_params: ['ldsc_ld'],              ancestry_params: ['ldsc_ld'],  conda_ok: true  ],
+        lava: [ scope: 'local',  required_params: ['lava_ref', 'lava_loci'], ancestry_params: ['lava_ref'], conda_ok: false ],
     ]
+}
+
+// GWAS ancestry of a trait (samplesheet column 'ancestry'; default EUR)
+def traitAncestry(Map meta) {
+    return (meta.ancestry ?: 'EUR').toString()
+}
+
+// Parameter holding a per-ancestry reference: ldsc_ld (EUR), ldsc_ld_eas (EAS), ...
+def ancestryParam(String name, String ancestry) {
+    return ancestry == 'EUR' ? name : "${name}_${ancestry.toLowerCase()}".toString()
 }
 
 /*
@@ -113,6 +126,17 @@ workflow PIPELINE_INITIALISATION {
     log.info "gencorr: ${samples.size()} traits, ${pair_list.size()} pairs (pair_mode = ${params.pair_mode}), methods: ${methods.join(', ')}"
 
     def meta_by_id = samples.collectEntries { row -> [ (row[0].id): row[0] ] }
+
+    //
+    // Ancestry: LDSC/LAVA analyse same-ancestry pairs with that ancestry's
+    // references; cross-ancestry pairs are reported with status cross_ancestry.
+    //
+    def same_ancestry = pair_list.findAll { p -> traitAncestry(meta_by_id[p[0]]) == traitAncestry(meta_by_id[p[1]]) }
+    def n_cross       = pair_list.size() - same_ancestry.size()
+    if (n_cross) {
+        log.warn "${n_cross} of ${pair_list.size()} pairs have traits of different ancestry; LDSC and LAVA assume one population, so these pairs are reported with status 'cross_ancestry' and not estimated."
+    }
+    validateReferences(params, methods, same_ancestry.collect { p -> traitAncestry(meta_by_id[p[0]]) }.unique().sort())
 
     emit:
     samplesheet = channel.fromList(samples)                                        // [ meta, sumstats ]
@@ -266,7 +290,8 @@ def validateGencorrParams(Map p, String profile) {
     }
 
     methods.each { m ->
-        registry[m].required_params.each { rp ->
+        // per-ancestry references are checked later, once the samplesheet is read
+        registry[m].required_params.findAll { rp -> !(rp in registry[m].ancestry_params) }.each { rp ->
             if (!p[rp]) {
                 error("--methods ${m} requires --${rp}.")
             }
@@ -282,10 +307,28 @@ def validateGencorrParams(Map p, String profile) {
     if (!(p.lava_snp_set in ['pairwise', 'joint'])) {
         error("--lava_snp_set must be 'pairwise' or 'joint' (got '${p.lava_snp_set}').")
     }
-    if (p.ldsc_ld && !p.ldsc_merge_alleles && 'ldsc' in methods) {
+    if ((p.ldsc_ld || p.ldsc_ld_eas) && !p.ldsc_merge_alleles && 'ldsc' in methods) {
         log.warn "No --ldsc_merge_alleles given. LDSC fails a pair when an rsID has different alleles in the two traits; the usual choice is w_hm3.snplist."
     }
     return methods
+}
+
+//
+// Per-ancestry references: every ancestry with at least one same-ancestry pair
+// needs its reference for every selected method (e.g. EAS + ldsc -> --ldsc_ld_eas).
+//
+def validateReferences(Map p, List methods, List ancestries) {
+    def registry = methodRegistry()
+    methods.each { m ->
+        registry[m].ancestry_params.each { rp ->
+            ancestries.each { a ->
+                def name = ancestryParam(rp, a)
+                if (!p[name]) {
+                    error("--methods ${m}: traits with ancestry ${a} are paired with each other, which needs --${name}.")
+                }
+            }
+        }
+    }
 }
 
 //

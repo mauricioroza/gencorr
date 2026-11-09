@@ -77,7 +77,10 @@ BigaGWAS's slowness is rsID mapping, which this pipeline avoids by design).
   .h2_liab.log was read first); local modules aligned with nf-core specs ($args, full version reporting,
   nf-core-format meta.yml, dependency tags). `nf-core modules lint`: 0 failures.
 - Full suite passes locally in Docker (nf-test 0.9.5, Nextflow 26.10.5): 23 module, 6 function,
-  3 pipeline tests; pytest 48 passed / 6 skipped. CI still pins NFT_VER 0.9.4.
+  4 pipeline tests; pytest 48 passed / 6 skipped. CI still pins NFT_VER 0.9.4.
+- Ancestry: samplesheet `ancestry` (EUR default, EAS); refs `--ldsc_ld[_eas]`, `--ldsc_w_ld[_eas]`,
+  `--lava_ref[_eas]` (see ancestryParam/traitAncestry in utils subworkflow). Same-ancestry pairs only go
+  to methods; cross-ancestry pairs become `cross_ancestry` rows (gencorr.nf crossAncestryRow).
 - Genome builds: all methods match variants by rsID and take positions from their references, so
   sumstats need rsIDs, not a particular build. Files without rsIDs get them from an rsID map
   (samplesheet `build`, `--rsid_map_grch37/38`; `.bim` or CHR/BP/SNP/A1/A2 table). No liftover.

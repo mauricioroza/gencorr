@@ -60,6 +60,7 @@ with `pandas.read_csv(..., sep="\t", quoting=3)`. Parse `extra` with
 | `no_snps_in_locus` | lava | no SNP shared by the traits and the reference falls in the locus; skipped without calling LAVA (fast) |
 | `locus_not_processed` | lava | LAVA could not process the locus (e.g. too few SNPs or PCs) |
 | `bivar_error` | lava | `run.bivar` raised an error (message in the task log) |
+| `cross_ancestry` | both | the two traits have different `ancestry` in the samplesheet; LDSC and LAVA assume one population, so the pair is not estimated. One row per method (locus NA); `extra` holds `ancestry_1` / `ancestry_2` |
 
 ## `lava/gencorr.lava_univ.tsv`
 

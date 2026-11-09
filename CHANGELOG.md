@@ -17,6 +17,7 @@ Initial version.
 - `--min_info` / `--min_maf`: optional variant QC in harmonization, applied to all methods (LDSC munge rule: remove value <= threshold; missing kept; warning when the column is absent).
 - `--lava_snp_list`: restrict LAVA to a SNP-ID list (e.g. `w_hm3.snplist`), as BigaGWAS does; recorded in `extra.snp_set`.
 - LAVA: loci without shared SNPs are skipped up front (`no_snps_in_locus`), and each analysed locus logs a progress line with timing; results unchanged.
+- Per-trait ancestry: samplesheet column `ancestry` (`EUR` default, `EAS`) with `--ldsc_ld_eas`, `--ldsc_w_ld_eas`, `--lava_ref_eas`. Same-ancestry pairs run LDSC/LAVA with their ancestry's references (joint LAVA groups per ancestry); cross-ancestry pairs are kept with status `cross_ancestry`. References are required only for ancestries that have same-ancestry pairs.
 - rsID mapping for summary statistics without rsIDs (e.g. GRCh38 `chr:pos:ref:alt` IDs, or no SNP column): samplesheet column `build` (`GRCh37`/`GRCh38`) and `--rsid_map_grch37` / `--rsid_map_grch38` (PLINK `.bim` or CHR/BP/SNP/A1/A2 table); matched by chromosome, position and alleles, no liftover needed. Without a map, the QC report warns when most IDs are not rsIDs.
 - `bin/compare_results.py` for comparison with BigaGWAS or other runs.
 - BigaGWAS comparison kit (`tests/bigagwas/`, `docs/bigagwas_comparison.md`); LDSC and LAVA reproduce BigaGWAS jobs 966, 967, 971 and 972.
