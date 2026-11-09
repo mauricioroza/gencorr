@@ -100,6 +100,37 @@ nextflow_pipeline {
         }
     }
 
+    test("Popcorn: cross-ancestry pair (Popcorn's own EUR/EAS test data)") {
+        // Score file tests/data/popcorn was computed from Popcorn's test reference
+        // panels (EUR_ref, EAS_ref) with the gencorr-popcorn image.
+
+        when {
+            params {
+                outdir        = "$outputDir"
+                input         = "${projectDir}/tests/data/samplesheet_popcorn.csv"
+                methods       = 'popcorn'
+                popcorn_cfile = "${projectDir}/tests/data/popcorn/EUR_EAS.test.cscore.gz"
+            }
+        }
+
+        then {
+            def lines  = new File("$outputDir/gencorr_results.tsv").readLines()
+            def header = lines[0].split('\t', -1) as List
+            def rows   = lines.drop(1).collect { line -> [header, line.split('\t', -1) as List].transpose().collectEntries() }
+            assert workflow.success
+            assertAll(
+                { assert rows.size() == 1 },
+                { assert rows[0].method == 'popcorn' && rows[0].status == 'ok' },
+                // EUR trait first, as in the score file
+                { assert [rows[0].trait1, rows[0].trait2] == ['eur_t', 'eas_t'] },
+                // same estimate as Popcorn run directly on the raw test files (pgi 0.5195)
+                { assert String.format('%.4f', rows[0].rg as double) == '0.5195' },
+                { assert rows[0].extra.contains('"correlation": "genetic_impact"') },
+                { assert rows[0].extra.contains('"p_pg_lt_1"') }
+            )
+        }
+    }
+
     test("-profile test, pair_mode target, joint LAVA SNP set") {
 
         when {

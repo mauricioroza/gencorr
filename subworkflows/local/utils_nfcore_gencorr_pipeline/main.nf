@@ -33,6 +33,8 @@ def methodRegistry() {
         ldsc: [ scope: 'global', required_params: ['ldsc_ld'],              ancestry_params: ['ldsc_ld'],  conda_ok: true  ],
         lava: [ scope: 'local',  required_params: ['lava_ref', 'lava_loci'], ancestry_params: ['lava_ref'], conda_ok: false ],
         sumher: [ scope: 'global', required_params: ['sumher_tagfile'],     ancestry_params: ['sumher_tagfile'], conda_ok: true ],
+        // Popcorn estimates the CROSS-ancestry pairs (the others take same-ancestry pairs)
+        popcorn: [ scope: 'global', required_params: ['popcorn_cfile'],     ancestry_params: [],                 conda_ok: false, cross_ancestry: true ],
     ]
 }
 
@@ -135,7 +137,8 @@ workflow PIPELINE_INITIALISATION {
     def same_ancestry = pair_list.findAll { p -> traitAncestry(meta_by_id[p[0]]) == traitAncestry(meta_by_id[p[1]]) }
     def n_cross       = pair_list.size() - same_ancestry.size()
     if (n_cross) {
-        log.warn "${n_cross} of ${pair_list.size()} pairs have traits of different ancestry; LDSC and LAVA assume one population, so these pairs are reported with status 'cross_ancestry' and not estimated."
+        def by_popcorn = 'popcorn' in methods ? ' They are estimated by Popcorn.' : ' Add --methods popcorn (with --popcorn_cfile) to estimate them across ancestries.'
+        log.warn "${n_cross} of ${pair_list.size()} pairs have traits of different ancestry; LDSC, LAVA and SumHer assume one population, so they report these pairs with status 'cross_ancestry'.${by_popcorn}"
     }
     validateReferences(params, methods, same_ancestry.collect { p -> traitAncestry(meta_by_id[p[0]]) }.unique().sort())
 
@@ -299,7 +302,7 @@ def validateGencorrParams(Map p, String profile) {
         }
         def conda = (profile ?: '').tokenize(',').intersect(['conda', 'mamba'])
         if (conda && !registry[m].conda_ok) {
-            error("Method '${m}' has no conda package (LAVA is installed from GitHub). Use -profile docker, singularity or apptainer.")
+            error("Method '${m}' has no conda package (it is installed from GitHub in its container). Use -profile docker, singularity or apptainer.")
         }
     }
     if ('lava' in methods && p.lava_overlap == 'ldsc' && !('ldsc' in methods)) {

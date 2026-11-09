@@ -66,6 +66,16 @@ FORMATS = {
         "sep": " ",
         "compress": False,  # LDAK reads plain text
     },
+    # Input for Popcorn fit --sfile1/--sfile2: rsid a1 a2 N Z (tab-separated).
+    # Only Z is given (no beta/SE), so Popcorn uses the harmonized Z like every
+    # other method (it would recompute Z from beta/SE otherwise).
+    "popcorn": {
+        "columns": [("rsid", "SNP"), ("a1", "A1"), ("a2", "A2"), ("N", "N"), ("Z", "Z")],
+        "optional": [],
+        "min_coverage": 1.0,
+        "sep": "\t",
+        "compress": False,
+    },
 }
 
 

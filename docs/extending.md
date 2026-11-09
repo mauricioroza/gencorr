@@ -131,7 +131,7 @@ rules to `conf/modules.config`.
 | method | scope | tool | note |
 |---|---|---|---|
 | ~~SumHer~~ | global | LDAK | **done** (`--methods sumher`) |
-| Popcorn | global, cross-ancestry | Popcorn | in BigaGWAS |
+| ~~Popcorn~~ | global, cross-ancestry | Popcorn | **done** (`--methods popcorn`; registry flag `cross_ancestry: true` makes it take the cross-ancestry pairs) |
 | HDL | global | R package | lower variance than LDSC |
 | HDL-L | local | R package | random-effects local rg, a useful cross-check of LAVA |
 | SUPERGNOVA, rho-HESS | local | | alternatives with different models |

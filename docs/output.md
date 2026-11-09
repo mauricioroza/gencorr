@@ -19,6 +19,9 @@ results/
 ├── sumher/
 │   ├── gencorr.sumher.tsv         SumHer rows of the standard table
 │   └── logs/                      LDAK output per pair: <trait1>__<trait2>.cors and .log
+├── popcorn/
+│   ├── gencorr.popcorn.tsv        Popcorn rows (cross-ancestry pairs)
+│   └── logs/                      Popcorn output per pair: <eur>__<eas>.popcorn, .popcorn.o.log, .popcorn.e.log
 └── pipeline_info/
     ├── gencorr_software_versions.yml   exact tool versions used by every process
     └── execution_{report,timeline,trace}_*.html/txt, params_*.json
@@ -64,7 +67,19 @@ with `pandas.read_csv(..., sep="\t", quoting=3)`. Parse `extra` with
 | `locus_not_processed` | lava | LAVA could not process the locus (e.g. too few SNPs or PCs) |
 | `bivar_error` | lava | `run.bivar` raised an error (message in the task log) |
 | `sumher_error` | sumher | LDAK stopped for this pair (e.g. no shared predictors with the tagging file); its message is in `extra.error` |
-| `cross_ancestry` | all | the two traits have different `ancestry` in the samplesheet; LDSC and LAVA assume one population, so the pair is not estimated. One row per method (locus NA); `extra` holds `ancestry_1` / `ancestry_2` |
+| `popcorn_error` | popcorn | Popcorn stopped for this pair; the last error line is in `extra.error` |
+| `same_ancestry` | popcorn | both traits have the same ancestry; Popcorn is only run on cross-ancestry pairs (the other methods estimate this pair) |
+| `cross_ancestry` | ldsc, lava, sumher | the two traits have different `ancestry` in the samplesheet; LDSC and LAVA assume one population, so the pair is not estimated. One row per method (locus NA); `extra` holds `ancestry_1` / `ancestry_2` |
+
+**Popcorn** (`method = popcorn`, `scope = global`, cross-ancestry pairs; trait1
+is from the score file's first population): `n_snps` = SNPs used after merging
+with the score file; `rg` = `pgi` (genetic impact) or `pge` (genetic effect)
+with Popcorn's jackknife SE; `rg_ci_*` = rg ± 1.96·SE; `z`, `p` test **rg ≠ 0**
+(computed here); `h2_1`, `h2_2` = observed-scale h2 of each trait in its
+population. `extra`: `correlation` (genetic_impact/genetic_effect), `fit`
+(regression/mle), **`z_pg_lt_1`, `p_pg_lt_1` (Popcorn's own test of rg < 1)**,
+`h2_1_liab`/`h2_2_liab` (binary traits with prevalences), `popcorn_version`,
+`error`, log name.
 
 ## `lava/gencorr.lava_univ.tsv`
 

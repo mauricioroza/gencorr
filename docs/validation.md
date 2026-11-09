@@ -85,15 +85,16 @@ version, or run them on a machine with LDSC and LAVA installed.
 **2026-11-09, in Docker** (`--profile +docker`, `gencorr-tools:0.1.0` + LDSC
 biocontainer), Nextflow 26.10.5, nf-test 0.9.5, WSL2 Ubuntu:
 
-* nf-test module tests: **27/27 pass** (incl. rsID mapping of a GRCh38-style
-  file, and SumHer with LDAK 6.1); function tests **6/6**; pipeline tests **4/4**
-  (`-profile test` with LDSC + LAVA + SumHer, `-stub`, mixed EUR + EAS
-  ancestry, target + joint), all with `--ci`
-* Python: **54 pass, 6 skipped** (oracle tests: LDSC/LAVA not on `PATH`); the
-  SumHer parser is tested on real LDAK 6.1 output, and the pipeline's SumHer
-  result equals LDAK run by hand on the same files (bmi × depression,
-  rg -0.093256, SE 0.057574)
-* `nf-core pipelines lint`: 233 passed, 0 failed; `nf-core modules lint`: 499 passed, 0 failed
+* nf-test module tests: **31/31 pass** (incl. rsID mapping of a GRCh38-style
+  file, SumHer with LDAK 6.1, Popcorn); function tests **6/6**; pipeline tests
+  **5/5** (`-profile test` with LDSC + LAVA + SumHer, `-stub`, mixed EUR + EAS
+  ancestry, Popcorn on a EUR × EAS pair, target + joint), all with `--ci`
+* Python: **60 pass, 6 skipped** (oracle tests: LDSC/LAVA not on `PATH`); the
+  SumHer and Popcorn parsers are tested on real tool output
+* Same numbers as the tools run by hand: SumHer bmi × depression rg -0.093256
+  (SE 0.057574); Popcorn on its own EUR/EAS test data pgi 0.5195109 (SE 0.153961)
+  through gencorr's harmonize + export vs Popcorn on the raw files (agree to 9 digits)
+* `nf-core pipelines lint`: 248 passed, 0 failed; `nf-core modules lint`: 590 passed, 0 failed
   (remaining lint warnings are expected for a private pipeline: private
   container registry, custom meta keys, underscores in local module names)
 

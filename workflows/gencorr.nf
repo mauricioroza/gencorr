@@ -17,6 +17,7 @@ include { MERGE_RESULTS as MERGE_ALL  } from '../modules/local/merge_results'
 include { METHOD_LDSC                 } from '../subworkflows/local/method_ldsc'
 include { METHOD_LAVA                 } from '../subworkflows/local/method_lava'
 include { METHOD_SUMHER               } from '../subworkflows/local/method_sumher'
+include { METHOD_POPCORN              } from '../subworkflows/local/method_popcorn'
 include { softwareVersionsToYAML      } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { traitAncestry; ancestryParam; methodRegistry } from '../subworkflows/local/utils_nfcore_gencorr_pipeline'
 
@@ -59,11 +60,17 @@ workflow GENCORR {
         same:  traitAncestry(m1) == traitAncestry(m2)
         cross: true
     }
-    def ch_same_pairs = ch_pairs_split.same
+    def ch_same_pairs  = ch_pairs_split.same
+    def ch_cross_pairs = ch_pairs_split.cross
+    // Methods that cannot estimate a pair get one row with a status saying why:
+    //   same-ancestry methods (ldsc, lava, sumher) on cross-ancestry pairs -> cross_ancestry
+    //   cross-ancestry methods (popcorn) on same-ancestry pairs             -> same_ancestry
+    def same_methods  = methods.findAll { m -> !methodRegistry()[m].cross_ancestry }
+    def cross_methods = methods.findAll { m ->  methodRegistry()[m].cross_ancestry }
     ch_results = ch_results.mix(
-        ch_pairs_split.cross
-            .flatMap { m1, m2 -> methods.collect { m -> crossAncestryRow(m, m1, m2) } }
-            .collectFile( name: 'gencorr.cross_ancestry.tsv', seed: resultHeader() + '\n',
+        ch_cross_pairs.flatMap { m1, m2 -> same_methods.collect  { m -> notEstimatedRow(m, m1, m2, 'cross_ancestry') } }
+            .mix( ch_same_pairs.flatMap { m1, m2 -> cross_methods.collect { m -> notEstimatedRow(m, m1, m2, 'same_ancestry') } } )
+            .collectFile( name: 'gencorr.not_estimated.tsv', seed: resultHeader() + '\n',
                           newLine: true, sort: true )
     )
 
@@ -130,6 +137,17 @@ workflow GENCORR {
     }
 
     //
+    // 2d. Popcorn (cross-ancestry pairs)
+    //
+    if ('popcorn' in methods) {
+        def ch_cfile = channel.value( file(params.popcorn_cfile, checkIfExists: true) )
+        def cfile_ancestries = params.popcorn_cfile_ancestries.tokenize(',').collect { a -> a.trim() }
+
+        METHOD_POPCORN ( ch_harmonized, ch_cross_pairs, ch_cfile, cfile_ancestries )
+        ch_results = ch_results.mix( METHOD_POPCORN.out.results )
+    }
+
+    //
     // 3. One table for all methods
     //
     MERGE_ALL (
@@ -189,12 +207,13 @@ def resultHeader() {
 }
 
 //
-// One results row for a pair the method cannot estimate because the two traits
-// have different ancestry.
+// One results row for a pair a method does not estimate because of the traits'
+// ancestries: 'cross_ancestry' (same-ancestry methods) or 'same_ancestry'
+// (cross-ancestry methods such as Popcorn).
 //
-def crossAncestryRow(String method, Map m1, Map m2) {
+def notEstimatedRow(String method, Map m1, Map m2, String status) {
     def extra = "{\"ancestry_1\": \"${traitAncestry(m1)}\", \"ancestry_2\": \"${traitAncestry(m2)}\"}"
-    def cells = [ method, methodRegistry()[method].scope, m1.id, m2.id ] + (['NA'] * 15) + [ 'cross_ancestry', extra ]
+    def cells = [ method, methodRegistry()[method].scope, m1.id, m2.id ] + (['NA'] * 15) + [ status, extra ]
     return cells.join('\t')
 }
 

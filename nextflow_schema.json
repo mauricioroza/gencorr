@@ -308,6 +308,36 @@
                 }
             }
         },
+        "popcorn_options": {
+            "title": "Popcorn options",
+            "type": "object",
+            "fa_icon": "fas fa-globe",
+            "description": "Cross-ancestry genetic correlation with Popcorn, for pairs whose traits have different ancestry.",
+            "properties": {
+                "popcorn_cfile": {
+                    "type": "string",
+                    "description": "Popcorn score file for the two populations (from `popcorn compute --bfile1 <EUR> --bfile2 <EAS>`, or the authors' pre-computed 1000 Genomes EUR/EAS scores). Plain or gzipped.",
+                    "format": "file-path",
+                    "exists": true
+                },
+                "popcorn_cfile_ancestries": {
+                    "type": "string",
+                    "description": "Ancestries of the score file's population 1 and 2, in that order.",
+                    "default": "EUR,EAS",
+                    "pattern": "^(EUR,EAS|EAS,EUR)$"
+                },
+                "popcorn_gen_effect": {
+                    "type": "boolean",
+                    "description": "Estimate the genetic effect correlation (--gen_effect) instead of the genetic impact correlation. The score file must be computed with --gen_effect too.",
+                    "default": false
+                },
+                "popcorn_use_mle": {
+                    "type": "boolean",
+                    "description": "Fit by maximum likelihood (--use_mle) instead of Popcorn's default regression, which its authors recommend.",
+                    "default": false
+                }
+            }
+        },
         "institutional_config_options": {
             "title": "Institutional config options",
             "type": "object",
@@ -444,6 +474,9 @@
         },
         {
             "$ref": "#/$defs/sumher_options"
+        },
+        {
+            "$ref": "#/$defs/popcorn_options"
         },
         {
             "$ref": "#/$defs/institutional_config_options"

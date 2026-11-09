@@ -75,3 +75,19 @@ awk '{print $1, 1}' "$TMP/thin.in" > "$TMP/weights.thin"
 mkdir -p "$HERE/sumher"
 gzip -n -c "$TMP/ldak.thin.test.tagging" > "$HERE/sumher/ldak.thin.test.tagging.gz"
 echo "SumHer tagging file written to $HERE/sumher/ldak.thin.test.tagging.gz"
+
+# -----------------------------------------------------------------------------
+# Popcorn test score file: tests/data/popcorn/EUR_EAS.test.cscore.gz
+# From Popcorn's own small EUR and EAS reference panels (test/EUR_ref, EAS_ref)
+# at the pinned commit; genetic impact scores (no --gen_effect).
+# Needs: docker build -t ghcr.io/mauricioroza/gencorr-popcorn:1.0.0-20a29e8 containers/gencorr-popcorn
+# -----------------------------------------------------------------------------
+POP_BASE=https://raw.githubusercontent.com/brielin/popcorn/20a29e8cb9c43fe88de8e903537eb874d52f38b3/test
+for pop in EUR EAS; do
+    for ext in bed bim fam; do curl -sSfL -o "$TMP/${pop}_ref.$ext" "$POP_BASE/${pop}_ref.$ext"; done
+done
+docker run --rm -u "$(id -u):$(id -g)" -v "$TMP:/w" -w /w ghcr.io/mauricioroza/gencorr-popcorn:1.0.0-20a29e8 \
+    popcorn compute -v 1 --bfile1 EUR_ref --bfile2 EAS_ref EUR_EAS.test.cscore > /dev/null
+mkdir -p "$HERE/popcorn"
+gzip -n -c "$TMP/EUR_EAS.test.cscore" > "$HERE/popcorn/EUR_EAS.test.cscore.gz"
+echo "Popcorn score file written to $HERE/popcorn/EUR_EAS.test.cscore.gz"

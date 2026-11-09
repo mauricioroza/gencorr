@@ -1,0 +1,93 @@
+name: "popcorn_fit"
+description: Cross-ancestry (trans-ethnic) genetic correlation and both
+  heritabilities for one pair of traits from two populations (popcorn fit)
+keywords:
+  - popcorn
+  - gwas
+  - genetic correlation
+  - cross-ancestry
+  - trans-ethnic
+tools:
+  - popcorn:
+      description: Popcorn estimates the genetic correlation of a trait pair
+        measured in two populations from summary statistics
+      homepage: "https://github.com/brielin/popcorn"
+      documentation: "https://github.com/brielin/popcorn#readme"
+      tool_dev_url: "https://github.com/brielin/popcorn"
+      doi: "10.1016/j.ajhg.2016.05.001"
+      licence: ["GPL-3.0"]
+      identifier: ""
+      args_id: "$args"
+input:
+  - - meta:
+        type: map
+        description: Pair meta map, e.g. [ id:'eur_t__eas_t', trait1:'eur_t',
+          trait2:'eas_t', ancestry_1:'EUR', ancestry_2:'EAS' ], plus k1/p1, k2/p2
+          (population/sample prevalence) for binary traits
+    - sumstats1:
+        type: file
+        description: Popcorn summary statistics (rsid a1 a2 N Z) of the trait from
+          the score file's first population, named <trait id>.popcorn.tsv
+        pattern: "*.popcorn.tsv"
+        ontologies:
+          - edam: "http://edamontology.org/format_3475" # TSV
+    - sumstats2:
+        type: file
+        description: Popcorn summary statistics of the trait from the second population
+        pattern: "*.popcorn.tsv"
+        ontologies:
+          - edam: "http://edamontology.org/format_3475" # TSV
+  - cfile:
+      type: file
+      description: Popcorn score file for the two populations (popcorn compute),
+        plain or gzipped
+      pattern: "*"
+      ontologies: []
+output:
+  results:
+    - - meta:
+          type: map
+          description: Pair meta map, as given
+      - ${meta.id}.popcorn:
+          type: file
+          description: Popcorn result table (h1^2, h2^2 and pgi or pge, with SE,
+            Z and P); empty when Popcorn failed
+          pattern: "*.popcorn"
+          ontologies:
+            - edam: "http://edamontology.org/format_3475" # TSV
+  log:
+    - - meta:
+          type: map
+          description: Pair meta map, as given
+      - ${meta.id}.popcorn.{o,e}.log:
+          type: file
+          description: Popcorn's output log (command, SNP counts, version) and
+            error log
+          pattern: "*.popcorn.{o,e}.log"
+          ontologies:
+            - edam: "http://edamontology.org/format_2330" # Textual format
+  versions_popcorn:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - popcorn:
+          type: string
+          description: The name of the tool
+      - "grep -m1 -oE 'Popcorn version [0-9.]+' ${meta.id}.popcorn.o.log | cut -d' ' -f3":
+          type: eval
+          description: The expression to obtain the version of the tool
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - popcorn:
+          type: string
+          description: The name of the tool
+      - "grep -m1 -oE 'Popcorn version [0-9.]+' ${meta.id}.popcorn.o.log | cut -d' ' -f3":
+          type: eval
+          description: The expression to obtain the version of the tool
+authors:
+  - "@mauricioroza"
+maintainers:
+  - "@mauricioroza"

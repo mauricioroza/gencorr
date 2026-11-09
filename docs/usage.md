@@ -26,7 +26,7 @@ They also assume **both traits of a pair come from one population**.
 |---|---|
 | EUR × EUR | LDSC with `--ldsc_ld`, LAVA with `--lava_ref`, SumHer with `--sumher_tagfile` |
 | EAS × EAS | LDSC with `--ldsc_ld_eas` (`--ldsc_w_ld_eas`), LAVA with `--lava_ref_eas`, SumHer with `--sumher_tagfile_eas` |
-| EUR × EAS | not estimated: one row per method with `status = cross_ancestry` (a cross-ancestry method such as Popcorn is needed) |
+| EUR × EAS | **Popcorn** (`--methods popcorn`, see below); LDSC, LAVA and SumHer report the pair with `status = cross_ancestry` |
 
 A reference is only required if some pair needs it: a run where every trait is
 EAS needs only the `_eas` references. `--ldsc_merge_alleles` (HapMap3) and
@@ -186,6 +186,37 @@ inflation instead; set `true` for that).
 LDAK reports rg and SEs but no p-value: gencorr gives z = rg / SE and a
 two-sided normal p (as BigaGWAS shows), marked in `extra.p_method`.
 
+### Popcorn (`--methods popcorn`): cross-ancestry pairs
+
+Popcorn (Brown et al. 2016) estimates the genetic correlation between a trait
+measured in one population and a trait measured in another, so it runs **only on
+the EUR × EAS pairs**; the other methods run on the same-ancestry pairs (and
+Popcorn reports those as `same_ancestry`). It needs a **score file** for the two
+populations:
+
+| file | where |
+|---|---|
+| EUR/EAS 1000 Genomes scores | pre-computed by the Popcorn authors (link in Popcorn's README), or `popcorn compute -v 1 --bfile1 <EUR panel> --bfile2 <EAS panel> scores.txt` with the `gencorr-popcorn` image |
+
+```bash
+--methods ldsc,lava,popcorn --popcorn_cfile /refs/popcorn/EUR_EAS.cscore
+```
+
+* `--popcorn_cfile_ancestries` (default `EUR,EAS`): the populations of the
+  score file in the order it was computed (`--bfile1`, `--bfile2`); gencorr puts
+  each pair's traits in that order.
+* `--popcorn_gen_effect`: genetic effect instead of genetic impact correlation
+  (the score file must be computed with `--gen_effect` too).
+* `--popcorn_use_mle`: maximum likelihood instead of the regression fit the
+  authors recommend.
+* Binary traits with `n_cases`, `n_controls` and `pop_prev` also get Popcorn's
+  liability-scale h2 (`extra.h2_1_liab`, `h2_2_liab`).
+
+**p-values:** Popcorn's own p for the correlation tests **rg < 1** (is the
+cross-ancestry correlation lower than perfect?). gencorr's `p` column instead
+tests **rg ≠ 0**, like every other method (z = rg / SE, normal), and keeps
+Popcorn's test as `extra.z_pg_lt_1` / `extra.p_pg_lt_1`.
+
 ### LAVA loci
 
 Loci: the default `--lava_loci` is LAVA's 2,495 GRCh37 blocks (fetched from the
@@ -212,6 +243,9 @@ they have rsIDs (see [Genome build and rsIDs](#genome-build-and-rsids)).
 | `--sumher_tagfile`, `--sumher_tagfile_eas` | none | LDAK tagging files for SumHer (EUR, EAS) |
 | `--sumher_snp_positions` | none | GRCh37 rsID → position table; SumHer variants named `CHR:BP` as in LDAK's tagging files |
 | `--sumher_cutoff`, `--sumher_genomic_control` | `0.01`, `false` | LDAK `--cutoff`, `--genomic-control` (BigaGWAS defaults) |
+| `--popcorn_cfile` | none | Popcorn score file for EUR × EAS pairs |
+| `--popcorn_cfile_ancestries` | `EUR,EAS` | populations of the score file, in order |
+| `--popcorn_gen_effect`, `--popcorn_use_mle` | `false`, `false` | genetic effect correlation; MLE fit |
 | `--ldsc_ld_eas`, `--ldsc_w_ld_eas`, `--lava_ref_eas` | none | references for traits with `ancestry = EAS` (see [Ancestry](#ancestry)) |
 | `--rsid_map_grch37`, `--rsid_map_grch38` | none | rsID maps for files without rsIDs, per samplesheet `build` (see [Genome build and rsIDs](#genome-build-and-rsids)) |
 | `--save_harmonized` / `--save_intermediates` | `false` | publish intermediate files |

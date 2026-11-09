@@ -1,0 +1,63 @@
+// Module test: POPCORN_SUMMARISE
+// Inputs: real Popcorn output in tests/python/fixtures/popcorn (also used by
+// tests/python/test_parse_popcorn.py): an ok pair, the same pair on the
+// liability scale, and a failed run (empty result) -> status popcorn_error.
+nextflow_process {
+
+    name "Test Process POPCORN_SUMMARISE"
+    script "../main.nf"
+    process "POPCORN_SUMMARISE"
+
+    tag "modules"
+    tag "modules_local"
+    tag "popcorn"
+    tag "popcorn/summarise"
+
+    test("two ok pairs + one failed pair") {
+
+        when {
+            params { outdir = "$outputDir" }
+            process {
+                """
+                input[0] = Channel.fromPath("${baseDir}/tests/python/fixtures/popcorn/*.popcorn").collect()
+                input[1] = Channel.fromPath("${baseDir}/tests/python/fixtures/popcorn/*.log").collect()
+                """
+            }
+        }
+
+        then {
+            def lines  = path(process.out.results[0]).readLines()
+            def header = lines[0].split('\t', -1) as List
+            def rows   = lines.drop(1).collect { line -> [ header, line.split('\t', -1) as List ].transpose().collectEntries() }
+            assertAll(
+                { assert process.success },
+                { assert rows.size() == 3 },
+                { assert rows.findAll { r -> r.status == 'ok' }.size() == 2 },
+                { assert rows.find { r -> r.trait1 == 'empty_t' }.status == 'popcorn_error' },
+                { assert snapshot(process.out.results).match() }
+            )
+        }
+    }
+
+    test("stub") {
+
+        options "-stub"
+
+        when {
+            params { outdir = "$outputDir" }
+            process {
+                """
+                input[0] = Channel.fromPath("${baseDir}/tests/python/fixtures/popcorn/*.popcorn").collect()
+                input[1] = Channel.fromPath("${baseDir}/tests/python/fixtures/popcorn/*.log").collect()
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out.results).match() }
+            )
+        }
+    }
+}

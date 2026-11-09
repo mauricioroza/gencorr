@@ -1,0 +1,103 @@
+name: "popcorn_summarise"
+description: Parse all Popcorn outputs into the standard gencorr results table,
+  one row per cross-ancestry pair
+keywords:
+  - popcorn
+  - genetic correlation
+  - parsing
+tools:
+  - gencorr:
+      description: gencorr helper scripts (bin/parse_popcorn.py; Python with pandas
+        and scipy)
+      homepage: "https://github.com/mauricioroza/gencorr"
+      documentation: "https://github.com/mauricioroza/gencorr/blob/dev/docs/output.md"
+      licence: ["MIT"]
+      identifier: ""
+      args_id: "$args"
+input:
+  - results:
+      type: file
+      description: Popcorn result tables (<pair>.popcorn) from POPCORN_FIT
+      pattern: "*.popcorn"
+      ontologies:
+        - edam: "http://edamontology.org/format_3475" # TSV
+  - logs:
+      type: file
+      description: Popcorn logs (<pair>.popcorn.o.log, .e.log) from POPCORN_FIT;
+        the output log names the two traits
+      pattern: "*.popcorn.{o,e}.log"
+      ontologies:
+        - edam: "http://edamontology.org/format_2330" # Textual format
+output:
+  results:
+    - gencorr.popcorn.tsv:
+        type: file
+        description: Standard results table with one Popcorn row per pair. The p
+          column tests rg != 0; Popcorn's own rg < 1 test is in extra. Failed
+          pairs are kept with status popcorn_error
+        pattern: "gencorr.popcorn.tsv"
+        ontologies:
+          - edam: "http://edamontology.org/format_3475" # TSV
+  versions_python:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - python:
+          type: string
+          description: The name of the tool
+      - "python3 -c 'import platform; print(platform.python_version())'":
+          type: eval
+          description: The expression to obtain the version of the tool
+  versions_pandas:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - pandas:
+          type: string
+          description: The name of the tool
+      - "python3 -c 'import pandas; print(pandas.__version__)'":
+          type: eval
+          description: The expression to obtain the version of the tool
+  versions_scipy:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - scipy:
+          type: string
+          description: The name of the tool
+      - "python3 -c 'import scipy; print(scipy.__version__)'":
+          type: eval
+          description: The expression to obtain the version of the tool
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - python:
+          type: string
+          description: The name of the tool
+      - "python3 -c 'import platform; print(platform.python_version())'":
+          type: eval
+          description: The expression to obtain the version of the tool
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - pandas:
+          type: string
+          description: The name of the tool
+      - "python3 -c 'import pandas; print(pandas.__version__)'":
+          type: eval
+          description: The expression to obtain the version of the tool
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - scipy:
+          type: string
+          description: The name of the tool
+      - "python3 -c 'import scipy; print(scipy.__version__)'":
+          type: eval
+          description: The expression to obtain the version of the tool
+authors:
+  - "@mauricioroza"
+maintainers:
+  - "@mauricioroza"

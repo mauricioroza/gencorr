@@ -76,8 +76,13 @@ BigaGWAS's slowness is rsID mapping, which this pipeline avoids by design).
 - On dev and pushed: module nf-tests; parse_ldsc log-order fix (samp_prev/pop_prev were NA when the
   .h2_liab.log was read first); local modules aligned with nf-core specs ($args, full version reporting,
   nf-core-format meta.yml, dependency tags). `nf-core modules lint`: 0 failures.
-- Full suite passes locally in Docker (nf-test 0.9.5, Nextflow 26.10.5): 27 module, 6 function,
-  4 pipeline tests; pytest 54 passed / 6 skipped. CI still pins NFT_VER 0.9.4.
+- Full suite passes locally in Docker (nf-test 0.9.5, Nextflow 26.10.5): 31 module, 6 function,
+  5 pipeline tests; pytest 60 passed / 6 skipped. CI still pins NFT_VER 0.9.4.
+- Popcorn (`--methods popcorn`, cross-ancestry pairs only; registry `cross_ancestry: true`): image
+  `ghcr.io/mauricioroza/gencorr-popcorn:1.0.0-20a29e8` built locally (GPL-3.0; not pushed). Needs
+  numpy<1.24 (np.bool) and six (pysnptools). Popcorn's p tests rg<1 -> kept in extra; `p` = rg!=0.
+  Container-only (conda_ok false). Test data: Popcorn repo test files at the pinned commit + score file
+  tests/data/popcorn. `.git/info/exclude` hides samplesheet_*.csv: add test samplesheets with `git add -f`.
 - SumHer (LDAK 6.1, `--methods sumher`): image `ghcr.io/mauricioroza/gencorr-ldak:6.1` built locally
   from containers/gencorr-ldak (GPL-3.0, may be public; not pushed yet). LDAK 6 writes `SE` not `SD`,
   can't read gzipped tagging files (module gunzips), defaults to multiplicative-inflation model (we pass

@@ -1,0 +1,26 @@
+{
+    "two ok pairs + one failed pair": {
+        "content": [
+            [
+                "gencorr.popcorn.tsv:md5,11e1f5d62b37720d90fa737acb71ebb6"
+            ]
+        ],
+        "timestamp": "2026-11-09T12:08:52.327941111",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.5"
+        }
+    },
+    "stub": {
+        "content": [
+            [
+                "gencorr.popcorn.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+            ]
+        ],
+        "timestamp": "2026-11-09T12:08:58.263891837",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.5"
+        }
+    }
+}

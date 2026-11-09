@@ -16,6 +16,7 @@ set of traits and returns one tidy results table.
 |---|---|---|---|
 | **global** | genome-wide rg | [LDSC](https://github.com/bulik/ldsc) 1.0.1 (same version as BigaGWAS) | rg, SE, p per trait pair; observed- and liability-scale h2 per trait |
 | **global** | genome-wide rg, LDAK heritability model | [SumHer](https://dougspeed.com/genetic-correlations/) (LDAK 6.1) | rg, SE, p per trait pair; h2 and coheritability |
+| **cross-ancestry** | rg between a EUR and an EAS GWAS | [Popcorn](https://github.com/brielin/popcorn) (commit `20a29e8`) | rg (genetic impact or effect), SE, p; h2 in each population |
 | **local** | rg per genomic locus | [LAVA](https://github.com/josefin-werme/LAVA) 0.1.5 (commit `e729a24`) | local rho, 95% CI, p per pair and locus; local h2 per trait |
 
 It was built to replace [BigaGWAS](https://bigagwas.org) for routine analyses:
@@ -155,7 +156,8 @@ JSON `extra` column with `jsonlite::fromJSON`.
 * **Ancestry:** set `ancestry` (`EUR` default, `EAS`) per trait in the
   samplesheet. Each same-ancestry pair runs with that ancestry's references
   (`--ldsc_ld`/`--lava_ref` for EUR, `--ldsc_ld_eas`/`--lava_ref_eas` for EAS);
-  EUR × EAS pairs are reported with status `cross_ancestry`
+  EUR × EAS pairs are estimated by Popcorn (`--methods popcorn`) and reported
+  by the other methods with status `cross_ancestry`
   ([details](docs/usage.md#ancestry)). For European data the LAVA authors
   recommend their UK Biobank reference over 1000 Genomes.
 * **conda:** LAVA has no conda package, so `-profile conda` works only with

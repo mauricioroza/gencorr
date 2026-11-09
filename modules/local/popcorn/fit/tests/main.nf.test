@@ -1,0 +1,95 @@
+// Module test: POPCORN_FIT
+// Setup: HARMONIZE_SUMSTATS -> EXPORT_SUMSTATS(popcorn) on Popcorn's own EUR and
+// EAS test summary statistics (pinned commit); score file tests/data/popcorn,
+// computed from Popcorn's test reference panels. Popcorn run directly on the raw
+// files gives pgi 0.5195109 (SE 0.153961); the pipeline route must match.
+nextflow_process {
+
+    name "Test Process POPCORN_FIT"
+    script "../main.nf"
+    process "POPCORN_FIT"
+
+    tag "modules"
+    tag "modules_local"
+    tag "popcorn"
+    tag "popcorn/fit"
+    tag "harmonize_sumstats"
+    tag "export_sumstats"
+
+    setup {
+        run("HARMONIZE_SUMSTATS") {
+            script "../../../harmonize_sumstats/main.nf"
+            process {
+                """
+                def base = 'https://raw.githubusercontent.com/brielin/popcorn/20a29e8cb9c43fe88de8e903537eb874d52f38b3/test'
+                input[0] = Channel.of(
+                    [ [ id:'eur_t', ancestry:'EUR' ], file("\${base}/EUR_test.txt", checkIfExists: true), [] ],
+                    [ [ id:'eas_t', ancestry:'EAS' ], file("\${base}/EAS_test.txt", checkIfExists: true), [] ]
+                )
+                """
+            }
+        }
+        run("EXPORT_SUMSTATS") {
+            script "../../../export_sumstats/main.nf"
+            process {
+                """
+                input[0] = HARMONIZE_SUMSTATS.out.sumstats
+                input[1] = 'popcorn'
+                input[2] = []
+                """
+            }
+        }
+    }
+
+    test("eur_t vs eas_t - genetic impact, regression") {
+
+        when {
+            params { outdir = "$outputDir" }
+            process {
+                """
+                input[0] = EXPORT_SUMSTATS.out.sumstats
+                    .toSortedList { a, b -> b[0].id <=> a[0].id }      // eur_t first
+                    .map { items -> [ [ id:'eur_t__eas_t', trait1:'eur_t', trait2:'eas_t', ancestry_1:'EUR', ancestry_2:'EAS' ],
+                                      items[0][1], items[1][1] ] }
+                input[1] = file("${baseDir}/tests/data/popcorn/EUR_EAS.test.cscore.gz", checkIfExists: true)
+                """
+            }
+        }
+
+        then {
+            def table = path(process.out.results[0][1]).readLines()
+            def pgi   = table.find { line -> line.startsWith('pgi\t') }.split('\t')
+            assertAll(
+                { assert process.success },
+                { assert String.format('%.6f', pgi[1] as double) == '0.519511' },
+                { assert String.format('%.6f', pgi[2] as double) == '0.153961' },
+                { assert snapshot(process.out.versions_popcorn).match() }
+            )
+        }
+    }
+
+    test("stub") {
+
+        options "-stub"
+
+        when {
+            params { outdir = "$outputDir" }
+            process {
+                """
+                input[0] = EXPORT_SUMSTATS.out.sumstats
+                    .toSortedList { a, b -> b[0].id <=> a[0].id }
+                    .map { items -> [ [ id:'eur_t__eas_t', trait1:'eur_t', trait2:'eas_t', ancestry_1:'EUR', ancestry_2:'EAS' ],
+                                      items[0][1], items[1][1] ] }
+                input[1] = file("${baseDir}/tests/data/popcorn/EUR_EAS.test.cscore.gz", checkIfExists: true)
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out.results, process.out.versions_popcorn).match() }
+            )
+        }
+    }
+}

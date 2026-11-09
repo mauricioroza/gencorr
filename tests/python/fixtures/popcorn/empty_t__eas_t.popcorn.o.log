@@ -1,0 +1,32 @@
+Popcorn version 1.1
+(C) 2015-2025 Brielin C Brown
+University of California, Berkeley
+GNU General Public License v3
+
+Invoking command: python /usr/local/bin/popcorn fit -v 1 --cfile scores.txt --sfile1 empty_t.popcorn.tsv --sfile2 eas_t.popcorn.tsv empty_t__eas_t.popcorn
+Beginning analysis at Mon Nov  9 15:04:20 2026
+Analyzing a pair of traits in two populations
+Parsing empty_t.popcorn.tsv ...
+Note: Study AF not provided. Defulating to ignoring variants where minor allele is the compliment of the major allele.
+Parsing eas_t.popcorn.tsv ...
+Note: Study AF not provided. Defulating to ignoring variants where minor allele is the compliment of the major allele.
+0 49999 SNPs detected in input.
+0 SNPs remaining after merging with score file.
+Traceback (most recent call last):
+  File "/usr/local/bin/popcorn", line 8, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/popcorn/__main__.py", line 209, in main
+    data = sumstats.sumstats_2_trait(scores,args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/popcorn/sumstats.py", line 196, in __init__
+    if not data1['a1'].iloc[0].isupper():
+           ~~~~~~~~~~~~~~~~^^^
+  File "/usr/local/lib/python3.11/site-packages/pandas/core/indexing.py", line 1191, in __getitem__
+    return self._getitem_axis(maybe_callable, axis=axis)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/pandas/core/indexing.py", line 1752, in _getitem_axis
+    self._validate_integer(key, axis)
+  File "/usr/local/lib/python3.11/site-packages/pandas/core/indexing.py", line 1685, in _validate_integer
+    raise IndexError("single positional indexer is out-of-bounds")
+IndexError: single positional indexer is out-of-bounds

@@ -1,0 +1,21 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/environment-schema.json
+# Popcorn (GPL-3.0) is not on conda; installed with pip from the pinned commit.
+# Must match containers/gencorr-popcorn/Dockerfile. Not tested with -profile
+# conda (the pipeline refuses it for popcorn, methodRegistry conda_ok: false);
+# kept as the recipe of the container's environment.
+channels:
+  - conda-forge
+dependencies:
+  - conda-forge::bottleneck=1.4.2
+  - conda-forge::git=2.47.1
+  - conda-forge::numpy=1.23.5
+  - conda-forge::pandas=2.2.3
+  - conda-forge::pip=24.0
+  - conda-forge::python=3.11.11
+  - conda-forge::scipy=1.11.4
+  - conda-forge::six=1.16.0
+  - conda-forge::statsmodels=0.14.4
+  - pip:
+      - pysnptools==0.5.13
+      - git+https://github.com/brielin/popcorn.git@20a29e8cb9c43fe88de8e903537eb874d52f38b3

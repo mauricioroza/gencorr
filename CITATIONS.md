@@ -52,6 +52,12 @@ Cite the method papers for the methods in `--methods`.
 
   The LDAK pre-computed tagging files were built from UK Biobank data; also follow UK Biobank's acknowledgement policy when you use them.
 
+### Popcorn (`--methods popcorn`)
+
+- [Popcorn: trans-ethnic genetic correlation](https://doi.org/10.1016/j.ajhg.2016.05.001)
+
+  > Brown BC; Asian Genetic Epidemiology Network Type 2 Diabetes Consortium, Ye CJ, Price AL, Zaitlen N. Transethnic genetic-correlation estimates from summary statistics. Am J Hum Genet. 2016;99(1):76-88. doi: 10.1016/j.ajhg.2016.05.001.
+
 ## Reference data
 
 Cite the data behind the references you pass to the pipeline.

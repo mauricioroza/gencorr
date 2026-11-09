@@ -1,0 +1,3 @@
+id,sumstats,n,n_cases,n_controls,pop_prev,colmap,ancestry,label
+eur_t,https://raw.githubusercontent.com/brielin/popcorn/20a29e8cb9c43fe88de8e903537eb874d52f38b3/test/EUR_test.txt,,,,,,EUR,Popcorn test trait (EUR)
+eas_t,https://raw.githubusercontent.com/brielin/popcorn/20a29e8cb9c43fe88de8e903537eb874d52f38b3/test/EAS_test.txt,,,,,,EAS,Popcorn test trait (EAS)
