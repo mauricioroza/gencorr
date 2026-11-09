@@ -29,6 +29,9 @@ nextflow_pipeline {
                 // every pair analysed by LDSC; 6 pairs x 10 loci for LAVA
                 { assert rows.count { it.method == 'ldsc' } == 6 },
                 { assert rows.count { it.method == 'lava' } == 60 },
+                // every pair estimated by SumHer too
+                { assert rows.findAll { it.method == 'sumher' }.size() == 6 },
+                { assert rows.findAll { it.method == 'sumher' }.every { it.status == 'ok' } },
                 { assert rows.findAll { it.method == 'ldsc' }.every { it.status == 'ok' } },
                 { assert snapshot(
                     // tool versions from the "versions" topic (nf-core template);
@@ -69,6 +72,7 @@ nextflow_pipeline {
                 input         = "${projectDir}/tests/data/samplesheet_ancestry.csv"
                 ldsc_ld_eas   = "${projectDir}/tests/data/ldsc"
                 lava_ref_eas  = 'https://raw.githubusercontent.com/josefin-werme/LAVA/e729a245f7b6923967a96804fbf5246eadf2d6c6/vignettes/data/g1000_test'
+                sumher_tagfile_eas = "${projectDir}/tests/data/sumher/ldak.thin.test.tagging.gz"
                 lava_snp_set  = 'joint'
             }
         }
@@ -81,8 +85,9 @@ nextflow_pipeline {
             def cross  = ['bmi|neuro', 'bmi|rheuma', 'depression|neuro', 'depression|rheuma'] as Set
             assert workflow.success
             assertAll(
-                // 4 cross-ancestry pairs x 2 methods: one row each, not estimated
-                { assert rows.findAll { r -> r.status == 'cross_ancestry' }.size() == 8 },
+                // 4 cross-ancestry pairs x 3 methods (ldsc, lava, sumher): one row each, not estimated
+                { assert rows.findAll { r -> r.status == 'cross_ancestry' }.size() == 12 },
+                { assert rows.findAll { r -> r.method == 'sumher' && r.status == 'ok' }.collect { r -> pair(r) }.toSet() == ['bmi|depression', 'neuro|rheuma'] as Set },
                 { assert rows.findAll { r -> r.status == 'cross_ancestry' }.collect { r -> pair(r) }.toSet() == cross },
                 { assert rows.findAll { r -> r.status == 'cross_ancestry' }.every { r -> r.rg == 'NA' && r.extra.contains('"ancestry_1"') } },
                 // same-ancestry pairs are estimated: bmi|depression (EUR), neuro|rheuma (EAS)

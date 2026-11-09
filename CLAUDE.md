@@ -76,8 +76,13 @@ BigaGWAS's slowness is rsID mapping, which this pipeline avoids by design).
 - On dev and pushed: module nf-tests; parse_ldsc log-order fix (samp_prev/pop_prev were NA when the
   .h2_liab.log was read first); local modules aligned with nf-core specs ($args, full version reporting,
   nf-core-format meta.yml, dependency tags). `nf-core modules lint`: 0 failures.
-- Full suite passes locally in Docker (nf-test 0.9.5, Nextflow 26.10.5): 23 module, 6 function,
-  4 pipeline tests; pytest 48 passed / 6 skipped. CI still pins NFT_VER 0.9.4.
+- Full suite passes locally in Docker (nf-test 0.9.5, Nextflow 26.10.5): 27 module, 6 function,
+  4 pipeline tests; pytest 54 passed / 6 skipped. CI still pins NFT_VER 0.9.4.
+- SumHer (LDAK 6.1, `--methods sumher`): image `ghcr.io/mauricioroza/gencorr-ldak:6.1` built locally
+  from containers/gencorr-ldak (GPL-3.0, may be public; not pushed yet). LDAK 6 writes `SE` not `SD`,
+  can't read gzipped tagging files (module gunzips), defaults to multiplicative-inflation model (we pass
+  `--genomic-control NO` like BigaGWAS). LDAK's pre-computed tagging files use GRCh37 CHR:BP names ->
+  `--sumher_snp_positions`. `--calc-tagging` needs ~9 GB RAM by default: use `--bit-size 400` in WSL.
 - Ancestry: samplesheet `ancestry` (EUR default, EAS); refs `--ldsc_ld[_eas]`, `--ldsc_w_ld[_eas]`,
   `--lava_ref[_eas]` (see ancestryParam/traitAncestry in utils subworkflow). Same-ancestry pairs only go
   to methods; cross-ancestry pairs become `cross_ancestry` rows (gencorr.nf crossAncestryRow).

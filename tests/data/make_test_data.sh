@@ -55,3 +55,23 @@ for m in M M_5_50; do
 done
 rm -f "$HERE"/ldsc/[0-9]*.l2.*
 echo "LD scores written to $HERE/ldsc (prefix: all)"
+
+# -----------------------------------------------------------------------------
+# SumHer test tagging file: tests/data/sumher/ldak.thin.test.tagging.gz
+# LDAK-Thin model (dougspeed.com, "Calculate Taggings"), restricted to the SNPs
+# of the 10 test loci so the file stays small (~90k predictors, 1.5 MB gz).
+# Needs the LDAK image: docker build -t ghcr.io/mauricioroza/gencorr-ldak:6.1 containers/gencorr-ldak
+# (~6 GB RAM with the default bit size; add --bit-size 400 on smaller machines).
+# -----------------------------------------------------------------------------
+LDAK=(docker run --rm -u "$(id -u):$(id -g)" -v "$TMP:/w" -w /w ghcr.io/mauricioroza/gencorr-ldak:6.1 ldak6)
+awk 'NR==FNR { if (FNR>1) { c[FNR]=$2; s[FNR]=$3; e[FNR]=$4; n=FNR } next }
+     { for (i=2;i<=n;i++) if ($1==c[i] && $4>=s[i] && $4<=e[i]) { print $2; break } }' \
+     "$HERE/test_10.loci" "$TMP/g1000_test.bim" > "$TMP/loci_snps.txt"
+"${LDAK[@]}" --thin thin --bfile g1000_test --window-prune .98 --window-kb 100 > /dev/null
+awk '{print $1, 1}' "$TMP/thin.in" > "$TMP/weights.thin"
+# 1 Mb window: the test bim has no cM positions
+"${LDAK[@]}" --calc-tagging ldak.thin.test --bfile g1000_test --extract loci_snps.txt \
+    --weights weights.thin --power -.25 --window-kb 1000 --save-matrix NO > /dev/null
+mkdir -p "$HERE/sumher"
+gzip -n -c "$TMP/ldak.thin.test.tagging" > "$HERE/sumher/ldak.thin.test.tagging.gz"
+echo "SumHer tagging file written to $HERE/sumher/ldak.thin.test.tagging.gz"

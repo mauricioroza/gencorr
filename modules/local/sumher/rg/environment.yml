@@ -1,0 +1,8 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/environment-schema.json
+# LDAK 6.1 (SumHer), GPL-3.0. Must match containers/gencorr-ldak/Dockerfile.
+channels:
+  - conda-forge
+  - genomedk
+dependencies:
+  - genomedk::ldak6=6.1

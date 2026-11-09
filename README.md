@@ -15,6 +15,7 @@ set of traits and returns one tidy results table.
 | | method | tool | what you get |
 |---|---|---|---|
 | **global** | genome-wide rg | [LDSC](https://github.com/bulik/ldsc) 1.0.1 (same version as BigaGWAS) | rg, SE, p per trait pair; observed- and liability-scale h2 per trait |
+| **global** | genome-wide rg, LDAK heritability model | [SumHer](https://dougspeed.com/genetic-correlations/) (LDAK 6.1) | rg, SE, p per trait pair; h2 and coheritability |
 | **local** | rg per genomic locus | [LAVA](https://github.com/josefin-werme/LAVA) 0.1.5 (commit `e729a24`) | local rho, 95% CI, p per pair and locus; local h2 per trait |
 
 It was built to replace [BigaGWAS](https://bigagwas.org) for routine analyses:

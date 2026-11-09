@@ -1,0 +1,100 @@
+name: "sumher_summarise"
+description: Parse all SumHer (LDAK --sum-cors) outputs into the standard
+  gencorr results table, one row per pair
+keywords:
+  - sumher
+  - genetic correlation
+  - parsing
+tools:
+  - gencorr:
+      description: gencorr helper scripts (bin/parse_sumher.py; Python with pandas
+        and scipy)
+      homepage: "https://github.com/mauricioroza/gencorr"
+      documentation: "https://github.com/mauricioroza/gencorr/blob/dev/docs/output.md"
+      licence: ["MIT"]
+      identifier: ""
+      args_id: "$args"
+input:
+  - logs:
+      type: file
+      description: LDAK logs (<pair>.log) from SUMHER_RG; they name the two traits
+      pattern: "*.log"
+      ontologies:
+        - edam: "http://edamontology.org/format_2330" # Textual format
+  - cors:
+      type: file
+      description: LDAK result files (<pair>.cors) from SUMHER_RG
+      pattern: "*.cors"
+      ontologies: []
+output:
+  results:
+    - gencorr.sumher.tsv:
+        type: file
+        description: Standard results table with one SumHer rg row per pair;
+          failed pairs kept with status sumher_error
+        pattern: "gencorr.sumher.tsv"
+        ontologies:
+          - edam: "http://edamontology.org/format_3475" # TSV
+  versions_python:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - python:
+          type: string
+          description: The name of the tool
+      - "python3 -c 'import platform; print(platform.python_version())'":
+          type: eval
+          description: The expression to obtain the version of the tool
+  versions_pandas:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - pandas:
+          type: string
+          description: The name of the tool
+      - "python3 -c 'import pandas; print(pandas.__version__)'":
+          type: eval
+          description: The expression to obtain the version of the tool
+  versions_scipy:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - scipy:
+          type: string
+          description: The name of the tool
+      - "python3 -c 'import scipy; print(scipy.__version__)'":
+          type: eval
+          description: The expression to obtain the version of the tool
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - python:
+          type: string
+          description: The name of the tool
+      - "python3 -c 'import platform; print(platform.python_version())'":
+          type: eval
+          description: The expression to obtain the version of the tool
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - pandas:
+          type: string
+          description: The name of the tool
+      - "python3 -c 'import pandas; print(pandas.__version__)'":
+          type: eval
+          description: The expression to obtain the version of the tool
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - scipy:
+          type: string
+          description: The name of the tool
+      - "python3 -c 'import scipy; print(scipy.__version__)'":
+          type: eval
+          description: The expression to obtain the version of the tool
+authors:
+  - "@mauricioroza"
+maintainers:
+  - "@mauricioroza"

@@ -32,6 +32,7 @@ def methodRegistry() {
     return [
         ldsc: [ scope: 'global', required_params: ['ldsc_ld'],              ancestry_params: ['ldsc_ld'],  conda_ok: true  ],
         lava: [ scope: 'local',  required_params: ['lava_ref', 'lava_loci'], ancestry_params: ['lava_ref'], conda_ok: false ],
+        sumher: [ scope: 'global', required_params: ['sumher_tagfile'],     ancestry_params: ['sumher_tagfile'], conda_ok: true ],
     ]
 }
 

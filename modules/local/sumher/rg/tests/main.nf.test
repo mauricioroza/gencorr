@@ -1,0 +1,98 @@
+// Module test: SUMHER_RG
+// Setup: HARMONIZE_SUMSTATS -> EXPORT_SUMSTATS(sumher) on two LAVA vignette
+// traits; tagging file tests/data/sumher (LDAK-Thin, SNPs of the 10 test loci,
+// rsID predictor names). The snapshot holds LDAK's .cors table (deterministic:
+// jackknife blocks are fixed).
+nextflow_process {
+
+    name "Test Process SUMHER_RG"
+    script "../main.nf"
+    process "SUMHER_RG"
+    config "./nextflow.config"
+
+    tag "modules"
+    tag "modules_local"
+    tag "sumher"
+    tag "sumher/rg"
+    tag "harmonize_sumstats"
+    tag "export_sumstats"
+
+    setup {
+        run("HARMONIZE_SUMSTATS") {
+            script "../../../harmonize_sumstats/main.nf"
+            process {
+                """
+                input[0] = Channel.of(
+                    [ [ id:'bmi' ], file("\${params.lava_test_data}/bmi.sumstats.txt", checkIfExists: true), [] ],
+                    [ [ id:'depression', n_cases:170756, n_controls:329443 ],
+                      file("\${params.lava_test_data}/depression.sumstats.txt", checkIfExists: true), [] ]
+                )
+                """
+            }
+        }
+        run("EXPORT_SUMSTATS") {
+            script "../../../export_sumstats/main.nf"
+            process {
+                """
+                input[0] = HARMONIZE_SUMSTATS.out.sumstats
+                input[1] = 'sumher'
+                input[2] = []
+                """
+            }
+        }
+    }
+
+    test("bmi vs depression - test tagging file") {
+
+        when {
+            params { outdir = "$outputDir" }
+            process {
+                """
+                input[0] = EXPORT_SUMSTATS.out.sumstats
+                    .toSortedList { a, b -> a[0].id <=> b[0].id }
+                    .map { items -> [ [ id:'bmi__depression', trait1:'bmi', trait2:'depression', ancestry:'EUR' ],
+                                      items[0][1], items[1][1] ] }
+                input[1] = file("${baseDir}/tests/data/sumher/ldak.thin.test.tagging.gz", checkIfExists: true)
+                """
+            }
+        }
+
+        then {
+            def cors = path(process.out.cors[0][1]).readLines()
+            def log  = path(process.out.log[0][1]).text
+            assertAll(
+                { assert process.success },
+                { assert cors[0] == 'Component Value SE' },
+                { assert cors.any { line -> line.startsWith('Cor_All ') } },
+                // BigaGWAS' options reached LDAK (conf: ./nextflow.config)
+                { assert log.contains('--genomic-control NO') && log.contains('--cutoff 0.01') },
+                { assert snapshot(cors, process.out.versions_ldak).match() }
+            )
+        }
+    }
+
+    test("stub") {
+
+        options "-stub"
+
+        when {
+            params { outdir = "$outputDir" }
+            process {
+                """
+                input[0] = EXPORT_SUMSTATS.out.sumstats
+                    .toSortedList { a, b -> a[0].id <=> b[0].id }
+                    .map { items -> [ [ id:'bmi__depression', trait1:'bmi', trait2:'depression', ancestry:'EUR' ],
+                                      items[0][1], items[1][1] ] }
+                input[1] = file("${baseDir}/tests/data/sumher/ldak.thin.test.tagging.gz", checkIfExists: true)
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out.cors, process.out.versions_ldak).match() }
+            )
+        }
+    }
+}

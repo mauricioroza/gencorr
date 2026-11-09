@@ -44,6 +44,14 @@ Cite the method papers for the methods in `--methods`.
 
   > Werme J, van der Sluis S, Posthuma D, de Leeuw CA. An integrated framework for local genetic correlation analysis. Nat Genet. 2022;54(3):274-282. doi: 10.1038/s41588-022-01017-y.
 
+### SumHer (`--methods sumher`)
+
+- [SumHer / LDAK](https://doi.org/10.1038/s41588-018-0279-5)
+
+  > Speed D, Balding DJ. SumHer better estimates the SNP heritability of complex traits from summary statistics. Nat Genet. 2019;51(2):277-284. doi: 10.1038/s41588-018-0279-5.
+
+  The LDAK pre-computed tagging files were built from UK Biobank data; also follow UK Biobank's acknowledgement policy when you use them.
+
 ## Reference data
 
 Cite the data behind the references you pass to the pipeline.

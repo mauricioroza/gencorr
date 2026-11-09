@@ -8,6 +8,9 @@
  * Output name: <id>.<format>.tsv (or .tsv.gz for compressed formats)
  *
  * snp_list (optional, [] for none): keep only these SNP IDs (e.g. w_hm3.snplist).
+ *   For format 'sumher' it is instead an rsID -> position table (PLINK .bim or
+ *   CHR/BP/SNP table): variants are then named CHR:BP, as LDAK's pre-computed
+ *   tagging files expect.
  */
 process EXPORT_SUMSTATS {
     tag "${meta.id}:${format}"
@@ -31,7 +34,8 @@ process EXPORT_SUMSTATS {
 
     script:
     def args     = task.ext.args ?: ''
-    def restrict = snp_list ? "--snp-list ${snp_list}" : ''
+    def restrict = !snp_list ? '' :
+                   format == 'sumher' ? "--predictor-positions ${snp_list}" : "--snp-list ${snp_list}"
     """
     export_sumstats.py \\
         --input ${harmonized} \\

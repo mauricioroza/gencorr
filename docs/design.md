@@ -49,6 +49,8 @@ caused by input handling.
 | LAVA SNP list | all SNPs by default; HapMap3 (or any list) with `--lava_snp_list` | BigaGWAS restricts LAVA to a HapMap3-based list (~16k of ~100k SNPs on the test data). With the same list gencorr reproduces BigaGWAS' rho to ~1e-5; the default follows the LAVA authors, who do not filter |
 | LAVA version | 0.1.5 | BigaGWAS runs 0.1.0. On identical SNPs, continuous traits, the estimates matched to 5–7 decimals; binary traits differ by design (0.1.5 changed the binary model) |
 | LAVA case/control | used when `n_cases`/`n_controls` are given | BigaGWAS' 2-trait form treats every trait as continuous |
+| SumHer version | LDAK 6.1 | BigaGWAS runs LDAK 5.2. LDAK 6 writes `SE` where 5.x wrote `SD` (the parser accepts both); its default without `--genomic-control` models multiplicative inflation, so gencorr passes BigaGWAS' `--genomic-control NO` explicitly |
+| SumHer Z | the harmonized Z (from P by default, `--z_priority`) for every method | BigaGWAS computes SumHer's Z as BETA/SE but feeds P to LDSC; `--z_priority beta_se,p` reproduces its SumHer input |
 | ancestry | per trait (`ancestry` column); each same-ancestry pair uses its ancestry's references; cross-ancestry pairs kept as `cross_ancestry` | BigaGWAS selects EUR or EAS LD scores per job and offers LAVA only for EUR; gencorr runs LAVA for EAS too when an EAS reference is given |
 
 ## Reproducibility

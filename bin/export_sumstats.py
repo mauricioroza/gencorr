@@ -55,6 +55,17 @@ FORMATS = {
         "sep": "\t",
         "compress": False,  # LAVA reads with data.table::fread; plain is fastest
     },
+    # Input for LDAK/SumHer --summary: Predictor A1 A2 n Z (space-separated).
+    # Predictor names must match the tagging file: rsIDs by default, or chr:bp
+    # (GRCh37) with --predictor-positions, as in LDAK's pre-computed taggings.
+    "sumher": {
+        "columns": [("Predictor", "SNP"), ("A1", "A1"), ("A2", "A2"), ("n", "N"),
+                    ("Z", "Z")],
+        "optional": [],
+        "min_coverage": 1.0,
+        "sep": " ",
+        "compress": False,  # LDAK reads plain text
+    },
 }
 
 
@@ -106,6 +117,27 @@ def restrict(df: pd.DataFrame, ids: set[str]) -> pd.DataFrame:
     return df.loc[keep]
 
 
+def to_positions(df: pd.DataFrame, path: str) -> pd.DataFrame:
+    """Rename SNP IDs to 'CHR:BP' using an rsID -> position table (PLINK .bim or a
+    CHR/BP/SNP table; read like an rsID map). Variants without a position, and
+    rsIDs or positions that occur more than once in the table, are dropped."""
+    from harmonize_sumstats import read_rsid_map  # same bin/ directory
+    table = read_rsid_map(Path(path))
+    table = table.drop_duplicates(subset=["SNP", "CHR", "BP"])
+    table = table[~table["SNP"].duplicated(keep=False)]
+    pos = table["CHR"].astype(str) + ":" + table["BP"].astype(str)
+    table = table[~pos.duplicated(keep=False)]
+    lookup = pd.Series((table["CHR"].astype(str) + ":" + table["BP"].astype(str)).to_numpy(),
+                       index=table["SNP"].to_numpy())
+    new_ids = df["SNP"].map(lookup)
+    keep = new_ids.notna()
+    print(f"predictor-positions: {int(keep.sum())} of {len(df)} variants have a unique "
+          f"position in {Path(path).name}; the rest are dropped")
+    out = df.loc[keep].copy()
+    out["SNP"] = new_ids[keep]
+    return out
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -114,6 +146,9 @@ def main(argv=None):
     p.add_argument("--out", required=True,
                    help="output file name ('.gz' is appended for compressed formats)")
     p.add_argument("--snp-list", help="keep only SNP IDs in this list (e.g. w_hm3.snplist)")
+    p.add_argument("--predictor-positions",
+                   help="name variants CHR:BP using this rsID -> position table (PLINK .bim or "
+                        "CHR/BP/SNP table), e.g. for LDAK's pre-computed GRCh37 tagging files")
     args = p.parse_args(argv)
 
     df = pd.read_csv(args.input, sep="\t", na_values=NA_VALUES, keep_default_na=False,
@@ -123,6 +158,11 @@ def main(argv=None):
         if df.empty:
             die("no variants left after --snp-list: check the list uses the same "
                 "IDs (rsIDs) as the summary statistics")
+    if args.predictor_positions:
+        df = to_positions(df, args.predictor_positions)
+        if df.empty:
+            die("no variants left after --predictor-positions: check the table has the "
+                "summary statistics' rsIDs")
     out = export(df, args.format)
     spec = FORMATS[args.format]
     path = args.out

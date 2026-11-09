@@ -1,0 +1,53 @@
+{
+    "stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "bmi__depression",
+                        "trait1": "bmi",
+                        "trait2": "depression",
+                        "ancestry": "EUR"
+                    },
+                    "bmi__depression.cors:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    "SUMHER_RG",
+                    "ldak",
+                    "6.1"
+                ]
+            ]
+        ],
+        "timestamp": "2026-11-09T11:20:41.21672196",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.5"
+        }
+    },
+    "bmi vs depression - test tagging file": {
+        "content": [
+            [
+                "Component Value SE",
+                "Her1_All 0.004497 0.000385",
+                "Her2_All 0.001186 0.000094",
+                "Coher_All -0.000215 0.000131",
+                "Cor_All -0.093256 0.057574",
+                "Overlap 0.223522 0.045501"
+            ],
+            [
+                [
+                    "SUMHER_RG",
+                    "ldak",
+                    "6.1"
+                ]
+            ]
+        ],
+        "timestamp": "2026-11-09T11:20:29.032860434",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.5"
+        }
+    }
+}

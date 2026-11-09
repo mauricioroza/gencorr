@@ -16,6 +16,7 @@ include { HARMONIZE_SUMSTATS          } from '../modules/local/harmonize_sumstat
 include { MERGE_RESULTS as MERGE_ALL  } from '../modules/local/merge_results'
 include { METHOD_LDSC                 } from '../subworkflows/local/method_ldsc'
 include { METHOD_LAVA                 } from '../subworkflows/local/method_lava'
+include { METHOD_SUMHER               } from '../subworkflows/local/method_sumher'
 include { softwareVersionsToYAML      } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { traitAncestry; ancestryParam; methodRegistry } from '../subworkflows/local/utils_nfcore_gencorr_pipeline'
 
@@ -110,6 +111,22 @@ workflow GENCORR {
             params.lava_snp_set, params.lava_loci_per_chunk
         )
         ch_results = ch_results.mix( METHOD_LAVA.out.results )
+    }
+
+    //
+    // 2c. SumHer (global, LDAK)
+    //
+    if ('sumher' in methods) {
+        // one entry per ancestry with a tagging file: [ ancestry, tagfile ]
+        def ch_tagfile = channel.fromList( ['EUR', 'EAS'].findAll { a -> params[ancestryParam('sumher_tagfile', a)] }.collect { a ->
+            [ a, file(params[ancestryParam('sumher_tagfile', a)], checkIfExists: true) ]
+        } )
+        def ch_positions = params.sumher_snp_positions
+            ? channel.value( file(params.sumher_snp_positions, checkIfExists: true) )
+            : channel.value([])
+
+        METHOD_SUMHER ( ch_harmonized, ch_same_pairs, ch_tagfile, ch_positions )
+        ch_results = ch_results.mix( METHOD_SUMHER.out.results )
     }
 
     //

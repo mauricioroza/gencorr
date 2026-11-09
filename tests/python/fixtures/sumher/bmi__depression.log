@@ -1,0 +1,98 @@
+-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+LDAK - Software for obtaining Linkage Disequilibrium Adjusted Kinships and Loads More
+Version 6 - Help pages at www.dougspeed.com
+-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+
+There are 8 pairs of arguments:
+--sum-cors bmi__depression
+--summary bmi.sumher.tsv
+--summary2 depression.sumher.tsv
+--tagfile small.tagging
+--check-sums NO
+--allow-ambiguous YES
+--cutoff 0.01
+--genomic-control NO
+
+-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+
+Estimating the genetic correlation from summary statistics
+Assuming no inflation of test statistics due to confounding (change this by adding "--genomic-control YES" or "--intercept YES")
+
+Will be excluding predictors which individually explain at least 0.010000 of phenotypic variance
+
+Will estimate SEs using jackknifing with 200 blocks (change this using "--num-blocks")
+
+To run the parallel version of LDAK, use "--max-threads" (this will only reduce runtime for some commands)
+
+-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+
+Reading details for 90418 predictors from small.tagging
+
+Reading summary statistics for Trait 1 from bmi.sumher.tsv
+Warning, Predictor rs540463334 will be ignored as its alleles (A and G) are not consistent with those in small.tagging (T and G)
+Warning, Predictor rs141028869 will be ignored as its alleles (G and A) are not consistent with those in small.tagging (C and A)
+Warning, Predictor rs144381501 will be ignored as its alleles (G and A) are not consistent with those in small.tagging (C and A)
+Warning, Predictor rs556162460 will be ignored as its alleles (A and G) are not consistent with those in small.tagging (T and G)
+Warning, Predictor rs186112481 will be ignored as its alleles (C and G) are not consistent with those in small.tagging (A and G)
+
+In total, 6 predictors have inconsistent alleles
+In total, 5953 predictors have ambiguous alleles
+Warning, bmi.sumher.tsv contains summary statistics for only 39310 of the 90418 predictors (the remaining predictors will be ignored)
+First few stats and ns are: rs2360008 1.179 379831.0 | rs547514678 -9999.000 -9999.0 | rs9429498 2.626 379682.0
+
+Reading summary statistics for Trait 2 from depression.sumher.tsv
+In total, 4364 predictors have ambiguous alleles
+Warning, depression.sumher.tsv contains summary statistics for only 28538 of the 90418 predictors (the remaining predictors will be ignored)
+First few stats and ns are: rs2360008 1.871 500199.0 | rs547514678 -9999.000 -9999.0 | rs9429498 -9999.000 -9999.0
+
+There are no predictors that explain at least 0.010000 of phenotypic variance for Trait 1
+
+There are no predictors that explain at least 0.010000 of phenotypic variance for Trait 2
+
+Warning, 47 SNPs have tagging less than 1 (29 less than 0); these have been replaced with 1
+
+Warning, 91 SNPs have test statistic 0; these have been replaced with 1e-6
+
+Trait 1: max variance explained 0.0004, max test statistic 168.73, weighted mean 3.013, weighted median 0.922, weighted GIF 2.027, weighted sample size 378064.62
+
+Trait 2: max variance explained 0.0002, max test statistic 77.81, weighted mean 1.751, weighted median 0.627, weighted GIF 1.378, weighted sample size 500199.00
+
+Estimating heritabilies for Trait 1
+Iter	Her_All	Difference	Target
+Start	0.0000	n/a		0.000100
+1	0.0041	0.004114	0.000100
+2	0.0045	0.000360	0.000100
+3	0.0045	0.000023	0.000100
+Performing Jackknife 1 out of 200
+
+Estimating heritabilies for Trait 2
+Iter	Her_All	Difference	Target
+Start	0.0000	n/a		0.000100
+1	0.0016	0.001640	0.000100
+2	0.0012	-0.000451	0.000100
+3	0.0012	-0.000004	0.000100
+Performing Jackknife 1 out of 200
+
+Estimating coheritabilies
+Iter	Coh_All	Difference	Target
+Start	0.0000	n/a		0.000100
+1	-0.0002	-0.000213	0.000100
+2	-0.0002	-0.000003	0.000100
+Performing Jackknife 1 out of 200
+
+Trait 1 heritability: 0.0045 (0.0004)
+Trait 2 heritability: 0.0012 (0.0001)
+Coheritability: -0.0002 (0.0001)
+Correlation: -0.0933 (0.0576)
+
+Results saved in bmi__depression.cors and bmi__depression.cors.full
+
+-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+
+This command started at Mon Nov  9 14:11:35 2026 and ended at Mon Nov  9 14:11:35 2026
+The elapsed time was 0.00 hours
+Given the command used one thread, this means the CPU time was also 0.00 hours
+Mission completed. All your basepair are belong to us :)
+
+-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+

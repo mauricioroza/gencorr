@@ -38,6 +38,14 @@
                     "pandas": "2.2.3",
                     "python": "3.12.3"
                 },
+                "SUMHER_RG": {
+                    "ldak": 6.1
+                },
+                "SUMHER_SUMMARISE": {
+                    "pandas": "2.2.3",
+                    "python": "3.12.3",
+                    "scipy": "1.15.1"
+                },
                 "Workflow": {
                     "mauricioroza/gencorr": "v0.1.0dev"
                 }
@@ -73,7 +81,22 @@
                 "ldsc/munged/neuro.munge.log",
                 "ldsc/munged/rheuma.munge.log",
                 "pipeline_info",
-                "pipeline_info/gencorr_software_versions.yml"
+                "pipeline_info/gencorr_software_versions.yml",
+                "sumher",
+                "sumher/gencorr.sumher.tsv",
+                "sumher/logs",
+                "sumher/logs/bmi__depression.cors",
+                "sumher/logs/bmi__depression.log",
+                "sumher/logs/bmi__neuro.cors",
+                "sumher/logs/bmi__neuro.log",
+                "sumher/logs/bmi__rheuma.cors",
+                "sumher/logs/bmi__rheuma.log",
+                "sumher/logs/depression__rheuma.cors",
+                "sumher/logs/depression__rheuma.log",
+                "sumher/logs/neuro__depression.cors",
+                "sumher/logs/neuro__depression.log",
+                "sumher/logs/neuro__rheuma.cors",
+                "sumher/logs/neuro__rheuma.log"
             ],
             [
                 "lava|bmi|depression|100|ok|-0.459",
@@ -141,7 +164,13 @@
                 "ldsc|bmi|rheuma|NA|ok|0.035",
                 "ldsc|depression|rheuma|NA|ok|-0.030",
                 "ldsc|neuro|depression|NA|ok|0.728",
-                "ldsc|neuro|rheuma|NA|ok|0.083"
+                "ldsc|neuro|rheuma|NA|ok|0.083",
+                "sumher|bmi|depression|NA|ok|-0.093",
+                "sumher|bmi|neuro|NA|ok|0.008",
+                "sumher|bmi|rheuma|NA|ok|-0.002",
+                "sumher|depression|rheuma|NA|ok|-0.035",
+                "sumher|neuro|depression|NA|ok|0.704",
+                "sumher|neuro|rheuma|NA|ok|-0.032"
             ],
             "gencorr.sample_overlap.txt:md5,17fdd7d56335010bb03d042bc0a573a7",
             {
@@ -186,7 +215,7 @@
                 "median_n": 379478.0
             }
         ],
-        "timestamp": "2026-11-08T12:47:37.523919575",
+        "timestamp": "2026-11-09T11:30:40.371705714",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.5"

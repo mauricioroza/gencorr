@@ -85,13 +85,17 @@ version, or run them on a machine with LDSC and LAVA installed.
 **2026-11-09, in Docker** (`--profile +docker`, `gencorr-tools:0.1.0` + LDSC
 biocontainer), Nextflow 26.10.5, nf-test 0.9.5, WSL2 Ubuntu:
 
-* nf-test module tests: **23/23 pass** (incl. rsID mapping of a GRCh38-style
-  file); function tests **6/6**; pipeline tests **4/4** (`-profile test`,
-  `-stub`, mixed EUR + EAS ancestry, target + joint), all with `--ci`
-* Python: **48 pass, 6 skipped** (oracle tests: LDSC/LAVA not on `PATH`)
-* `nf-core pipelines lint`: 0 failures; `nf-core modules lint --all --local`: 0 failures
-  (remaining warnings are expected for a private pipeline: private container
-  registry, custom meta keys, underscores in local module names)
+* nf-test module tests: **27/27 pass** (incl. rsID mapping of a GRCh38-style
+  file, and SumHer with LDAK 6.1); function tests **6/6**; pipeline tests **4/4**
+  (`-profile test` with LDSC + LAVA + SumHer, `-stub`, mixed EUR + EAS
+  ancestry, target + joint), all with `--ci`
+* Python: **54 pass, 6 skipped** (oracle tests: LDSC/LAVA not on `PATH`); the
+  SumHer parser is tested on real LDAK 6.1 output, and the pipeline's SumHer
+  result equals LDAK run by hand on the same files (bmi × depression,
+  rg -0.093256, SE 0.057574)
+* `nf-core pipelines lint`: 233 passed, 0 failed; `nf-core modules lint`: 499 passed, 0 failed
+  (remaining lint warnings are expected for a private pipeline: private
+  container registry, custom meta keys, underscores in local module names)
 
 **Earlier (first build), tools on `PATH`** (`-profile test,local_tools`),
 Nextflow 25.10.6, nf-test 0.9.3, LDSC 1.0.1 (bioconda, Python 2.7.15),

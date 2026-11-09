@@ -24,8 +24,8 @@ They also assume **both traits of a pair come from one population**.
 
 | pair | what happens |
 |---|---|
-| EUR × EUR | LDSC with `--ldsc_ld`, LAVA with `--lava_ref` |
-| EAS × EAS | LDSC with `--ldsc_ld_eas` (`--ldsc_w_ld_eas`), LAVA with `--lava_ref_eas` |
+| EUR × EUR | LDSC with `--ldsc_ld`, LAVA with `--lava_ref`, SumHer with `--sumher_tagfile` |
+| EAS × EAS | LDSC with `--ldsc_ld_eas` (`--ldsc_w_ld_eas`), LAVA with `--lava_ref_eas`, SumHer with `--sumher_tagfile_eas` |
 | EUR × EAS | not estimated: one row per method with `status = cross_ancestry` (a cross-ancestry method such as Popcorn is needed) |
 
 A reference is only required if some pair needs it: a run where every trait is
@@ -160,6 +160,34 @@ pair as soon as one rsID has different alleles in the two traits.
 All files starting with the prefix are staged, so keep the reference in its own
 directory.
 
+### SumHer (`--methods sumher`)
+
+SumHer (LDAK 6.1) estimates global rg with a different heritability model
+than LDSC. It needs an LDAK **tagging file** per ancestry:
+
+| file | where |
+|---|---|
+| `ldak.thin.hapmap.gbr.tagging` (EUR), `ldak.thin.hapmap.eas.tagging` (EAS) | dougspeed.com → Pre-computed Tagging Files (LDAK-Thin model, recommended by LDAK for genetic correlation; gunzip not needed, gencorr does it) |
+
+```bash
+--methods ldsc,lava,sumher \
+--sumher_tagfile /refs/ldak/ldak.thin.hapmap.gbr.tagging.gz \
+--sumher_snp_positions /refs/g1000_eur/g1000_eur.bim      # GRCh37 rsID -> position
+```
+
+LDAK's pre-computed tagging files name SNPs `CHR:BP` (GRCh37), not rsIDs, so
+gencorr renames each variant using `--sumher_snp_positions` (any GRCh37 rsID →
+position table: the 1000 Genomes `.bim` you use for LAVA works). Leave it out
+only for a tagging file you made yourself with rsID names. Options are those
+of BigaGWAS: `--check-sums NO --allow-ambiguous YES`, `--sumher_cutoff 0.01`,
+`--sumher_genomic_control false` (LDAK 6's own default models multiplicative
+inflation instead; set `true` for that).
+
+LDAK reports rg and SEs but no p-value: gencorr gives z = rg / SE and a
+two-sided normal p (as BigaGWAS shows), marked in `extra.p_method`.
+
+### LAVA loci
+
 Loci: the default `--lava_loci` is LAVA's 2,495 GRCh37 blocks (fetched from the
 pinned LAVA commit). **The locus file and the LAVA reference must be on the same
 build** (both GRCh37 by default), because LAVA assigns SNPs to loci by the
@@ -181,6 +209,9 @@ they have rsIDs (see [Genome build and rsIDs](#genome-build-and-rsids)).
 | `--min_info` | `0` (off) | remove variants with INFO ≤ value, for all methods (see 4a) |
 | `--min_maf` | `0` (off) | remove variants with MAF ≤ value, for all methods (see 4a) |
 | `--lava_snp_list` | none (all SNPs) | run LAVA only on the SNP IDs in this list, e.g. `w_hm3.snplist` (see 4b) |
+| `--sumher_tagfile`, `--sumher_tagfile_eas` | none | LDAK tagging files for SumHer (EUR, EAS) |
+| `--sumher_snp_positions` | none | GRCh37 rsID → position table; SumHer variants named `CHR:BP` as in LDAK's tagging files |
+| `--sumher_cutoff`, `--sumher_genomic_control` | `0.01`, `false` | LDAK `--cutoff`, `--genomic-control` (BigaGWAS defaults) |
 | `--ldsc_ld_eas`, `--ldsc_w_ld_eas`, `--lava_ref_eas` | none | references for traits with `ancestry = EAS` (see [Ancestry](#ancestry)) |
 | `--rsid_map_grch37`, `--rsid_map_grch38` | none | rsID maps for files without rsIDs, per samplesheet `build` (see [Genome build and rsIDs](#genome-build-and-rsids)) |
 | `--save_harmonized` / `--save_intermediates` | `false` | publish intermediate files |

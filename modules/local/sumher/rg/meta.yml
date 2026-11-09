@@ -1,0 +1,89 @@
+name: "sumher_rg"
+description: SumHer (LDAK) global genetic correlation for one trait pair
+  (ldak6 --sum-cors), with the tagging file of the pair's ancestry
+keywords:
+  - sumher
+  - ldak
+  - gwas
+  - genetic correlation
+  - heritability
+tools:
+  - ldak:
+      description: LDAK, software for heritability and genetic correlation
+        analysis; SumHer estimates them from summary statistics
+      homepage: "https://dougspeed.com"
+      documentation: "https://dougspeed.com/genetic-correlations/"
+      tool_dev_url: "https://github.com/dougspeed/LDAK"
+      doi: "10.1038/s41588-018-0279-5"
+      licence: ["GPL-3.0-or-later"]
+      identifier: ""
+      args_id: "$args"
+input:
+  - - meta:
+        type: map
+        description: Pair meta map, e.g. [ id:'bmi__depression', trait1:'bmi',
+          trait2:'depression', ancestry:'EUR' ]
+    - sumstats1:
+        type: file
+        description: SumHer summary statistics (Predictor A1 A2 n Z) of trait 1,
+          named <trait id>.sumher.tsv
+        pattern: "*.sumher.tsv"
+        ontologies: []
+    - sumstats2:
+        type: file
+        description: SumHer summary statistics of trait 2, named <trait id>.sumher.tsv
+        pattern: "*.sumher.tsv"
+        ontologies: []
+  - tagfile:
+      type: file
+      description: LDAK tagging file (plain or gzipped) whose predictor names
+        match the summary statistics (rsIDs, or CHR:BP for LDAK's pre-computed files)
+      pattern: "*.tagging{,.gz}"
+      ontologies: []
+output:
+  cors:
+    - - meta:
+          type: map
+          description: Pair meta map, as given
+      - ${meta.id}.cors:
+          type: file
+          description: LDAK results (Component Value SE) with both heritabilities,
+            coheritability, genetic correlation and the overlap/scaling terms;
+            empty when LDAK failed
+          pattern: "*.cors"
+          ontologies: []
+  log:
+    - - meta:
+          type: map
+          description: Pair meta map, as given
+      - ${meta.id}.log:
+          type: file
+          description: LDAK screen output, including warnings and any error message
+          pattern: "*.log"
+          ontologies:
+            - edam: "http://edamontology.org/format_2330" # Textual format
+  versions_ldak:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - ldak:
+          type: string
+          description: The name of the tool
+      - "ls $(dirname $(command -v ldak6))/../conda-meta/ldak6-*.json | sed -E 's/.*ldak6-([0-9.]+)-.*/\\1/'":
+          type: eval
+          description: The expression to obtain the version of the tool
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - ldak:
+          type: string
+          description: The name of the tool
+      - "ls $(dirname $(command -v ldak6))/../conda-meta/ldak6-*.json | sed -E 's/.*ldak6-([0-9.]+)-.*/\\1/'":
+          type: eval
+          description: The expression to obtain the version of the tool
+authors:
+  - "@mauricioroza"
+maintainers:
+  - "@mauricioroza"

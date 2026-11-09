@@ -1,0 +1,26 @@
+{
+    "stub": {
+        "content": [
+            [
+                "gencorr.sumher.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+            ]
+        ],
+        "timestamp": "2026-11-09T11:20:51.538668477",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.5"
+        }
+    },
+    "one ok pair + one failed pair": {
+        "content": [
+            [
+                "gencorr.sumher.tsv:md5,c50f524cbbcaf505deceb9d6610e7012"
+            ]
+        ],
+        "timestamp": "2026-11-09T11:20:46.55222647",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.5"
+        }
+    }
+}

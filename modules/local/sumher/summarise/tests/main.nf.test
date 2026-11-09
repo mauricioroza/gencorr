@@ -1,0 +1,66 @@
+// Module test: SUMHER_SUMMARISE
+// Inputs: real LDAK 6.1 output in tests/python/fixtures/sumher (also used by
+// tests/python/test_parse_sumher.py):
+//   bmi__depression    a successful pair
+//   empty__depression  a failed LDAK run (empty .cors) -> status sumher_error
+nextflow_process {
+
+    name "Test Process SUMHER_SUMMARISE"
+    script "../main.nf"
+    process "SUMHER_SUMMARISE"
+
+    tag "modules"
+    tag "modules_local"
+    tag "sumher"
+    tag "sumher/summarise"
+
+    test("one ok pair + one failed pair") {
+
+        when {
+            params { outdir = "$outputDir" }
+            process {
+                """
+                input[0] = Channel.fromPath("${baseDir}/tests/python/fixtures/sumher/*.log").collect()
+                input[1] = Channel.fromPath("${baseDir}/tests/python/fixtures/sumher/*.cors").collect()
+                """
+            }
+        }
+
+        then {
+            def lines  = path(process.out.results[0]).readLines()
+            def header = lines[0].split('\t', -1) as List
+            def rows   = lines.drop(1).collect { line -> [ header, line.split('\t', -1) as List ].transpose().collectEntries() }
+            assertAll(
+                { assert process.success },
+                { assert rows.size() == 2 },
+                { assert rows.every { r -> r.method == 'sumher' && r.scope == 'global' } },
+                { assert rows.find { r -> r.trait1 == 'bmi' }.status == 'ok' },
+                { assert rows.find { r -> r.trait1 == 'bmi' }.rg == '-0.093256' },
+                { assert rows.find { r -> r.trait1 == 'empty' }.status == 'sumher_error' },
+                { assert snapshot(process.out.results).match() }
+            )
+        }
+    }
+
+    test("stub") {
+
+        options "-stub"
+
+        when {
+            params { outdir = "$outputDir" }
+            process {
+                """
+                input[0] = Channel.fromPath("${baseDir}/tests/python/fixtures/sumher/*.log").collect()
+                input[1] = Channel.fromPath("${baseDir}/tests/python/fixtures/sumher/*.cors").collect()
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out.results).match() }
+            )
+        }
+    }
+}

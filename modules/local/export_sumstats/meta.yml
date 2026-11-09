@@ -30,7 +30,9 @@ input:
   - snp_list:
       type: file
       description: Optional list of SNP IDs (e.g. HapMap3 w_hm3.snplist); only
-        these SNPs are exported. Pass [] to export all
+        these SNPs are exported. For format 'sumher' it is instead an rsID to
+        position table (PLINK .bim or CHR/BP/SNP table) and variants are named
+        CHR:BP. Pass [] for neither
       pattern: "*"
       ontologies: []
 output:

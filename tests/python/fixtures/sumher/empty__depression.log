@@ -1,0 +1,34 @@
+-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+LDAK - Software for obtaining Linkage Disequilibrium Adjusted Kinships and Loads More
+Version 6 - Help pages at www.dougspeed.com
+-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+
+There are 8 pairs of arguments:
+--sum-cors empty__depression
+--summary empty.sumher.tsv
+--summary2 depression.sumher.tsv
+--tagfile small.tagging
+--check-sums NO
+--allow-ambiguous YES
+--cutoff 0.01
+--genomic-control NO
+
+-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+
+Estimating the genetic correlation from summary statistics
+Assuming no inflation of test statistics due to confounding (change this by adding "--genomic-control YES" or "--intercept YES")
+
+Will be excluding predictors which individually explain at least 0.010000 of phenotypic variance
+
+Will estimate SEs using jackknifing with 200 blocks (change this using "--num-blocks")
+
+To run the parallel version of LDAK, use "--max-threads" (this will only reduce runtime for some commands)
+
+-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+
+Reading details for 90418 predictors from small.tagging
+
+Reading summary statistics for Trait 1 from empty.sumher.tsv
+
+Error, empty.sumher.tsv contains summary statistics for none of the 90418 predictors
+

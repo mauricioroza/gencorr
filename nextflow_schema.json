@@ -269,6 +269,45 @@
                 }
             }
         },
+        "sumher_options": {
+            "title": "SumHer options",
+            "type": "object",
+            "fa_icon": "fas fa-link",
+            "description": "Global genetic correlation with SumHer (LDAK 6, ldak6 --sum-cors).",
+            "properties": {
+                "sumher_tagfile": {
+                    "type": "string",
+                    "description": "LDAK tagging file for EUR traits, plain or gzipped (e.g. LDAK-Thin HapMap3 GBR: ldak.thin.hapmap.gbr.tagging).",
+                    "help_text": "Pre-computed tagging files are at dougspeed.com (Pre-computed Tagging Files); LDAK recommends the LDAK-Thin model for genetic correlation. Those files name predictors CHR:BP (GRCh37), so also set --sumher_snp_positions.",
+                    "format": "file-path",
+                    "exists": true
+                },
+                "sumher_tagfile_eas": {
+                    "type": "string",
+                    "description": "LDAK tagging file for EAS traits (e.g. ldak.thin.hapmap.eas.tagging).",
+                    "format": "file-path",
+                    "exists": true
+                },
+                "sumher_snp_positions": {
+                    "type": "string",
+                    "description": "rsID to GRCh37 position table (PLINK .bim such as g1000_eur.bim, or a CHR/BP/SNP table). When given, SumHer input names variants CHR:BP, as LDAK's pre-computed tagging files do; otherwise rsIDs.",
+                    "format": "file-path",
+                    "exists": true
+                },
+                "sumher_cutoff": {
+                    "type": "number",
+                    "description": "LDAK --cutoff: exclude predictors that individually explain more than this share of phenotypic variance.",
+                    "default": 0.01,
+                    "minimum": 0,
+                    "maximum": 1
+                },
+                "sumher_genomic_control": {
+                    "type": "boolean",
+                    "description": "LDAK --genomic-control YES (model multiplicative inflation of test statistics). Default false = NO, as in BigaGWAS; LDAK 6's own default is different.",
+                    "default": false
+                }
+            }
+        },
         "institutional_config_options": {
             "title": "Institutional config options",
             "type": "object",
@@ -402,6 +441,9 @@
         },
         {
             "$ref": "#/$defs/lava_options"
+        },
+        {
+            "$ref": "#/$defs/sumher_options"
         },
         {
             "$ref": "#/$defs/institutional_config_options"

@@ -27,7 +27,13 @@ workflow METHOD_X {
 
 ## Worked example: SumHer (LDAK) global rg
 
-BigaGWAS already runs SumHer, so this is the natural next one. Five steps:
+SumHer was added exactly this way, so the real files are the reference:
+`bin/export_sumstats.py` (`FORMATS["sumher"]`), `modules/local/sumher/rg`,
+`modules/local/sumher/summarise`, `bin/parse_sumher.py` (+
+`tests/python/test_parse_sumher.py` on real LDAK output),
+`subworkflows/local/method_sumher`, the `sumher` entry in `methodRegistry()`
+and the `2c` block in `workflows/gencorr.nf`. The five steps, as planned
+before it was built (details differ slightly from the final code):
 
 ### 1. Input format: one entry in `bin/export_sumstats.py`
 
@@ -124,7 +130,7 @@ rules to `conf/modules.config`.
 
 | method | scope | tool | note |
 |---|---|---|---|
-| SumHer | global | LDAK | in BigaGWAS; tagging files per ancestry |
+| ~~SumHer~~ | global | LDAK | **done** (`--methods sumher`) |
 | Popcorn | global, cross-ancestry | Popcorn | in BigaGWAS |
 | HDL | global | R package | lower variance than LDSC |
 | HDL-L | local | R package | random-effects local rg, a useful cross-check of LAVA |
