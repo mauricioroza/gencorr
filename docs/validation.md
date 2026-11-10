@@ -15,6 +15,7 @@ short, readable scripts.
 | module (nf-test) | `nf-test test --tag modules_local` | each of the 8 local modules on its own, with small real inputs: output layout, the numbers the tool reports (LDSC summary lines; LAVA status, n SNPs, K and rho per locus), error paths (duplicated estimates rejected), and the `stub:` block | 10 min |
 | function (nf-test) | `nf-test test subworkflows/local/utils_nfcore_gencorr_pipeline/tests/` | pair construction for all/target/pairs modes, error cases | 40 s |
 | pipeline (nf-test) | `nf-test test tests/default.nf.test --profile +apptainer` | full test profile succeeds; row counts; snapshot of every (method, pair, locus, status, rg to 3 decimals) and of the software versions; `-stub` wiring; mixed-ancestry routing (same-ancestry pairs estimated, cross-ancestry pairs `cross_ancestry`, joint LAVA groups per ancestry); target + joint mode | 20 min |
+| command-line options | `GENCORR_NEXTFLOW_TESTS=1 pytest tests/python/test_cli_options.py` | `--option false` / `true` typed on the command line reach the tools as false / true, under Nextflow's default syntax parser (nf-test needs `NXF_SYNTAX_PARSER=v1`, which hides this case); runs `-profile test,docker -stub` twice | 3 min |
 | nf-core lint | `nf-core pipelines lint` and `nf-core modules lint --all --local` | template conformance; every module's `meta.yml` matches its channels (official schema) | 1 min |
 
 ### Running the Python tests

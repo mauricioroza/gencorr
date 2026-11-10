@@ -104,6 +104,10 @@ nextflow_pipeline {
         // Score file tests/data/popcorn was computed from Popcorn's test reference
         // panels (EUR_ref, EAS_ref) with the gencorr-popcorn image.
 
+        // given on the command line (the text "false" with Nextflow's default parser;
+        // see tests/python/test_cli_options.py for that case)
+        options "--popcorn_gen_effect false"
+
         when {
             params {
                 outdir        = "$outputDir"
@@ -133,6 +137,11 @@ nextflow_pipeline {
 
     test("-profile test, pair_mode target, joint LAVA SNP set") {
 
+        // true/false options given on the command line must mean false. nf-test needs
+        // NXF_SYNTAX_PARSER=v1, which turns them into real booleans; the default parser
+        // passes the text "false" instead, tested in tests/python/test_cli_options.py
+        options "--sumher_genomic_control false --save_intermediates false --drop_ambiguous false"
+
         when {
             params {
                 outdir       = "$outputDir"
@@ -146,11 +155,18 @@ nextflow_pipeline {
             def lines  = new File("$outputDir/gencorr_results.tsv").readLines()
             def header = lines[0].split('\t', -1) as List
             def rows   = lines.drop(1).collect { line -> [header, line.split('\t', -1) as List].transpose().collectEntries() }
+            def sumherLogs = new File("$outputDir/sumher/logs").listFiles().findAll { f -> f.name.endsWith('.log') }
             assert workflow.success
             assertAll(
                 // depression vs the 3 other traits
                 { assert rows.findAll { it.method == 'ldsc' }.collect { [it.trait1, it.trait2].sort() }.unique().size() == 3 },
-                { assert rows.findAll { it.method == 'lava' }.every { 'depression' in [it.trait1, it.trait2] } }
+                { assert rows.findAll { it.method == 'lava' }.every { 'depression' in [it.trait1, it.trait2] } },
+                { assert sumherLogs.size() == 3 },
+                { assert sumherLogs.every { f -> f.text.contains('--genomic-control NO') } },
+                { assert !new File("$outputDir/lava/chunks").exists() },
+                { assert new File("$outputDir/harmonized").listFiles().every { f -> f.name.endsWith('.qc.json') } },
+                // the strand_ambiguous filter only appears in the QC report when it ran
+                { assert !new File("$outputDir/harmonized/depression.qc.json").text.contains('strand_ambiguous') }
             )
         }
     }

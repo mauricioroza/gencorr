@@ -53,8 +53,10 @@ process SUMHER_RG {
     """
 
     stub:
+    def args   = task.ext.args ?: ''
+    // the LDAK options are recorded so -stub runs can check them (tests/python/test_cli_options.py)
     """
-    printf -- '--summary ${sumstats1}\\n--summary2 ${sumstats2}\\n' > ${meta.id}.log
+    printf -- '--summary ${sumstats1}\\n--summary2 ${sumstats2}\\n${args}\\n' > ${meta.id}.log
     touch ${meta.id}.cors
     """
 }

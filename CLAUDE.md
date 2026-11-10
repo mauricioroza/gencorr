@@ -20,6 +20,10 @@ BigaGWAS's slowness is rsID mapping, which this pipeline avoids by design).
 - WSL has ~7.5 GB RAM: always run with `-c local.config` (resourceLimits cpus 4, memory 6.GB, time 4.h).
 - nf-test on Nextflow ≥ 26 needs `NXF_SYNTAX_PARSER=v1` (nf-test wrappers only; pipeline doesn't), e.g.
   `NXF_SYNTAX_PARSER=v1 nf-test test --tag modules_local --profile +docker`.
+- Boolean params: with the default (v2) parser `--x false` on the CLI arrives as the String "false"
+  (truthy); under NXF_SYNTAX_PARSER=v1 (nf-test) it is a real Boolean. Always test
+  `params.x.toString() == 'true'`, never `params.x ? ...`. Guarded by tests/python/test_cli_options.py
+  (`GENCORR_NEXTFLOW_TESTS=1`). Template's monochrome_logs still has this (cosmetic).
 - Keep code Nextflow strict-syntax clean (`nextflow lint` = 0 errors; runs on 25.10 and 26.10.5):
   no implicit `it`, no `switch`/`for` in workflow code, unused closure params prefixed `_`.
 
@@ -60,6 +64,8 @@ BigaGWAS's slowness is rsID mapping, which this pipeline avoids by design).
 - Test data is downloaded from raw.githubusercontent.com on every pipeline test; GitHub can throttle it
   (seen 2026-11-07, ~150 KB/s), which makes Nextflow hang on staging. Check speed with curl first.
 - nf-test snapshots must contain only machine-independent values (identical under pandas 2.2.3 and 3.0.5).
+- SumHer vs BigaGWAS job 974 (2traits SumHer on job 971's T2D x CHD, LDAK 5.2, CHR:BP tagging file,
+  --genomic-control YES): gencorr (LDAK 6.1, rsID tagging file) identical to all 6 printed decimals.
 - BigaGWAS comparison kit: `tests/bigagwas/`. Jobs 966/967/971/972 agree (differences explained:
   SNP set, LAVA version, Monte Carlo noise, OR==1 sign handling in LAVA's own reader).
 - BigaGWAS example data (ieu-a-25 T2D, ieu-a-9 CHD) is Metabochip, not genome-wide: plumbing tests only,

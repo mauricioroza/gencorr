@@ -81,7 +81,7 @@ workflow GENCORR {
         // one entry per ancestry with LD scores: [ ancestry, ld_meta, ref_ld_dir, w_ld_dir ]
         def ch_ld = channel.fromList( ['EUR', 'EAS'].findAll { a -> params[ancestryParam('ldsc_ld', a)] }.collect { a ->
             [ a,
-              [ prefix: params.ldsc_ld_prefix ?: '', split_by_chr: params.ldsc_ld_split_by_chr ],
+              [ prefix: params.ldsc_ld_prefix ?: '', split_by_chr: params.ldsc_ld_split_by_chr.toString() == 'true' ],
               file(params[ancestryParam('ldsc_ld', a)], checkIfExists: true),
               file(params[ancestryParam('ldsc_w_ld', a)] ?: params[ancestryParam('ldsc_ld', a)], checkIfExists: true) ]
         } )

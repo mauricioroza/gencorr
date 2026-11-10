@@ -33,6 +33,8 @@ Initial version.
 
 ### Fixed
 
+- True/false options given as `--option false` on the command line were treated as true with Nextflow's default (v2) syntax parser, which passes the text `"false"`: `--sumher_genomic_control`, `--drop_ambiguous`, `--save_harmonized`, `--save_intermediates`, `--popcorn_gen_effect`, `--popcorn_use_mle`, `--ldsc_ld_split_by_chr`. Leaving the option out always worked. Regression test `tests/python/test_cli_options.py` (nf-test runs with the v1 parser and cannot see this).
+
 - SumHer: when no SNP of a trait is in the tagging file, `extra.n_snps_1/2` is 0 for that trait and empty for a trait LDAK never checked (was the number of SNPs in the tagging file). Docs: current LDAK pre-computed tagging files use rsIDs, so `--sumher_snp_positions` is only for older `CHR:BP`-named files.
 
 - `tests/data/` (test LD scores, samplesheet, loci) was never committed because `.gitignore` ignored every `data/` folder; `-profile test` and the nf-tests failed on a fresh clone. The rule now ignores only a top-level `/data/`.

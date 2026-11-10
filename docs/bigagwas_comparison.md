@@ -170,6 +170,15 @@ Jobs 971/972 were re-checked on 2026-11-08 against all 2,495 standard loci
 | 967 | bmi × depression | LAVA | 32/32 loci in common; SNPs and PCs identical in 29/32 (3 differ by 1–2 SNPs BigaGWAS dropped); rho median difference 1e-5; same loci at p < 0.05 |
 | 971 | T2D × CHD | LAVA | same 8 loci tested; SNPs and PCs identical 8/8; rho within 1e-7; same 2 loci at p < 0.05 (1126, 1801); log10 p within 0.005, CI bounds within 0.019 (Monte Carlo); univariate h2 identical (63/63 locus × trait) |
 | 972 | T2D × CHD | LDSC | identical: rg 0.3476, se 0.0796, z 4.3684, p 1.2518e-05, 2,937 SNPs; h2, intercepts and gencov identical in both logs |
+| 974 | T2D × CHD | SumHer | identical to all 6 decimals LDAK prints: rg 0.320501 (SE 0.081386), h2, coheritability, scaling and overlap; same SNPs (4,678 / 49,453, 2,962 shared; same 41 allele mismatches) |
+
+SumHer (job 974) was run as a BigaGWAS "2 traits" job with `--genomic-control
+YES` (as set on the job) on the harmonized files of job 971. gencorr's command:
+`--input samplesheet_971.csv --methods sumher --sumher_tagfile
+ldak.thin.hapmap.gbr.tagging.gz --sumher_genomic_control true --z_priority
+beta_se,z,p` (BigaGWAS computes Z = BETA/SE for SumHer). BigaGWAS runs LDAK 5.2
+with an older tagging file named `CHR:BP`; gencorr ran LDAK 6.1 with the current
+rsID-named file; neither difference changed any digit.
 
 Without the HapMap3 list (gencorr's default, all SNPs), LAVA rho on job 967
 correlates r = 0.92 with BigaGWAS; the difference is entirely the SNP set.
