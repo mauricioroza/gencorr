@@ -37,6 +37,15 @@ input:
           an rsID. Pass [] for none
         pattern: "*"
         ontologies: []
+    - source_info:
+        type: file
+        description: Optional JSON written by GWASCATALOG_FETCH for a study
+          downloaded from the GWAS Catalog. Recorded in the QC report; its n
+          is used when the file has no N column and the meta map gives no n.
+          Pass [] for none
+        pattern: "*.gwascatalog.json"
+        ontologies:
+          - edam: "http://edamontology.org/format_3464" # JSON
 output:
   sumstats:
     - - meta:

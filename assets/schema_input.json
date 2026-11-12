@@ -15,10 +15,9 @@
             },
             "sumstats": {
                 "type": "string",
-                "format": "file-path",
-                "exists": true,
                 "pattern": "^\\S+$",
-                "errorMessage": "sumstats must be a path to an existing summary statistics file without spaces"
+                "description": "Path or URL of a summary statistics file, or a GWAS Catalog accession (e.g. GCST90000016) to download the study's harmonised file",
+                "errorMessage": "sumstats must be a path or URL of a summary statistics file (no spaces), or a GWAS Catalog accession such as GCST90000016"
             },
             "n": {
                 "type": "number",

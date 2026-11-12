@@ -1,0 +1,50 @@
+name: "gwascatalog_fetch"
+description: Download a study's harmonised summary statistics from the GWAS
+  Catalog by accession, check its md5 and record its provenance and sample size
+keywords:
+  - gwas
+  - summary statistics
+  - gwas catalog
+  - download
+tools:
+  - gencorr:
+      description: gencorr helper scripts (bin/fetch_gwascatalog.py; Python
+        standard library only)
+      homepage: "https://github.com/mauricioroza/gencorr"
+      documentation: "https://github.com/mauricioroza/gencorr/blob/dev/docs/usage.md"
+      licence: ["MIT"]
+      identifier: ""
+      args_id: "$args"
+input:
+  - meta:
+      type: map
+      description: |
+        Trait meta map. id and gwas_catalog (the accession) are required;
+        ancestry (EUR or EAS, default EUR) decides whether the study's sample
+        size can be used as N.
+        e.g. [ id:'migraine', gwas_catalog:'GCST90000016', ancestry:'EUR' ]
+output:
+  sumstats:
+    - - meta:
+          type: map
+          description: Trait meta map, as given
+      - "*.h.tsv.gz":
+          type: file
+          description: The study's harmonised summary statistics, as published
+            by the GWAS Catalog (GRCh38 positions, harmonised rsIDs)
+          pattern: "*.h.tsv.gz"
+          ontologies:
+            - edam: "http://edamontology.org/format_3475" # TSV
+            - edam: "http://edamontology.org/format_3989" # GZIP format
+      - ${meta.id}.gwascatalog.json:
+          type: file
+          description: Provenance (accession, URL, md5, metadata date, genome
+            assembly, trait, samples) and n, the total sample size when the
+            study has a single ancestry matching meta.ancestry, with warnings
+          pattern: "*.gwascatalog.json"
+          ontologies:
+            - edam: "http://edamontology.org/format_3464" # JSON
+authors:
+  - "@mauricioroza"
+maintainers:
+  - "@mauricioroza"

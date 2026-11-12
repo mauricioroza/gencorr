@@ -105,8 +105,13 @@ id,sumstats,n,n_cases,n_controls,pop_prev,colmap,label
 bmi,/data/bmi.txt.gz,,,,,,Body mass index
 mdd,/data/mdd.tsv.gz,,170756,329443,0.15,,Major depression
 scz,/data/scz.txt,,53386,77258,0.01,"Z=STAT",Schizophrenia
+t2d,GCST000028,,,,,,Type 2 diabetes (GWAS Catalog)
 ```
 
+* `sumstats` is a path, a URL, or a **GWAS Catalog accession** (`GCST…`): the
+  study's harmonised file is downloaded and md5-checked, and its sample size
+  is used when `n` is empty and the study has one sample group, of the trait's ancestry
+  ([details](docs/usage.md#gwas-catalog-studies)).
 * `n` is used only when the file has no N column.
 * `n_cases`/`n_controls` mark a binary trait (LAVA case/control model, N fallback);
   with `pop_prev` you also get liability-scale h2.

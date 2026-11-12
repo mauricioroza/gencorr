@@ -1,0 +1,3 @@
+id,sumstats,ancestry,label
+bmi,https://raw.githubusercontent.com/josefin-werme/LAVA/e729a245f7b6923967a96804fbf5246eadf2d6c6/vignettes/data/bmi.sumstats.txt,EUR,Body mass index
+synthetic,GCST90000999,EUR,Synthetic GWAS Catalog study (tests/data/gwascatalog)

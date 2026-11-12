@@ -115,9 +115,11 @@ workflow PIPELINE_INITIALISATION {
     //
     // Samplesheet -> [ meta, sumstats ]. Empty optional columns become absent
     // meta keys, so modules can test them with `meta.n_cases ? ... : ...`.
+    // A GWAS Catalog accession in 'sumstats' becomes meta.gwas_catalog (the
+    // file is downloaded by GWASCATALOG_FETCH) and sumstats [].
     //
     def samples = samplesheetToList(input, "${projectDir}/assets/schema_input.json")
-        .collect { meta, sumstats -> [ cleanMeta(meta), sumstats ] }
+        .collect { meta, sumstats -> resolveSumstats(cleanMeta(meta), sumstats as String) }
     validateSamples(samples)
 
     //
@@ -200,6 +202,22 @@ def gencorrLogo(monochrome_logs = true) {
 
 def cleanMeta(Map meta) {
     return meta.findAll { _k, v -> v != null && v != [] && v != '' }
+}
+
+//
+// samplesheet 'sumstats': a GWAS Catalog accession (GCST + digits) or a file
+// path / URL. Returns [ meta, file ] or [ meta + [gwas_catalog: accession], [] ].
+//
+def resolveSumstats(Map meta, String sumstats) {
+    def value = sumstats.trim()
+    if (value ==~ /GCST\d+/) {
+        return [ meta + [ gwas_catalog: value ], [] ]
+    }
+    def f = file(value)
+    if (!f.exists()) {
+        error("Samplesheet row '${meta.id}': sumstats '${value}' is neither an existing file nor a GWAS Catalog accession (e.g. GCST90000016).")
+    }
+    return [ meta, f ]
 }
 
 //

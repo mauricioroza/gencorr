@@ -126,6 +126,18 @@
                     "exists": true,
                     "description": "rsID map for traits with build = GRCh38 in the samplesheet; same format as --rsid_map_grch37, with GRCh38 positions.",
                     "help_text": "E.g. a 1000 Genomes GRCh38 .bim, or a CHR/POS/ID/REF/ALT table extracted from dbSNP for GRCh38."
+                },
+                "gwascatalog_base": {
+                    "type": "string",
+                    "default": "https://ftp.ebi.ac.uk/pub/databases/gwas/summary_statistics",
+                    "description": "Root of the GWAS Catalog summary statistics, for samplesheet rows whose sumstats is an accession (GCST...).",
+                    "help_text": "Change it only to use a mirror, or a local folder with the same layout (<range>/<accession>/harmonised/)."
+                },
+                "gwascatalog_cache": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "description": "Folder where studies downloaded from the GWAS Catalog are kept (one subfolder per accession) and reused by later runs.",
+                    "help_text": "Without it, downloads live in the work directory and are reused only with -resume. Delete a study's subfolder to download it again."
                 }
             }
         },

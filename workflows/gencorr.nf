@@ -12,6 +12,7 @@
     below + an entry in methodRegistry() (docs/extending.md).
 */
 
+include { GWASCATALOG_FETCH           } from '../modules/local/gwascatalog/fetch'
 include { HARMONIZE_SUMSTATS          } from '../modules/local/harmonize_sumstats'
 include { MERGE_RESULTS as MERGE_ALL  } from '../modules/local/merge_results'
 include { METHOD_LDSC                 } from '../subworkflows/local/method_ldsc'
@@ -44,9 +45,19 @@ workflow GENCORR {
         GRCh37: params.rsid_map_grch37 ? file(params.rsid_map_grch37, checkIfExists: true) : [],
         GRCh38: params.rsid_map_grch38 ? file(params.rsid_map_grch38, checkIfExists: true) : [],
     ]
-    def ch_harmonize_in = ch_samplesheet.map { meta, sumstats ->
-        [ meta, sumstats, rsid_maps[meta.build ?: 'GRCh37'] ]
+    //
+    //    Samplesheet rows with a GWAS Catalog accession (meta.gwas_catalog) are
+    //    downloaded first: the study's harmonised file, checked against the
+    //    Catalog's md5, plus a JSON with its provenance and sample size.
+    //    Harmonised GWAS Catalog files carry rsIDs, so no rsID map is needed.
+    def ch_sources = ch_samplesheet.branch { meta, _sumstats ->
+        catalog: meta.gwas_catalog
+        files:   true
     }
+    GWASCATALOG_FETCH ( ch_sources.catalog.map { meta, _sumstats -> meta } )
+    def ch_harmonize_in = ch_sources.files
+        .map { meta, sumstats -> [ meta, sumstats, rsid_maps[meta.build ?: 'GRCh37'], [] ] }
+        .mix( GWASCATALOG_FETCH.out.sumstats.map { meta, sumstats, info -> [ meta, sumstats, [], info ] } )
     HARMONIZE_SUMSTATS ( ch_harmonize_in )
     def ch_harmonized = HARMONIZE_SUMSTATS.out.sumstats
 

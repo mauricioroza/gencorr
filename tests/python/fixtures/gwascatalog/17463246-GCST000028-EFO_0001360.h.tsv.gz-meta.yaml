@@ -1,0 +1,33 @@
+# Study meta-data
+gwas_id: GCST000028
+gwas_catalog_api: https://www.ebi.ac.uk/gwas/rest/api/studies/GCST000028
+date_metadata_last_modified: 2025-01-14
+
+# Trait Information
+trait_description:
+  - Type 2 diabetes
+ontology_mapping:
+  - MONDO_0005148
+
+# Genotyping Information
+genome_assembly: GRCh38
+coordinate_system: 1-based
+genotyping_technology:
+  - Genome-wide genotyping array
+
+# Sample Information
+samples:
+  - sample_ancestry_category:
+      - European
+    sample_size: 2931
+    case_control_study: true
+
+# Summary Statistic information
+data_file_name: 17463246-GCST000028-EFO_0001360.h.tsv.gz
+file_type: ''
+data_file_md5sum: 0a873f1c0427f2ef31df29851e7ba8ae
+
+# Harmonization status
+is_harmonised: true
+is_sorted: false
+harmonisation_reference: ftp://ftp.ensembl.org/pub/release-95/fasta/homo_sapiens/dna/

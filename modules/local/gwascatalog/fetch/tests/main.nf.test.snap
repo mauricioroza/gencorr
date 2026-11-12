@@ -1,0 +1,35 @@
+{
+    "GCST90000999 - synthetic mirror, single-ancestry study": {
+        "content": [
+            [
+                "chromosome\tbase_pair_location\teffect_allele\tother_allele\tbeta\tstandard_error\teffect_allele_frequency\tp_value\tvariant_id\trsid",
+                "1\t1000\tA\tG\t0.1\t0.05\t0.3\t0.045\t1_1000_G_A\trs1",
+                "1\t2000\tC\tT\t-0.2\t0.05\t0.4\t0.0001\t1_2000_T_C\trs2",
+                "1\t3000\tA\tC\t0.05\t0.05\t0.2\t0.32\t1_3000_C_A\trs3"
+            ],
+            {
+                "accession": "GCST90000999",
+                "file": "GCST90000999.h.tsv.gz",
+                "md5": "d1d679f7deda48b797dbfa74e39bcf0d",
+                "n": 5000,
+                "samples": [
+                    {
+                        "ancestry": [
+                            "European"
+                        ],
+                        "size": 5000,
+                        "case_control": false
+                    }
+                ],
+                "warnings": [
+                    
+                ]
+            }
+        ],
+        "timestamp": "2026-11-10T15:24:25.908060508",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.5"
+        }
+    }
+}

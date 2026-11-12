@@ -117,5 +117,9 @@ not rsIDs and no rsID map was given). Variants removed by the thresholds are
 counted in `removed` as `info_le_<t>` / `maf_le_<t>`. With an rsID map,
 `rsid_mapping` gives the map file, the build, `rows_without_rsid`, `mapped`,
 `unmatched` and how variants were matched, and `removed.no_rsid_after_mapping`
-counts the variants dropped because no rsID was found. Look at these first when a trait behaves
-unexpectedly.
+counts the variants dropped because no rsID was found. For a study given as a
+GWAS Catalog accession, `source` records where the file came from (`accession`,
+`url`, `file`, `md5`, `md5_checked`, `genome_assembly`, `file_type`,
+`date_metadata_last_modified`, `trait`, `samples`, `n`, `warnings`), and
+`n_source` is `gwas_catalog_metadata` when N came from the study's metadata.
+Look at these first when a trait behaves unexpectedly.

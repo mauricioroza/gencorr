@@ -7,7 +7,7 @@ CSV, one row per trait. Only `id` and `sumstats` are required.
 | column | meaning |
 |---|---|
 | `id` | short trait ID: starts with a letter; letters, digits, `_ . -`. Becomes file names and the LAVA phenotype ID. |
-| `sumstats` | path or URL to the summary statistics (plain or `.gz`; tab, comma or whitespace separated) |
+| `sumstats` | path or URL to the summary statistics (plain or `.gz`; tab, comma or whitespace separated), **or a GWAS Catalog accession** such as `GCST90000016` (see [GWAS Catalog studies](#gwas-catalog-studies)) |
 | `n` | total sample size, used **only** if the file has no N column |
 | `n_cases`, `n_controls` | binary traits. Used for N when missing, for LAVA's case/control model and for LDSC liability h2 |
 | `pop_prev` | population prevalence (binary traits). Adds liability-scale h2 (LDSC) and LAVA `h2_latent` |
@@ -83,6 +83,45 @@ Without alleles, matching uses chromosome + position only and skips positions
 that carry several rsIDs. Only rows without an rsID are looked up; existing
 rsIDs are never changed. Without a map, the QC report and the task log warn
 when fewer than half of a file's IDs are rsIDs.
+
+### GWAS Catalog studies
+
+Put a study's accession in `sumstats` and gencorr downloads its **harmonised**
+summary statistics from the GWAS Catalog FTP (as BigaGWAS' "Query from GWAS
+Catalog" does):
+
+```csv
+id,sumstats,n,ancestry
+migraine,GCST90000016,550000,EUR
+t2d_early,GCST000028,,EUR
+mdd,/data/mdd.txt.gz,500199,EUR
+```
+
+* The file is found in `<range>/<accession>/harmonised/` (or, failing that, by
+  an exact match in the Catalog's `harmonised_list.txt`). When a study has two
+  harmonised files, the newer `<accession>.h.tsv.gz` is used.
+* It is checked against the md5 in the study's metadata (`-meta.yaml`); the
+  accession, URL, md5, metadata date, genome assembly, trait and samples are
+  recorded under `source` in `harmonized/<id>.qc.json`.
+* **N**: harmonised files rarely have an N column. gencorr uses, in order, the
+  file's N column, the samplesheet `n` (or `n_cases + n_controls`), and the
+  study's sample size from the metadata. The metadata size is used **only**
+  when the study lists a single sample group, of the samplesheet's ancestry
+  (European for `EUR`, East Asian for `EAS`). Otherwise the run stops and asks
+  for `n`: a total over several ancestries does not match the LD references,
+  and several groups can be stages or repeated entries (some studies list the
+  same sample twice), so their sum is not reliably the analysed N. A study
+  whose ancestry does not include the samplesheet's gets a warning in the task
+  log and the QC report.
+* Harmonised files carry rsIDs, so `build` and the rsID maps are not needed.
+  Older files keep the submitted columns next to the harmonised `hm_` ones;
+  gencorr then uses the `hm_` alleles and effects together (`colmap` overrides).
+* Only harmonised studies can be given by accession. For others, download the
+  file yourself and give its path or URL.
+* Downloads need network access from the compute nodes. They are kept in the
+  work directory (reused with `-resume`), or across runs with
+  `--gwascatalog_cache <folder>` (one subfolder per accession).
+* `--gwascatalog_base` points at a mirror or a local copy with the same layout.
 
 ### Column detection
 
@@ -257,6 +296,8 @@ they have rsIDs (see [Genome build and rsIDs](#genome-build-and-rsids)).
 | `--popcorn_gen_effect`, `--popcorn_use_mle` | `false`, `false` | genetic effect correlation; MLE fit |
 | `--ldsc_ld_eas`, `--ldsc_w_ld_eas`, `--lava_ref_eas` | none | references for traits with `ancestry = EAS` (see [Ancestry](#ancestry)) |
 | `--rsid_map_grch37`, `--rsid_map_grch38` | none | rsID maps for files without rsIDs, per samplesheet `build` (see [Genome build and rsIDs](#genome-build-and-rsids)) |
+| `--gwascatalog_cache` | none | folder that keeps GWAS Catalog downloads across runs (see [GWAS Catalog studies](#gwas-catalog-studies)) |
+| `--gwascatalog_base` | GWAS Catalog FTP | mirror or local copy of the GWAS Catalog summary statistics |
 | `--save_harmonized` / `--save_intermediates` | `false` | publish intermediate files |
 
 `nextflow run mauricioroza/gencorr --help --show_hidden` lists everything.

@@ -38,8 +38,11 @@ BigaGWAS's slowness is rsID mapping, which this pipeline avoids by design).
 - `bin/harmonize_sumstats.py`: column synonyms (STAT never auto-mapped), Z from z → p → beta/se,
   OR → ln OR, N from column → `--n` → cases+controls; drops non-SNVs, A1==A2, missing Z/N, all copies of
   duplicates, optionally ambiguous; per-trait QC JSON (incl. lambda_gc). Byte-reproducible output
-  (gzip mtime 0, `%.8g`) — preserve this.
-- LDSC 1.0.1 (bioconda, same as BigaGWAS): munge with merge-alleles (`--signed-sumstats Z,0`), h2
+  (gzip mtime 0, `%.8g`) — preserve this. Memory: load_input reads only mapped columns (numerics
+  parsed while reading, CHR/alleles shared strings), filters use one keep mask; 9.5M rows ~4.4 GB.
+- LDSC 1.0.1 (bioconda, same as BigaGWAS): munge with merge-alleles (`--signed-sumstats Z,0`,
+  `--chunksize 500000`: the container's pandas 0.20.3 `isin` on >1M rows uses np.in1d, O(n*m) for
+  rsIDs, hours on genome-wide files; keep chunks <= 1M), h2
   (observed + liability when n_cases/n_controls/pop_prev given), batched `--rg` (`ldsc_rg_batch_size=50`),
   summary step also builds the sample-overlap matrix from intercepts (used by LAVA).
 - LAVA 0.1.5 pinned at commit e729a24 (BigaGWAS uses 0.1.0 — known difference). `bin/run_lava.R`:
@@ -100,6 +103,14 @@ BigaGWAS's slowness is rsID mapping, which this pipeline avoids by design).
 - Genome builds: all methods match variants by rsID and take positions from their references, so
   sumstats need rsIDs, not a particular build. Files without rsIDs get them from an rsID map
   (samplesheet `build`, `--rsid_map_grch37/38`; `.bim` or CHR/BP/SNP/A1/A2 table). No liftover.
+- GWAS Catalog accessions in samplesheet `sumstats` (GCST\d+ -> meta.gwas_catalog, resolveSumstats in utils):
+  GWASCATALOG_FETCH (bin/fetch_gwascatalog.py, stdlib only incl. a small reader for the Catalog's
+  -meta.yaml) -> HARMONIZE_SUMSTATS 4th input source_info JSON (provenance in qc.json `source`; N fallback
+  only when the metadata lists ONE sample group of the samplesheet ancestry; real studies list the same
+  sample twice (GCST90002409) or 'NR' ancestry (GCST004131), so sums are never used). Old hm_ files: hm_ alleles+effects
+  used together. `--gwascatalog_cache` (storeDir), `--gwascatalog_base` (mirror/local folder; tests use
+  synthetic tests/data/gwascatalog). BigaGWAS's OpenGWAS route is dead (old URLs 404, API needs JWT
+  since 2024-05); its Neale/FinnGen/PGC sources are server-local copies.
 - `tests/data/` is committed (`.gitignore` ignores only top-level `/data/`); it was missing on
   GitHub before 2026-11-09.
 - Remaining nf-core gaps (warnings only): no meta.yml/tests for subworkflows method_ldsc/method_lava;
@@ -115,8 +126,9 @@ BigaGWAS's slowness is rsID mapping, which this pipeline avoids by design).
 
 ## Possible next steps (only with the user's go-ahead)
 
-1. Pelle/SLURM profile + first real genome-wide pair (e.g. MDD × another trait) — main next step for MapGEN.
-   Expect ~1.5–3.5 CPU-hours per pair for LAVA.
+1. First real genome-wide pair (e.g. MDD × another trait). Expect ~1.5–3.5 CPU-hours per pair for LAVA.
+   Remote compute is still to be found (Pelle/UPPMAX was the user's old SU job: no longer available;
+   docs/usage.md §5 still has a Pelle/SLURM example).
 2. CI workflow: build/push private gencorr-tools image to ghcr.io and run nf-test in it.
 3. `lava/gencorr.lava_native.tsv` output in LAVA/BigaGWAS column layout.
 4. Option to skip FRQ in LDSC munge; LAVA 0.1.0 container variant (exact BigaGWAS reproduction).

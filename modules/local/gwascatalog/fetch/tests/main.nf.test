@@ -1,0 +1,84 @@
+// Module test: GWASCATALOG_FETCH
+// Uses a synthetic folder laid out like the GWAS Catalog FTP
+// (tests/data/gwascatalog, see its README), so no network is needed.
+nextflow_process {
+
+    name "Test Process GWASCATALOG_FETCH"
+    script "../main.nf"
+    process "GWASCATALOG_FETCH"
+    config "./nextflow.config"
+
+    tag "modules"
+    tag "modules_local"
+    tag "gwascatalog"
+    tag "gwascatalog/fetch"
+
+    test("GCST90000999 - synthetic mirror, single-ancestry study") {
+
+        when {
+            params { outdir = "$outputDir" }
+            process {
+                """
+                input[0] = Channel.of([ id:'trait', gwas_catalog:'GCST90000999', ancestry:'EUR' ])
+                """
+            }
+        }
+
+        then {
+            def info = path(process.out.sumstats[0][2]).json
+            assertAll(
+                { assert process.success },
+                { assert file(process.out.sumstats[0][1]).name == 'GCST90000999.h.tsv.gz' },
+                { assert info.md5_checked == true },
+                { assert info.n == 5000 && info.n_reason == null },
+                { assert info.genome_assembly == 'GRCh38' && info.trait == 'Synthetic test trait' },
+                { assert snapshot(
+                    path(process.out.sumstats[0][1]).linesGzip,
+                    info.subMap(['accession', 'file', 'md5', 'n', 'samples', 'warnings'])
+                  ).match() }
+            )
+        }
+    }
+
+    test("GCST90000999 - samplesheet ancestry EAS: warning, no N") {
+
+        when {
+            params { outdir = "$outputDir" }
+            process {
+                """
+                input[0] = Channel.of([ id:'trait', gwas_catalog:'GCST90000999', ancestry:'EAS' ])
+                """
+            }
+        }
+
+        then {
+            def info = path(process.out.sumstats[0][2]).json
+            assertAll(
+                { assert process.success },
+                { assert info.n == null && info.n_reason },
+                { assert info.warnings.any { w -> w.contains('does not include East Asian') } }
+            )
+        }
+    }
+
+    test("stub") {
+
+        options "-stub"
+
+        when {
+            params { outdir = "$outputDir" }
+            process {
+                """
+                input[0] = Channel.of([ id:'trait', gwas_catalog:'GCST90000999', ancestry:'EUR' ])
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert path(process.out.sumstats[0][2]).json.accession == 'GCST90000999' }
+            )
+        }
+    }
+}

@@ -122,7 +122,27 @@ def parse_args(argv=None):
                         "a PLINK .bim, or a table with CHR, BP, SNP (and A1, A2) columns")
     p.add_argument("--build", default=None,
                    help="genome build of the file's positions (only used in messages)")
+    p.add_argument("--source-info", default=None,
+                   help="JSON from fetch_gwascatalog.py: provenance for the QC report, and "
+                        "the study's N when there is no N column, n or n_cases+n_controls")
     return p.parse_args(argv)
+
+
+# Older GWAS Catalog harmonised files keep the submitted columns (effect_allele,
+# beta, ...) next to the harmonised ones (hm_effect_allele, hm_beta, ...).
+# The hm_ set is used as a whole, so alleles and effects always come from the
+# same orientation; it is used only when it has alleles and an effect.
+GWAS_CATALOG_HM = {"A1": "hm_effect_allele", "A2": "hm_other_allele", "BETA": "hm_beta",
+                   "OR": "hm_odds_ratio", "EAF": "hm_effect_allele_frequency",
+                   "SNP": "hm_rsid", "CHR": "hm_chrom", "BP": "hm_pos"}
+
+
+def gwas_catalog_overrides(header: list[str]) -> dict[str, str]:
+    present = {c.strip().lower(): c for c in header}
+    hm = {std: present[col] for std, col in GWAS_CATALOG_HM.items() if col in present}
+    if {"A1", "A2"} <= set(hm) and ({"BETA", "OR"} & set(hm)):
+        return hm
+    return {}
 
 
 # --------------------------------------------------------------------------- #
@@ -138,11 +158,47 @@ def detect_separator(path: Path) -> str:
     return r"\s+"
 
 
-def read_table(path: Path) -> pd.DataFrame:
+def read_table(path: Path, usecols=None, numeric=(), shared=(), chunksize=None) -> pd.DataFrame:
+    """Read a table as strings. usecols limits the columns read; columns in
+    numeric are parsed with to_num chunk by chunk, and equal values in the
+    low-cardinality columns in shared (CHR, alleles) become one string object,
+    so a large file (e.g. a GWAS Catalog file: ~10M rows, 24 columns) never
+    holds every value as its own Python string. Values are unchanged."""
     sep = detect_separator(path)
-    return pd.read_csv(path, sep=sep, dtype=str, na_values=NA_VALUES,
-                       keep_default_na=False, engine="python" if sep == r"\s+" else "c",
-                       compression="infer")
+    opts = dict(sep=sep, dtype=str, na_values=NA_VALUES, keep_default_na=False,
+                engine="python" if sep == r"\s+" else "c", compression="infer")
+    if usecols is None and not chunksize:
+        return pd.read_csv(path, **opts)
+    # numeric columns: let the parser read floats directly (no string per value;
+    # to_num then only handles columns that did not parse cleanly); shared
+    # columns: parsed as categories, then expanded to one string object per value
+    opts["dtype"] = {**{c: str for c in (usecols or [])}, **{c: "category" for c in shared}}
+    for c in numeric:
+        opts["dtype"].pop(c, None)
+    opts["float_precision"] = "round_trip" if opts["engine"] == "c" else None
+    chunks = []
+    pools = {c: {} for c in shared}
+    for chunk in pd.read_csv(path, usecols=usecols, chunksize=chunksize or 1_000_000, **opts):
+        for c in numeric:
+            chunk[c] = to_num(chunk[c])
+        for c, pool in pools.items():
+            cats = np.array([pool.setdefault(v, v) for v in chunk[c].cat.categories], dtype=object)
+            codes = chunk[c].cat.codes.to_numpy()
+            values = np.full(len(codes), np.nan, dtype=object)
+            values[codes >= 0] = cats[codes[codes >= 0]]
+            chunk[c] = pd.Series(values, index=chunk.index, dtype=object)
+        chunks.append(chunk)
+    return pd.concat(chunks, ignore_index=True) if chunks else pd.read_csv(path, usecols=usecols, **opts)
+
+
+def read_header(path: Path) -> list[str]:
+    """Column names exactly as read_table would name them."""
+    sep = detect_separator(path)
+    return list(pd.read_csv(path, sep=sep, nrows=0, engine="python" if sep == r"\s+" else "c",
+                            compression="infer").columns)
+
+
+STRING_COLUMNS = {"SNP", "CHR", "A1", "A2"}   # every other mapped column goes through to_num
 
 
 def map_columns(header: list[str], overrides: dict[str, str]) -> dict[str, str]:
@@ -275,7 +331,7 @@ def harmonize(raw: pd.DataFrame, mapping: dict[str, str], *, n=None, n_cases=Non
               n_controls=None, z_priority=("z", "p", "beta_se"),
               drop_ambiguous=False, min_info=None,
               min_maf=None, rsid_map=None, rsid_map_name=None,
-              build=None) -> tuple[pd.DataFrame, dict]:
+              build=None, source_n=None, source_n_reason=None) -> tuple[pd.DataFrame, dict]:
     qc: dict = {"rows_in": int(len(raw)), "column_mapping": mapping, "removed": {}}
 
     def col(name):
@@ -283,9 +339,9 @@ def harmonize(raw: pd.DataFrame, mapping: dict[str, str], *, n=None, n_cases=Non
 
     for required in ("A1", "A2"):
         if required not in mapping:
-            die(f"no {required} column found (header: {list(raw.columns)}); use --colmap")
+            die(f"no {required} column found (header: {raw.attrs.get('header', list(raw.columns))}); use --colmap")
     if "SNP" not in mapping and (rsid_map is None or "CHR" not in mapping or "BP" not in mapping):
-        die(f"no SNP column found (header: {list(raw.columns)}). Give an rsID column "
+        die(f"no SNP column found (header: {raw.attrs.get('header', list(raw.columns))}). Give an rsID column "
             "(--colmap SNP=<column>), or CHR and BP columns plus an rsID map for the "
             "file's build (--rsid_map_grch37 / --rsid_map_grch38)")
 
@@ -293,15 +349,21 @@ def harmonize(raw: pd.DataFrame, mapping: dict[str, str], *, n=None, n_cases=Non
     out["SNP"] = (col("SNP").str.strip() if "SNP" in mapping
                   else pd.Series(pd.NA, index=raw.index, dtype="object"))
     is_rs = out["SNP"].str.match(RS_PATTERN, na=False)
-    out.loc[is_rs, "SNP"] = out.loc[is_rs, "SNP"].str.lower()
+    upper_rs = is_rs & ~out["SNP"].str.startswith("rs", na=False)   # lowercase only where needed (memory)
+    out.loc[upper_rs, "SNP"] = out.loc[upper_rs, "SNP"].str.lower()
+
+    def by_value(series: pd.Series, fn) -> pd.Series:
+        """fn applied once per distinct value (CHR, alleles: few distinct values),
+        so equal results share one string object instead of one per row."""
+        return series.map({v: fn(v) for v in pd.unique(series.dropna())})
 
     chrom = col("CHR")
-    out["CHR"] = (chrom.str.strip().str.replace(r"^chr", "", regex=True, case=False)
+    out["CHR"] = (by_value(chrom, lambda v: re.sub(r"^chr", "", v.strip(), flags=re.IGNORECASE))
                   if chrom is not None else np.nan)
     out["BP"] = to_num(col("BP")).round().astype("Int64") if "BP" in mapping else pd.NA
 
-    out["A1"] = col("A1").str.strip().str.upper()
-    out["A2"] = col("A2").str.strip().str.upper()
+    out["A1"] = by_value(col("A1"), lambda v: v.strip().upper())
+    out["A2"] = by_value(col("A2"), lambda v: v.strip().upper())
 
     # ---- rsIDs: every method matches variants by rsID ---------------------- #
     share_rs = float(is_rs.mean()) if len(out) else 1.0
@@ -368,6 +430,12 @@ def harmonize(raw: pd.DataFrame, mapping: dict[str, str], *, n=None, n_cases=Non
     elif fallback_n is not None:
         out["N"] = float(fallback_n)
         qc["n_source"] = "samplesheet"
+    elif source_n is not None:
+        out["N"] = float(source_n)
+        qc["n_source"] = "gwas_catalog_metadata"
+    elif source_n_reason:
+        die(f"no N column and no n / n_cases+n_controls in the samplesheet, and the GWAS "
+            f"Catalog N cannot be used: {source_n_reason}")
     else:
         die("no N column and no n / n_cases+n_controls in the samplesheet")
 
@@ -381,13 +449,18 @@ def harmonize(raw: pd.DataFrame, mapping: dict[str, str], *, n=None, n_cases=Non
     out["_MAF"] = np.minimum(maf, 1 - maf) if maf is not None else np.nan
     qc["maf_source"] = (f"column:{mapping['MAF']}" if "MAF" in mapping else
                         f"EAF:{mapping['EAF']}" if "EAF" in mapping else None)
+    del beta, odds, se, pval, zcol, z, source, sign, ncol, maf   # all in out now (memory)
 
-    # ---- filters, each counted ------------------------------------------- #
+    # ---- filters, each counted on the rows the earlier ones kept --------- #
+    # (one keep mask and a single subset at the end: copying the table once per
+    # filter needed several GB for a ~10M-row file)
+    keep = pd.Series(True, index=out.index)
+
     def drop(mask: pd.Series, reason: str):
-        nonlocal out
-        mask = mask.fillna(False).astype(bool)
+        nonlocal keep
+        mask = mask.fillna(False).astype(bool).reindex(out.index, fill_value=False) & keep
         qc["removed"][reason] = int(mask.sum())
-        out = out.loc[~mask]
+        keep &= ~mask
 
     if rsid_map is not None:
         drop(~out["SNP"].str.match(RS_PATTERN, na=False), "no_rsid_after_mapping")
@@ -398,47 +471,76 @@ def harmonize(raw: pd.DataFrame, mapping: dict[str, str], *, n=None, n_cases=Non
     drop(out["Z"].isna(), "missing_z")
     drop(out["N"].isna() | (out["N"] <= 0), "missing_or_nonpositive_n")
     if drop_ambiguous:
-        pair = [frozenset(x) for x in zip(out["A1"], out["A2"])]
-        drop(pd.Series([p in AMBIGUOUS_PAIRS for p in pair], index=out.index),
+        kept = out.loc[keep]
+        pair = [frozenset(x) for x in zip(kept["A1"], kept["A2"])]
+        drop(pd.Series([p in AMBIGUOUS_PAIRS for p in pair], index=kept.index, dtype=bool),
              "strand_ambiguous")
+        del kept
     # ---- optional QC thresholds (LDSC munge convention: remove value <= t) - #
     qc["thresholds"] = {"min_info": min_info, "min_maf": min_maf}
     if min_info is not None:
         if "INFO" in mapping:
-            qc["info_missing_kept"] = int(out["INFO"].isna().sum())
+            qc["info_missing_kept"] = int((out["INFO"].isna() & keep).sum())
             drop(out["INFO"] <= min_info, f"info_le_{min_info:g}")
         else:
             qc["warning_min_info"] = "--min-info requested but the file has no INFO column; not applied"
     if min_maf is not None:
         if qc["maf_source"] is not None:
-            qc["maf_missing_kept"] = int(out["_MAF"].isna().sum())
+            qc["maf_missing_kept"] = int((out["_MAF"].isna() & keep).sum())
             drop(out["_MAF"] <= min_maf, f"maf_le_{min_maf:g}")
         else:
             qc["warning_min_maf"] = "--min-maf requested but the file has no MAF or EAF column; not applied"
 
-    dup = out["SNP"].duplicated(keep=False)
-    drop(dup, "duplicated_snp_all_copies")
+    drop(out.loc[keep, "SNP"].duplicated(keep=False), "duplicated_snp_all_copies")
+    # subset column by column, releasing each old column as it goes (memory)
+    keep_np = keep.to_numpy()
+    out = pd.DataFrame({c: out.pop(c).values[keep_np] for c in HARMONIZED_COLUMNS})
 
     # ---- P from Z where unusable ----------------------------------------- #
-    need_p = out["P"].isna() | (out["P"] <= 0) | (out["P"] > 1)
+    # (on arrays: .loc assignment would first copy every float column)
+    p = out["P"].to_numpy(dtype=float, copy=True)
+    zv = out["Z"].to_numpy(dtype=float)
+    with np.errstate(invalid="ignore"):
+        need_p = np.isnan(p) | (p <= 0) | (p > 1)
     qc["p_recomputed_from_z"] = int(need_p.sum())
-    out.loc[need_p, "P"] = 2 * stats.norm.sf(np.abs(out.loc[need_p, "Z"]))
-    floored = out["P"] < MIN_P
+    p[need_p] = 2 * stats.norm.sf(np.abs(zv[need_p]))
+    with np.errstate(invalid="ignore"):
+        floored = p < MIN_P
     qc["p_floored_at_1e-300"] = int(floored.sum())
-    out.loc[floored, "P"] = MIN_P
+    p[floored] = MIN_P
+    out["P"] = p
 
     chi2 = out["Z"] ** 2
     qc["rows_out"] = int(len(out))
     qc["lambda_gc"] = float(np.median(chi2) / CHISQ_MEDIAN_1DF) if len(out) else None
     qc["mean_chi2"] = float(chi2.mean()) if len(out) else None
     qc["median_n"] = float(out["N"].median()) if len(out) else None
-    return out[HARMONIZED_COLUMNS].reset_index(drop=True), qc
+    return out, qc
+
+
+def load_input(path: Path, overrides: dict[str, str], gwas_catalog=False,
+               chunksize=None) -> tuple[pd.DataFrame, dict[str, str]]:
+    """Map the header, then read only the mapped columns (numeric ones parsed
+    while reading, CHR/alleles as shared strings): a ~10M-row file then fits in
+    a few GB. harmonize() gives the same result as on a plain read_table()."""
+    header = read_header(path)
+    if gwas_catalog:
+        overrides = {**gwas_catalog_overrides(header), **overrides}   # --colmap wins
+    mapping = map_columns(header, overrides)
+    usecols = list(dict.fromkeys(mapping.values()))
+    numeric = [c for c in usecols
+               if not any(std in STRING_COLUMNS for std, src in mapping.items() if src == c)]
+    shared = [mapping[s] for s in ("CHR", "A1", "A2") if s in mapping and mapping[s] not in numeric]
+    raw = read_table(path, usecols=usecols, numeric=numeric, shared=shared, chunksize=chunksize)
+    raw.attrs["header"] = header
+    return raw, mapping
 
 
 def main(argv=None):
     args = parse_args(argv)
-    raw = read_table(Path(args.input))
-    mapping = map_columns(list(raw.columns), parse_overrides(args.colmap))
+    source = json.loads(Path(args.source_info).read_text()) if args.source_info else None
+    raw, mapping = load_input(Path(args.input), parse_overrides(args.colmap),
+                              gwas_catalog=bool(source and source.get("source") == "gwas_catalog"))
     rsid_map = read_rsid_map(Path(args.rsid_map)) if args.rsid_map else None
     harmonized, qc = harmonize(
         raw, mapping, n=args.n, n_cases=args.n_cases, n_controls=args.n_controls,
@@ -446,7 +548,15 @@ def main(argv=None):
         drop_ambiguous=args.drop_ambiguous, min_info=args.min_info,
         min_maf=args.min_maf, rsid_map=rsid_map,
         rsid_map_name=Path(args.rsid_map).name if args.rsid_map else None,
-        build=args.build)
+        build=args.build,
+        source_n=source.get("n") if source else None,
+        source_n_reason=source.get("n_reason") if source else None)
+    if source:
+        qc["source"] = {k: source.get(k) for k in (
+            "source", "accession", "url", "file", "md5", "md5_checked", "genome_assembly",
+            "file_type", "date_metadata_last_modified", "trait", "samples", "n", "warnings")}
+        for w in source.get("warnings") or []:
+            print(f"WARNING ({args.id}, {source.get('accession')}): {w}", file=sys.stderr)
     for key in ("warning_min_info", "warning_min_maf", "warning_effective_n", "warning_non_rsid"):
         if key in qc:
             print(f"WARNING ({args.id}): {qc[key]}", file=sys.stderr)

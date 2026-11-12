@@ -9,6 +9,8 @@
  * meta fields used: id, n, n_cases, n_controls, colmap, build (all but id optional)
  * rsid_map: CHR/BP/allele -> rsID table on the file's build (PLINK .bim or
  *           table), used for rows without an rsID; [] for none
+ * source_info: JSON from GWASCATALOG_FETCH (provenance for the QC report; the
+ *           study's N when the samplesheet gives none); [] for none
  * ext.args: extra harmonize_sumstats.py flags, e.g. '--drop-ambiguous'
  */
 process HARMONIZE_SUMSTATS {
@@ -19,7 +21,7 @@ process HARMONIZE_SUMSTATS {
     container "ghcr.io/mauricioroza/gencorr-tools:0.1.0"
 
     input:
-    tuple val(meta), path(sumstats), path(rsid_map, stageAs: 'rsid_map/*')   // rsid_map: [] for none
+    tuple val(meta), path(sumstats), path(rsid_map, stageAs: 'rsid_map/*'), path(source_info, stageAs: 'source/*')   // [] for none
 
     output:
     tuple val(meta), path("${prefix}.harmonized.tsv.gz"), emit: sumstats
@@ -40,6 +42,7 @@ process HARMONIZE_SUMSTATS {
     def ctrl_arg = meta.n_controls ? "--n-controls ${meta.n_controls}" : ''
     def colmap   = meta.colmap     ? "--colmap '${meta.colmap}'"       : ''
     def rsmap    = rsid_map        ? "--rsid-map ${rsid_map}"          : ''
+    def source   = source_info     ? "--source-info ${source_info}"    : ''
     def build    = "--build ${meta.build ?: 'GRCh37'}"
     """
     harmonize_sumstats.py \\
@@ -47,7 +50,7 @@ process HARMONIZE_SUMSTATS {
         --id ${meta.id} \\
         --out ${prefix} \\
         ${n_arg} ${case_arg} ${ctrl_arg} ${colmap} \\
-        ${build} ${rsmap} \\
+        ${build} ${rsmap} ${source} \\
         ${args}
     """
 

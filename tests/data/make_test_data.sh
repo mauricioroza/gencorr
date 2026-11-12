@@ -91,3 +91,50 @@ docker run --rm -u "$(id -u):$(id -g)" -v "$TMP:/w" -w /w ghcr.io/mauricioroza/g
 mkdir -p "$HERE/popcorn"
 gzip -n -c "$TMP/EUR_EAS.test.cscore" > "$HERE/popcorn/EUR_EAS.test.cscore.gz"
 echo "Popcorn score file written to $HERE/popcorn/EUR_EAS.test.cscore.gz"
+
+# -----------------------------------------------------------------------------
+# Synthetic GWAS Catalog mirror: tests/data/gwascatalog (GWASCATALOG_FETCH test)
+# Made-up data laid out like the GWAS Catalog FTP; needs only gzip and md5sum.
+# -----------------------------------------------------------------------------
+R="$HERE/gwascatalog"
+rm -rf $R; mkdir -p $R/GCST90000001-GCST90001000/GCST90000999/harmonised
+D=$R/GCST90000001-GCST90001000/GCST90000999/harmonised
+printf 'chromosome\tbase_pair_location\teffect_allele\tother_allele\tbeta\tstandard_error\teffect_allele_frequency\tp_value\tvariant_id\trsid\n1\t1000\tA\tG\t0.1\t0.05\t0.3\t0.045\t1_1000_G_A\trs1\n1\t2000\tC\tT\t-0.2\t0.05\t0.4\t0.0001\t1_2000_T_C\trs2\n1\t3000\tA\tC\t0.05\t0.05\t0.2\t0.32\t1_3000_C_A\trs3\n' \
+    | gzip -n > $D/GCST90000999.h.tsv.gz
+MD5=$(md5sum $D/GCST90000999.h.tsv.gz | cut -d' ' -f1)
+cat > $D/GCST90000999.h.tsv.gz-meta.yaml <<EOF
+# Study meta-data
+gwas_id: GCST90000999
+date_metadata_last_modified: 2026-11-10
+
+# Trait Information
+trait_description:
+  - Synthetic test trait
+
+# Genotyping Information
+genome_assembly: GRCh38
+coordinate_system: 1-based
+
+# Sample Information
+samples:
+  - sample_ancestry_category:
+      - European
+    sample_size: 5000
+    case_control_study: false
+
+# Summary Statistic information
+data_file_name: GCST90000999.h.tsv.gz
+file_type: GWAS-SSF v1.0
+data_file_md5sum: $MD5
+EOF
+cat > $R/README.md <<'EOF'
+# Synthetic GWAS Catalog mirror
+
+A folder laid out like the GWAS Catalog FTP
+(`<range>/<accession>/harmonised/<accession>.h.tsv.gz` and `-meta.yaml`), used
+by the `GWASCATALOG_FETCH` module test with `--base tests/data/gwascatalog`.
+GCST90000999 here is **not** the real study of that accession: three made-up
+variants and a made-up sample size. Regenerate with the recipe in
+`tests/data/make_test_data.sh`.
+EOF
+echo "GWAS Catalog test mirror written to $R"

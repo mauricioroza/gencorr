@@ -23,8 +23,8 @@ nextflow_process {
                 """
                 def base = 'https://raw.githubusercontent.com/brielin/popcorn/20a29e8cb9c43fe88de8e903537eb874d52f38b3/test'
                 input[0] = Channel.of(
-                    [ [ id:'eur_t', ancestry:'EUR' ], file("\${base}/EUR_test.txt", checkIfExists: true), [] ],
-                    [ [ id:'eas_t', ancestry:'EAS' ], file("\${base}/EAS_test.txt", checkIfExists: true), [] ]
+                    [ [ id:'eur_t', ancestry:'EUR' ], file("\${base}/EUR_test.txt", checkIfExists: true), [], [] ],
+                    [ [ id:'eas_t', ancestry:'EAS' ], file("\${base}/EAS_test.txt", checkIfExists: true), [], [] ]
                 )
                 """
             }

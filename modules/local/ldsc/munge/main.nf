@@ -8,6 +8,13 @@
  *
  * The Z column carries the sign; munge recomputes |Z| from P. This is the same
  * information BigaGWAS passed (P + beta), so munged files are comparable.
+ *
+ * --chunksize 500000: munge reads the file in chunks (default 5M rows) and
+ * filters each with Series.isin(merge-alleles SNPs). In this container's
+ * pandas (0.20.3), isin on more than 1M rows switches to np.in1d, which for
+ * text compares every SNP with every merge-alleles SNP: a 9M-row file took
+ * hours instead of a minute. Chunks of <= 1M rows keep the hash-table path.
+ * The per-chunk filters are row-wise, so results are identical.
  */
 process LDSC_MUNGE {
     tag "${meta.id}"
@@ -40,6 +47,7 @@ process LDSC_MUNGE {
         --signed-sumstats Z,0 \\
         --snp SNP --a1 A1 --a2 A2 --p P --N-col N \\
         ${merge} \\
+        --chunksize 500000 \\
         ${args}
     mv ${meta.id}.log ${meta.id}.munge.log
     """

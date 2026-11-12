@@ -61,6 +61,31 @@ nextflow_pipeline {
         }
     }
 
+    test("-stub, one trait given as a GWAS Catalog accession") {
+        // wiring only: the accession row goes through GWASCATALOG_FETCH (local
+        // synthetic mirror) into HARMONIZE_SUMSTATS; the file row does not
+
+        options "-stub"
+
+        when {
+            params {
+                outdir           = "$outputDir"
+                input            = "${projectDir}/tests/data/samplesheet_gwascatalog.csv"
+                gwascatalog_base = "${projectDir}/tests/data/gwascatalog"
+            }
+        }
+
+        then {
+            def tasks = workflow.trace.succeeded().collect { t -> t.name }
+            assertAll(
+                { assert workflow.success },
+                { assert tasks.count { n -> n.contains('GWASCATALOG_FETCH') } == 1 },
+                { assert tasks.any { n -> n.contains('GWASCATALOG_FETCH (synthetic:GCST90000999)') } },
+                { assert tasks.count { n -> n.contains('HARMONIZE_SUMSTATS') } == 2 }
+            )
+        }
+    }
+
     test("-profile test, mixed ancestry (EUR + EAS)") {
         // bmi, depression: EUR (depression via the default); neuro, rheuma: EAS.
         // The EAS references are the same test files as EUR (stand-ins): the test

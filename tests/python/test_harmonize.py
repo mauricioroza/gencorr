@@ -123,6 +123,34 @@ def test_effective_n_column_is_flagged():
     assert "warning_effective_n" in qc
 
 
+# ------------------------------------------------------------ reading input --
+@pytest.mark.parametrize("chunksize", [None, 2])
+@pytest.mark.parametrize("sep", ["\t", ",", " "])
+def test_load_input_matches_plain_read(tmp_path, sep, chunksize):
+    """The memory-saving reader (mapped columns only, numerics parsed while
+    reading, CHR/alleles as shared strings, chunks) changes no result."""
+    rows = [
+        ["SNP", "CHR", "BP", "A1", "A2", "BETA", "SE", "P", "N", "EAF", "unused"],
+        ["rs1", "chr1", "100", "a", "g", "0.1", "0.05", "0.04", "1000", "0.2", "x"],
+        ["RS2", "1", "200", "C", "T", "-0.2", "0.05", "abc", "1000", "NA", "y"],
+        ["rs3", "X", "300", "A", "AT", "0.3", "0.1", "0.01", "900", "0.5", "z"],
+        ["rs4", "2", "400", "G", "G", "0.1", "0.1", "0.2", "1000", "0.1", "w"],
+        ["rs5", "2", "500", "T", "C", "NA", "NA", "NA", "1000", "0.3", "v"],
+        ["rs6", "3", "600", "T", "C", "0.05", "0.01", "1e-400", "1000", "0.3", "v"],
+        ["rs6", "3", "600", "T", "C", "0.05", "0.01", "0.5", "1000", "0.3", "v"],
+        ["rs7", "NA", "NA", "A", "C", "0.01", "0.02", "0.6", "1100", "0.9", "u"],
+    ]
+    src = tmp_path / "in.txt"
+    src.write_text("\n".join(sep.join(r) for r in rows) + "\n")
+    plain = hs.read_table(src)
+    expected, qc_expected = hs.harmonize(plain, hs.map_columns(list(plain.columns), {}))
+    raw_new, mapping = hs.load_input(src, {}, chunksize=chunksize)
+    assert "unused" not in raw_new.columns and raw_new.attrs["header"] == rows[0]
+    got, qc_got = hs.harmonize(raw_new, mapping)
+    pd.testing.assert_frame_equal(got, expected)
+    assert qc_got == qc_expected and qc_got["rows_out"] == 3   # rs1, rs2, rs7
+
+
 # ------------------------------------------------------------- CLI + export --
 def test_cli_output_is_byte_identical_across_runs(tmp_path):
     src = tmp_path / "in.tsv"

@@ -1,0 +1,52 @@
+author_notes: "1. Full citation for the publication linked to the submitted summary\
+  \ statistics: Choquet H, Yin J, Jacobson AS, Horton BH, Hoffmann TJ, Jorgenson E,\
+  \ Avins AL, and Pressman AR (2021). New and sex-specific migraine susceptibility\
+  \ loci identified from a multiethnic genome-wide meta-analysis. Communications Biology.\n\
+  \ 2. Clear description of the content presented in additional columns that are not\
+  \ present in our standard format: N/A"
+coordinate_system: 1-based
+data_file_md5sum: 71375cc8bf0acfc57ea8854cd9061e5e
+data_file_name: GCST90000016.h.tsv.gz
+date_metadata_last_modified: 2025-01-16
+file_type: pre-GWAS-SSF
+genome_assembly: GRCh38
+genotyping_technology:
+- Genome-wide genotyping array
+gwas_catalog_api: https://www.ebi.ac.uk/gwas/rest/api/studies/GCST90000016
+gwas_id: GCST90000016
+harmonisation_reference: ftp://ftp.ensembl.org/pub/release-95/fasta/homo_sapiens/dna/
+is_harmonised: true
+is_sorted: true
+ontology_mapping:
+- MONDO_0005277
+samples:
+- case_control_study: true
+  sample_ancestry_category:
+  - European
+  sample_size: 513266
+- case_control_study: true
+  sample_ancestry_category:
+  - East Asian
+  sample_size: 7188
+- case_control_study: true
+  sample_ancestry_category:
+  - Hispanic or Latin American
+  sample_size: 5837
+- case_control_study: true
+  sample_ancestry_category:
+  - African American or Afro-Caribbean
+  sample_size: 2043
+- case_control_study: true
+  sample_ancestry_category:
+  - African unspecified
+  sample_size: 8565
+- case_control_study: true
+  sample_ancestry_category:
+  - South Asian
+  sample_size: 9758
+- case_control_study: true
+  sample_ancestry_category:
+  - Other admixed ancestry
+  sample_size: 7912
+trait_description:
+- Migraine
