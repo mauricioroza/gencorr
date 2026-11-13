@@ -43,7 +43,7 @@
 #   2. Within one task, every trait listed in --info is loaded with
 #      process.input(), and LAVA keeps only SNPs present in ALL loaded traits.
 #      The Nextflow subworkflow controls this: lava_snp_set = 'pairwise' loads
-#      2 traits per task, 'joint' loads every trait (BigaGWAS-style batches).
+#      2 traits per task, 'joint' loads every trait.
 # =============================================================================
 
 suppressPackageStartupMessages(library(LAVA))

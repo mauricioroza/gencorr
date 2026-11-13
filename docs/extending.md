@@ -58,8 +58,7 @@ bioconda as `ldak6`), one `versions_<tool>` output on the `versions` topic for
 block, and a `meta.yml` in the current nf-core format (copy
 `modules/local/ldsc/rg/meta.yml`: `tools:` with `args_id`, inputs/outputs
 matching the channels 1:1, `versions_*` outputs and a `topics:` section).
-The command is the one from BigaGWAS'
-`static/shell/specific_sumher.sh`:
+The command:
 
 ```bash
 ldak --sum-cors ${meta.id} --summary ${s1} --summary2 ${s2} \

@@ -3,7 +3,7 @@ Oracle tests: gencorr's LDSC path vs running LDSC 1.0.1 directly.
 
 These answer "does the pipeline give the same numbers as the tool?":
 
-1. Raw file -> munge_sumstats.py -> ldsc --rg     (what BigaGWAS / a user does)
+1. Raw file -> munge_sumstats.py -> ldsc --rg     (what a user does)
    Raw file -> harmonize -> export -> munge -> rg (what gencorr does)
    must give identical rg, se, z, p and intercepts.
 
@@ -39,7 +39,7 @@ def munged(vignette, test_ld, tmp_path_factory):
     (d / "gencorr").mkdir()
     # Direct: the column choices a user would make by hand for these files.
     # MAF/INFO_UKB/STAT are ignored because the harmonized route does not carry
-    # them either (BigaGWAS likewise passed --ignore for eaf).
+    # them either.
     run(["munge_sumstats.py", "--sumstats", vignette / "bmi.sumstats.txt", "--out", d / "direct/bmi",
          "--snp", "SNPID_UKB", "--N-col", "NMISS", "--signed-sumstats", "BETA,0",
          "--ignore", "MAF,STAT,SE,INFO_UKB,CHR,BP", *merge])

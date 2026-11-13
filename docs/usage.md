@@ -38,9 +38,7 @@ References for EAS: the LDSC authors' 1000 Genomes East Asian LD scores
 EAS PLINK reference for LAVA (linked from LAVA's `REFERENCE.md`). With
 `--lava_snp_set joint`, traits are loaded together per ancestry.
 
-This matches BigaGWAS' "European GWAS / East Asian GWAS" option for LDSC
-(it switches `eur_w_ld_chr` ↔ `eas_ldscores`). BigaGWAS does not offer LAVA for
-East Asian traits; gencorr does when `--lava_ref_eas` is given.
+LAVA runs for East Asian traits when `--lava_ref_eas` is given.
 
 ### Genome build and rsIDs
 
@@ -87,8 +85,7 @@ when fewer than half of a file's IDs are rsIDs.
 ### GWAS Catalog studies
 
 Put a study's accession in `sumstats` and gencorr downloads its **harmonised**
-summary statistics from the GWAS Catalog FTP (as BigaGWAS' "Query from GWAS
-Catalog" does):
+summary statistics from the GWAS Catalog FTP:
 
 ```csv
 id,sumstats,n,ancestry
@@ -154,15 +151,15 @@ Per variant, the first available of (`--z_priority`, default `z,p,beta_se`):
 3. BETA / SE.
 
 Option 2 before 3 matches what LDSC `munge_sumstats.py` and LAVA do with raw
-files (and what BigaGWAS fed them). That keeps results comparable.
+files. That keeps results comparable.
 
 ## 2. Which pairs (`--pair_mode`)
 
-| mode | pairs | BigaGWAS equivalent |
-|---|---|---|
-| `all` (default) | every pair of samplesheet traits | n/a |
-| `target --targets mdd,scz` | each target vs every other trait | "massive" / one-vs-group jobs |
-| `pairs --pairs pairs.csv` | exactly the listed pairs (`trait1,trait2` header) | "2 traits" jobs |
+| mode | pairs |
+|---|---|
+| `all` (default) | every pair of samplesheet traits |
+| `target --targets mdd,scz` | each target vs every other trait (one vs group) |
+| `pairs --pairs pairs.csv` | exactly the listed pairs (`trait1,trait2` header) |
 
 Every method analyses the same pairs.
 
@@ -218,7 +215,7 @@ SNP names in your data must match those in the tagging file. Check them with
 
 * **rsIDs** (`rs3094315`): the current pre-computed files (checked November
   2026). Nothing else to set.
-* **`CHR:BP`** (`1:752566`): older releases (the files BigaGWAS uses) and
+* **`CHR:BP`** (`1:752566`): older releases and
   tagging files you made from a `CHR:BP`-named reference. Add
   `--sumher_snp_positions` with a GRCh37 rsID → position table (the 1000
   Genomes `.bim` you use for LAVA works, or a `CHR BP SNP` table), and gencorr
@@ -226,13 +223,12 @@ SNP names in your data must match those in the tagging file. Check them with
 
 With the wrong choice no SNP matches, and the pair gets `status = sumher_error`
 with LDAK's message "contains summary statistics for none of the … predictors"
-in `extra.error`. Options are those
-of BigaGWAS: `--check-sums NO --allow-ambiguous YES`, `--sumher_cutoff 0.01`,
+in `extra.error`. Options: `--check-sums NO --allow-ambiguous YES`, `--sumher_cutoff 0.01`,
 `--sumher_genomic_control false` (LDAK 6's own default models multiplicative
 inflation instead; set `true` for that).
 
 LDAK reports rg and SEs but no p-value: gencorr gives z = rg / SE and a
-two-sided normal p (as BigaGWAS shows), marked in `extra.p_method`.
+two-sided normal p, marked in `extra.p_method`.
 
 ### Popcorn (`--methods popcorn`): cross-ancestry pairs
 
@@ -279,7 +275,7 @@ they have rsIDs (see [Genome build and rsIDs](#genome-build-and-rsids)).
 |---|---|---|
 | `--methods` | `ldsc,lava` | |
 | `--lava_overlap` | `ldsc` | sample-overlap correction from LDSC intercepts (LAVA vignette recipe); `none`; or a matrix file |
-| `--lava_snp_set` | `pairwise` | `pairwise`: a pair uses SNPs shared by its two traits. `joint`: all traits loaded together, SNPs shared by **all** traits (closer to a BigaGWAS group job) |
+| `--lava_snp_set` | `pairwise` | `pairwise`: a pair uses SNPs shared by its two traits. `joint`: all traits loaded together, SNPs shared by **all** traits (LAVA's multi-trait behaviour) |
 | `--lava_univ_thresh` | `0.05` | bivariate test only if both local h2 p-values are below this. For genome-wide screens the LAVA authors suggest a stricter (e.g. Bonferroni) filter |
 | `--lava_loci_per_chunk` | `250` | parallelism only; results do not depend on it |
 | `--lava_seed` | `20201231` | base seed for LAVA's Monte Carlo CIs/p-values |
@@ -290,7 +286,7 @@ they have rsIDs (see [Genome build and rsIDs](#genome-build-and-rsids)).
 | `--lava_snp_list` | none (all SNPs) | run LAVA only on the SNP IDs in this list, e.g. `w_hm3.snplist` (see 4b) |
 | `--sumher_tagfile`, `--sumher_tagfile_eas` | none | LDAK tagging files for SumHer (EUR, EAS) |
 | `--sumher_snp_positions` | none | GRCh37 rsID → position table; SumHer variants named `CHR:BP`. Only for tagging files with `CHR:BP` names (older LDAK releases); current pre-computed files use rsIDs |
-| `--sumher_cutoff`, `--sumher_genomic_control` | `0.01`, `false` | LDAK `--cutoff`, `--genomic-control` (BigaGWAS defaults) |
+| `--sumher_cutoff`, `--sumher_genomic_control` | `0.01`, `false` | LDAK `--cutoff`, `--genomic-control` |
 | `--popcorn_cfile` | none | Popcorn score file for EUR × EAS pairs |
 | `--popcorn_cfile_ancestries` | `EUR,EAS` | populations of the score file, in order |
 | `--popcorn_gen_effect`, `--popcorn_use_mle` | `false`, `false` | genetic effect correlation; MLE fit |
@@ -325,15 +321,13 @@ into LDSC. LAVA applies no MAF/INFO filter of its own.
 
 By default LAVA uses every harmonized SNP that is also in the LD reference.
 `--lava_snp_list w_hm3.snplist` restricts LAVA to the IDs in a list
-(first column; header optional; plain or gzipped). This is what BigaGWAS does
-(HapMap3-based list), and it is needed to reproduce BigaGWAS' LAVA results.
+(first column; header optional; plain or gzipped).
 
 | | all SNPs (default) | HapMap3 only (`--lava_snp_list w_hm3.snplist`) |
 |---|---|---|
 | information per locus | all SNPs; LAVA compresses LD to PCs itself | ~15–20% of SNPs; some loci drop to a handful of SNPs |
 | robustness to imputation quality | depends on QC → use `--min_info`/`--min_maf` | common, well-imputed SNPs only |
 | same SNPs across GWAS | pairwise intersection | fixed list |
-| comparable with BigaGWAS | no | yes (shown on the test data: rho equal to ~1e-5) |
 | ancestry | whatever the reference covers | HapMap3 is less complete outside European ancestry |
 
 LDSC is not affected (it has its own list: `--ldsc_merge_alleles`). The SNP set

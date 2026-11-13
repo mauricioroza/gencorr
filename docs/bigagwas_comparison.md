@@ -156,6 +156,25 @@ SNPs this made no visible difference.
 Differences that are not explained by this table are worth reporting, either
 to us or to the BigaGWAS team.
 
+### Known differences in defaults
+
+| topic | gencorr | BigaGWAS |
+|---|---|---|
+| LAVA SNP set | all SNPs (`--lava_snp_list` to restrict) | HapMap3-based list (~16k of ~100k SNPs on the test data); with the same list gencorr reproduces its rho to ~1e-5 |
+| LAVA version | 0.1.5 | 0.1.0; identical SNPs and continuous traits matched to 5–7 decimals; binary traits differ by design (0.1.5 changed the binary model) |
+| LAVA case/control | used when `n_cases`/`n_controls` are given | 2-trait form treats every trait as continuous |
+| LAVA seeds | per (locus, trait1, trait2) | not seed-reproducible |
+| LAVA sample overlap | from LDSC intercepts by default | option for 2-trait jobs only |
+| pairs without estimate | kept with a `status` | rows dropped (e.g. LDSC `NA` → "9999") |
+| SumHer | LDAK 6.1, `--genomic-control NO` passed explicitly | LDAK 5.2 |
+| SumHer Z | harmonized Z (from P by default) | BETA/SE for SumHer, P for LDSC; `--z_priority beta_se,p` reproduces its SumHer input |
+| ancestry | per trait; LAVA also for EAS | EUR or EAS LD scores per job; LAVA only for EUR |
+| input handling | one harmonized file per trait, matched by rsID | per-tool conversion; liftover to GRCh38, dbSNP rsIDs, reference-VCF alignment, liftover back |
+| pair selection | `--pair_mode target` / `pairs` | "massive" (one vs group) / "2 traits" jobs |
+| LAVA group jobs | `--lava_snp_set joint` comes closest | all traits loaded at once, SNPs shared by all |
+| GWAS Catalog | exact accession match | "Query from GWAS Catalog" matches a substring, which can pick another study |
+| LDSC munge input | harmonized Z (`--signed-sumstats Z,0`) | P + beta; the same information, so munged files are comparable |
+
 ## 6. Results on the test jobs
 
 gencorr run with BigaGWAS' references and settings (sections 3–4, LAVA with

@@ -16,10 +16,9 @@
                              other traits are in the run. (default)
       snp_set = 'joint'    : one group with every trait. All pairs use the SNPs
                              shared by ALL traits (LAVA's behaviour when many
-                             phenotypes are loaded at once, as in BigaGWAS batches).
+                             phenotypes are loaded at once).
     SNP set: by default every harmonized SNP is used. With --lava_snp_list
-    (e.g. w_hm3.snplist) the input is first restricted to that list, as
-    BigaGWAS does with its HapMap3-based list.
+    (e.g. w_hm3.snplist) the input is first restricted to that list.
     Results are identical however the loci are chunked: run_lava.R seeds each
     (locus, pair) separately (tests/python/test_lava_runner.py).
 */

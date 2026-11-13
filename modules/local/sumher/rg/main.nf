@@ -3,7 +3,7 @@
  * ---------
  * SumHer (LDAK) global genetic correlation for one trait pair:
  *     ldak6 --sum-cors <pair> --summary t1 --summary2 t2 --tagfile <tagging>
- * Same command as BigaGWAS (static/shell/sumHer_2traits.sh); its options
+ * Options
  * (--check-sums, --allow-ambiguous, --cutoff, --genomic-control) come from
  * ext.args (conf/modules.config).
  *

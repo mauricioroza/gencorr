@@ -18,8 +18,7 @@ A format entry has:
 --snp-list restricts the export to the SNP IDs in a list (first column of a
 whitespace-separated file, header optional, plain or gzipped), e.g. LDSC's
 w_hm3.snplist. Only IDs are matched, not alleles: allele alignment is done by
-each method (LAVA aligns to its LD reference). This reproduces BigaGWAS, which
-filters its LAVA input to a fixed rsID list.
+each method (LAVA aligns to its LD reference).
 """
 
 from __future__ import annotations
@@ -37,7 +36,7 @@ HEADER_TOKENS = {"snp", "rsid", "rs_id", "id", "snpid", "marker", "variant_id"}
 
 FORMATS = {
     # Input for ldsc munge_sumstats.py. munge recomputes Z from P and takes the
-    # sign from Z (--signed-sumstats Z,0), exactly as BigaGWAS fed it P + beta.
+    # sign from Z (--signed-sumstats Z,0).
     "ldsc": {
         "columns": [("SNP", "SNP"), ("A1", "A1"), ("A2", "A2"), ("Z", "Z"),
                     ("P", "P"), ("N", "N")],

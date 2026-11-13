@@ -77,7 +77,7 @@ def test_read_snp_list_header_case_and_gzip(tmp_path):
 
 def test_snp_list_cli_equals_manual_awk_filter(tmp_path):
     """--snp-list gives the same LAVA input as filtering the raw file by ID first
-    (the manual `awk` step used to reproduce BigaGWAS)."""
+    (a manual `awk` step)."""
     snps = [f"rs{i}" for i in range(1, 11)]
     raw_df = pd.DataFrame({"SNP": snps, "A1": ["A"] * 10, "A2": ["G"] * 10,
                            "BETA": np.linspace(-0.1, 0.1, 10), "SE": [0.05] * 10,

@@ -14,8 +14,8 @@ Inputs (one pair per LDAK run, as written by the SUMHER_RG module):
 Output (--out prefix): <prefix>.sumher.tsv in gencorr_common.RESULT_COLUMNS.
 
 rg, its SE and both heritabilities are LDAK's own numbers (6 decimals). LDAK
-reports no p-value, so z = rg / SE and a two-sided normal p are computed here
-(as BigaGWAS shows them), and the 95% CI is rg +- 1.96 SE; extra.p_method says
+reports no p-value, so z = rg / SE and a two-sided normal p are computed here,
+and the 95% CI is rg +- 1.96 SE; extra.p_method says
 so. A failed or empty LDAK run gives status 'sumher_error' with LDAK's message.
 """
 

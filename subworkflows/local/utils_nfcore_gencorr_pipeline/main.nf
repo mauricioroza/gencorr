@@ -237,7 +237,7 @@ def validateSamples(List samples) {
 //
 // Build the list of trait pairs.
 //   all    : every unordered pair, in samplesheet order (i < j)
-//   target : each target trait against every other trait (BigaGWAS "one vs group")
+//   target : each target trait against every other trait ("one vs group")
 //   pairs  : exactly the pairs listed in a CSV (columns trait1,trait2)
 // Pairs are unordered: [a, b] and [b, a] are the same pair; the first seen wins.
 // (Written without switch/for loops: Nextflow >= 26 parses strict syntax.)

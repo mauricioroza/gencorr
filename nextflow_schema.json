@@ -43,7 +43,7 @@
                 "pair_mode": {
                     "type": "string",
                     "description": "How trait pairs are formed.",
-                    "help_text": "all: every pair of samplesheet traits. target: --targets against every other trait (BigaGWAS 'one vs group'). pairs: exactly the pairs in --pairs.",
+                    "help_text": "all: every pair of samplesheet traits. target: --targets against every other trait ('one vs group'). pairs: exactly the pairs in --pairs.",
                     "default": "all",
                     "enum": [
                         "all",
@@ -87,7 +87,7 @@
                 "z_priority": {
                     "type": "string",
                     "description": "Order in which the signed Z-score is derived: z (Z column), p (P + sign of effect), beta_se (BETA/SE).",
-                    "help_text": "Default 'z,p,beta_se' matches what LDSC munge and LAVA do with raw files (and what BigaGWAS fed them).",
+                    "help_text": "Default 'z,p,beta_se' matches what LDSC munge and LAVA do with raw files.",
                     "default": "z,p,beta_se",
                     "pattern": "^(z|p|beta_se)(,(z|p|beta_se))*$"
                 },
@@ -226,7 +226,7 @@
                 "lava_snp_set": {
                     "type": "string",
                     "description": "Which SNPs a pair is analysed on.",
-                    "help_text": "pairwise: SNPs shared by the two traits (result independent of other traits). joint: SNPs shared by all traits in the run (LAVA multi-phenotype behaviour, as in BigaGWAS batches).",
+                    "help_text": "pairwise: SNPs shared by the two traits (result independent of other traits). joint: SNPs shared by all traits in the run (LAVA multi-phenotype behaviour).",
                     "default": "pairwise",
                     "enum": [
                         "pairwise",
@@ -277,7 +277,7 @@
                     "format": "file-path",
                     "exists": true,
                     "description": "Restrict LAVA to the SNP IDs in this list (first column; e.g. w_hm3.snplist). Default: all SNPs.",
-                    "help_text": "Reproduces BigaGWAS, which runs LAVA on HapMap3 SNPs only. Fewer SNPs = more robust to imputation quality and faster, but less information and some loci become sparse. Recorded in the results ('extra.snp_set')."
+                    "help_text": "E.g. HapMap3 SNPs only (w_hm3.snplist). Fewer SNPs = more robust to imputation quality and faster, but less information and some loci become sparse. Recorded in the results ('extra.snp_set')."
                 }
             }
         },
@@ -290,7 +290,7 @@
                 "sumher_tagfile": {
                     "type": "string",
                     "description": "LDAK tagging file for EUR traits, plain or gzipped (e.g. LDAK-Thin HapMap3 GBR: ldak.thin.hapmap.gbr.tagging).",
-                    "help_text": "Pre-computed tagging files are at dougspeed.com (Pre-computed Tagging Files); LDAK recommends the LDAK-Thin model for genetic correlation. Current releases name predictors by rsID (nothing else to set); older releases and BigaGWAS' copies use CHR:BP (GRCh37): then also set --sumher_snp_positions.",
+                    "help_text": "Pre-computed tagging files are at dougspeed.com (Pre-computed Tagging Files); LDAK recommends the LDAK-Thin model for genetic correlation. Current releases name predictors by rsID (nothing else to set); older releases use CHR:BP (GRCh37): then also set --sumher_snp_positions.",
                     "format": "file-path",
                     "exists": true
                 },
@@ -315,7 +315,7 @@
                 },
                 "sumher_genomic_control": {
                     "type": "boolean",
-                    "description": "LDAK --genomic-control YES (model multiplicative inflation of test statistics). Default false = NO, as in BigaGWAS; LDAK 6's own default is different.",
+                    "description": "LDAK --genomic-control YES (model multiplicative inflation of test statistics). Default false = NO; LDAK 6's own default is different.",
                     "default": false
                 }
             }

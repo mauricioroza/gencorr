@@ -64,7 +64,7 @@ nextflow_process {
                 { assert process.success },
                 { assert cors[0] == 'Component Value SE' },
                 { assert cors.any { line -> line.startsWith('Cor_All ') } },
-                // BigaGWAS' options reached LDAK (conf: ./nextflow.config)
+                // the configured options reached LDAK (conf: ./nextflow.config)
                 { assert log.contains('--genomic-control NO') && log.contains('--cutoff 0.01') },
                 { assert snapshot(cors, process.out.versions_ldak).match() }
             )

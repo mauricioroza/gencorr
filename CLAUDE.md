@@ -1,12 +1,19 @@
 # gencorr — notes for Claude
 
-Nextflow (nf-core template) pipeline for global and local genetic correlation (LDSC + LAVA),
-built to replace BigaGWAS (bigagwas.org) for the Genis group. Owner: GitHub `mauricioroza`,
+Nextflow (nf-core template) pipeline for global and local genetic correlation (LDSC + LAVA)
+for the Genis group. Owner: GitHub `mauricioroza`,
 repo `mauricioroza/gencorr` (private), working branch `dev` (also `master`, `TEMPLATE`).
 
 Goals: reproducible, testable, well documented; results checkable against the original tools;
 new methods easy to add. A Rust rewrite was considered and rejected (stats run inside LDSC/LAVA;
-BigaGWAS's slowness is rsID mapping, which this pipeline avoids by design).
+the slow part of such platforms is rsID mapping, which this pipeline avoids by design).
+
+Docs/code framing: BigaGWAS (BIGA) is mentioned ONLY in the acknowledgement (README Credits,
+CITATIONS "Related work") and where its results were used to compare/test gencorr
+(docs/bigagwas_comparison.md incl. its "Known differences in defaults" table, docs/validation.md
+comparison sections, tests/bigagwas/, compare_results.py `bigagwas_ldsc` format). Don't describe gencorr
+as replacing or following it anywhere else (docs, help texts, code comments). The notes below
+mention it only as a comparison reference.
 
 ## Environment (WSL)
 

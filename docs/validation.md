@@ -10,7 +10,7 @@ short, readable scripts.
 | layer | command | what it proves | runtime |
 |---|---|---|---|
 | unit (Python) | `pytest tests/python -k "not oracle"` | harmonizer rules (column detection, Z derivation, filters, N fallback, byte-identical reruns); LDSC log parsing matches the numbers in real logs; schema checks; comparison tool | 20 s |
-| **LDSC oracle** | `pytest tests/python/test_ldsc_oracle.py` | raw file → `munge_sumstats.py` → `ldsc --rg` (what you or BigaGWAS do by hand) gives **identical** rg/se/z/p/intercepts to the pipeline route; batching pairs into one `--rg` call changes nothing | 2 min |
+| **LDSC oracle** | `pytest tests/python/test_ldsc_oracle.py` | raw file → `munge_sumstats.py` → `ldsc --rg` (what you do by hand) gives **identical** rg/se/z/p/intercepts to the pipeline route; batching pairs into one `--rg` call changes nothing | 2 min |
 | **LAVA oracle** | `pytest tests/python/test_lava_oracle.py` | `bin/run_lava.R` gives **identical** rho, CIs, p and local h2 to LAVA called as in its vignette (`tests/oracle/lava_native.R`); splitting loci into chunks changes nothing; harmonized input vs LAVA reading raw files: same SNPs/statuses, rg within 1e-4 (explained below) | 15 min |
 | module (nf-test) | `nf-test test --tag modules_local` | each of the 8 local modules on its own, with small real inputs: output layout, the numbers the tool reports (LDSC summary lines; LAVA status, n SNPs, K and rho per locus), error paths (duplicated estimates rejected), and the `stub:` block | 10 min |
 | function (nf-test) | `nf-test test subworkflows/local/utils_nfcore_gencorr_pipeline/tests/` | pair construction for all/target/pairs modes, error cases | 40 s |

@@ -14,19 +14,16 @@ set of traits and returns one tidy results table.
 
 | | method | tool | what you get |
 |---|---|---|---|
-| **global** | genome-wide rg | [LDSC](https://github.com/bulik/ldsc) 1.0.1 (same version as BigaGWAS) | rg, SE, p per trait pair; observed- and liability-scale h2 per trait |
+| **global** | genome-wide rg | [LDSC](https://github.com/bulik/ldsc) 1.0.1 | rg, SE, p per trait pair; observed- and liability-scale h2 per trait |
 | **global** | genome-wide rg, LDAK heritability model | [SumHer](https://dougspeed.com/genetic-correlations/) (LDAK 6.1) | rg, SE, p per trait pair; h2 and coheritability |
 | **cross-ancestry** | rg between a EUR and an EAS GWAS | [Popcorn](https://github.com/brielin/popcorn) (commit `20a29e8`) | rg (genetic impact or effect), SE, p; h2 in each population |
 | **local** | rg per genomic locus | [LAVA](https://github.com/josefin-werme/LAVA) 0.1.5 (commit `e729a24`) | local rho, 95% CI, p per pair and locus; local h2 per trait |
 
-It was built to replace [BigaGWAS](https://bigagwas.org) for routine analyses:
-
-* **Same numbers as BigaGWAS.** With the same data and settings, LDSC rg is
-  identical and LAVA rho agrees to 1e-5–1e-7
-  ([comparison](docs/bigagwas_comparison.md#6-results-on-the-test-jobs)).
-* **Faster.** No rsID mapping step, LAVA loci run in parallel chunks and empty
-  loci are skipped. On the example data one LDSC job took ~45 s instead of
-  ~20 min on BigaGWAS.
+* **Checked against the original tools.** Oracle tests run LDSC and LAVA
+  directly and require the same numbers from the pipeline
+  ([validation](docs/validation.md)).
+* **Fast.** No rsID mapping step, LAVA loci run in parallel chunks and empty
+  loci are skipped.
 * **Reproducible.** Every tool version is pinned, LAVA's Monte Carlo steps are
   seeded per (locus, pair), and outputs are byte-identical on re-runs.
 * **Nothing disappears.** Pairs and loci that could not be estimated stay in
@@ -123,9 +120,9 @@ t2d,GCST000028,,,,,,Type 2 diabetes (GWAS Catalog)
 | option | default | |
 |---|---|---|
 | `--methods` | `ldsc,lava` | run one or both. With `--methods lava` alone, also set `--lava_overlap none` (the default overlap comes from LDSC) |
-| `--pair_mode` | `all` | `all` pairs; `target --targets mdd,scz` = each target vs all others (BigaGWAS "one vs group"); `pairs --pairs pairs.csv` = listed pairs only |
+| `--pair_mode` | `all` | `all` pairs; `target --targets mdd,scz` = each target vs all others (one vs group); `pairs --pairs pairs.csv` = listed pairs only |
 | `--min_maf`, `--min_info` | off | variant QC for all methods; `0.01` / `0.9` recommended |
-| `--lava_snp_list` | all SNPs | e.g. `w_hm3.snplist`, to reproduce BigaGWAS' LAVA |
+| `--lava_snp_list` | all SNPs | e.g. `w_hm3.snplist` (HapMap3 SNPs only) |
 | `--lava_univ_thresh` | `0.05` | local h2 p-value both traits must pass before a pair is tested |
 
 All parameters: [docs/usage.md](docs/usage.md) or
@@ -175,7 +172,7 @@ JSON `extra` column with `jsonlite::fromJSON`.
   for a SLURM config. `-resume` works as usual; changing a LAVA option re-runs
   only LAVA.
 * **Status:** v0.1.0dev, not yet released. Validated on the LAVA vignette and
-  BigaGWAS example data; no genome-wide production run yet.
+  other example data; no genome-wide production run yet.
 
 ## Testing
 
@@ -191,16 +188,20 @@ the pipeline gives the same numbers. `nf-core pipelines lint` and
 |---|---|
 | [usage.md](docs/usage.md) | samplesheet, all parameters, reference data, running on UPPMAX |
 | [output.md](docs/output.md) | every output file and column, status values |
-| [design.md](docs/design.md) | design decisions, and where results differ from BigaGWAS on purpose |
+| [design.md](docs/design.md) | design decisions and their reasons |
 | [validation.md](docs/validation.md) | test layers and how to run them |
-| [bigagwas_comparison.md](docs/bigagwas_comparison.md) | reproducing BigaGWAS jobs and the comparison results |
+| [bigagwas_comparison.md](docs/bigagwas_comparison.md) | comparison with BIGA results, used to test the pipeline |
 | [extending.md](docs/extending.md) | adding a new method, step by step |
 | [CONTRIBUTING.md](docs/CONTRIBUTING.md) | conventions and checks before a pull request |
 
 ## Credits and citation
 
-Written by MR (Genis). The method choices follow BigaGWAS, whose LDSC and LAVA
-usage this pipeline reproduces and extends.
+Written by MR (Genis).
+
+We thank the developers of [BIGA](https://bigagwas.org) (Li et al. 2023,
+[10.1101/2023.04.28.538585](https://doi.org/10.1101/2023.04.28.538585)): its
+results were used to compare and test gencorr's results
+([docs/bigagwas_comparison.md](docs/bigagwas_comparison.md)).
 
 If you use gencorr, please cite the tools it runs: LDSC
 (Bulik-Sullivan et al. 2015, [10.1038/ng.3211](https://doi.org/10.1038/ng.3211);

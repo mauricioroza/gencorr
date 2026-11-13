@@ -151,7 +151,7 @@ def test_unknown_accession_fails_clearly(tmp_path):
 
 def test_harmonised_list_fallback_matches_whole_accession(tmp_path):
     # study not in its expected folder; harmonised_list.txt also lists a study whose
-    # accession merely contains the one asked for (BigaGWAS would take that one)
+    # accession merely contains the one asked for (a substring match would take that one)
     mirror = tmp_path / "ftp"
     other = mirror / "elsewhere/GCST0001234/harmonised"
     wanted = mirror / "elsewhere/GCST000123/harmonised"

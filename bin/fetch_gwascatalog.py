@@ -18,7 +18,7 @@ GCST90000001-GCST90001000/GCST90000016. Some studies have two harmonised
 files (an older '<pmid>-<accession>-<efo>.h.tsv.gz' and a newer
 '<accession>.h.tsv.gz'); the newer one is used. If the folder is not where
 expected, the Catalog's harmonised_list.txt is searched for the exact
-accession (BigaGWAS matches a substring, which can pick another study).
+accession (a substring match could pick another study).
 
 Only the standard library is used (the metadata is read with a small reader
 for the Catalog's fixed YAML layout), so this runs in the gencorr-tools image.

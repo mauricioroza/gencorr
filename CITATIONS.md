@@ -76,7 +76,7 @@ Cite the data behind the references you pass to the pipeline.
 
 ## Related work
 
-- [BIGA](https://doi.org/10.1101/2023.04.28.538585) (bigagwas.org): the cloud platform whose LDSC and LAVA analyses gencorr reproduces ([docs/bigagwas_comparison.md](docs/bigagwas_comparison.md)). Cite it when you compare with, or build on, BIGA results.
+- [BIGA](https://doi.org/10.1101/2023.04.28.538585) (bigagwas.org): cloud platform for cross-trait genetic analyses; its results were used to compare and test gencorr's results ([docs/bigagwas_comparison.md](docs/bigagwas_comparison.md)).
 
   > Li Y, Xue F, et al., Zhao B. Analyzing bivariate cross-trait genetic architecture in GWAS summary statistics with the BIGA cloud computing platform. bioRxiv. 2023. doi: 10.1101/2023.04.28.538585.
 

@@ -4,10 +4,9 @@
  * munge_sumstats.py on the LDSC export of a harmonized file. Applies LDSC's own
  * QC (INFO > 0.9, MAF > 0.01 when those columns are present, strand-ambiguous
  * and non-SNP removal) and, if given, restricts/aligns to --merge-alleles
- * (normally w_hm3.snplist, as in BigaGWAS).
+ * (normally w_hm3.snplist).
  *
- * The Z column carries the sign; munge recomputes |Z| from P. This is the same
- * information BigaGWAS passed (P + beta), so munged files are comparable.
+ * The Z column carries the sign; munge recomputes |Z| from P.
  *
  * --chunksize 500000: munge reads the file in chunks (default 5M rows) and
  * filters each with Series.isin(merge-alleles SNPs). In this container's

@@ -98,7 +98,7 @@ One row per (locus, trait) that LAVA processed:
 ## Precision
 
 * LDSC values are copied from LDSC's logs, which print 4 decimals. That is
-  the precision of all LDSC numbers here and in BigaGWAS.
+  the precision of all LDSC numbers here.
 * LAVA values are written with R's default 15 significant digits. CIs and
   p-values are Monte Carlo estimates (1e4 to 1e6 draws). They are exactly
   reproducible for a given `--lava_seed`, but a different seed gives slightly

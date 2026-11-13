@@ -1,4 +1,4 @@
-# LDSC 1.0.1 (Bulik-Sullivan et al.), the Python 2.7 release used by BigaGWAS.
+# LDSC 1.0.1 (Bulik-Sullivan et al.), the Python 2.7 release.
 channels:
   - conda-forge
   - bioconda
