@@ -3,9 +3,9 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     mauricioroza/gencorr
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Global (LDSC) and local (LAVA) genetic correlation from GWAS summary
-    statistics, with one harmonization step and one results format shared by
-    all methods.
+    Global (LDSC, SumHer), local (LAVA) and cross-ancestry (Popcorn) genetic
+    correlation from GWAS summary statistics, with one harmonization step and
+    one results format shared by all methods.
 ----------------------------------------------------------------------------------------
 */
 

@@ -5,9 +5,10 @@ common layouts, into the gencorr harmonized format (see gencorr_common.py).
 
 What it does, in order (every step is counted in the QC report):
 
- 1. Detect the delimiter (tab, comma or whitespace) and read everything as text.
+ 1. Detect the delimiter (tab, comma or whitespace) and read the header.
  2. Map source columns to standard names using a synonym table
-    (COLUMN_SYNONYMS below); --colmap overrides any automatic choice.
+    (COLUMN_SYNONYMS below); --colmap overrides any automatic choice. Only the
+    mapped columns are then read (IDs and alleles as text, the rest as numbers).
  3. Normalise IDs and alleles: upper-case alleles, "rs" IDs lower-cased,
     "chr" prefix stripped from chromosomes.
  3b. Optional rsID mapping (--rsid-map): rows whose SNP ID is not an rsID
@@ -25,7 +26,8 @@ What it does, in order (every step is counted in the QC report):
        beta_se  BETA / SE
     Using P first mirrors what LDSC munge_sumstats.py and LAVA do internally,
     so the Z passed to every method is the same Z the original tools would use.
- 6. Resolve the per-variant N: N column > samplesheet --n > cases + controls.
+ 6. Resolve the per-variant N: N column > samplesheet --n > cases + controls >
+    the study's N from GWAS Catalog metadata (--source-info).
  7. Drop variants that cannot be used: missing SNP/alleles/Z/N, non-SNV or
     multi-character alleles, A1 == A2, (optionally) strand-ambiguous A/T and C/G
     pairs, and every copy of a duplicated SNP ID.
@@ -372,7 +374,7 @@ def harmonize(raw: pd.DataFrame, mapping: dict[str, str], *, n=None, n_cases=Non
         qc["rsid_mapping"] = {"map": rsid_map_name, "build": build, **mapping_info}
     elif share_rs < NON_RSID_WARN_FRACTION:
         qc["warning_non_rsid"] = (
-            f"only {share_rs:.0%} of SNP IDs are rsIDs. LDSC and LAVA match variants by "
+            f"only {share_rs:.0%} of SNP IDs are rsIDs. Every method matches variants by "
             "rsID, so the others will not be analysed. Provide an rsID map for this "
             f"file's build ({build or 'GRCh37'}): --rsid_map_grch37 or --rsid_map_grch38")
 

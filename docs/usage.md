@@ -38,8 +38,6 @@ References for EAS: the LDSC authors' 1000 Genomes East Asian LD scores
 EAS PLINK reference for LAVA (linked from LAVA's `REFERENCE.md`). With
 `--lava_snp_set joint`, traits are loaded together per ancestry.
 
-LAVA runs for East Asian traits when `--lava_ref_eas` is given.
-
 ### Genome build and rsIDs
 
 Every method matches variants **by rsID** and takes positions from its own
@@ -129,7 +127,7 @@ The harmonizer recognises the usual names case-insensitively (full list in
 |---|---|
 | SNP | snp, rsid, rs_id, hm_rsid, variant_id, markername, snpid, snpid_ukb, … |
 | A1 (effect) | a1, effect_allele, hm_effect_allele, ea, alt, allele1, tested_allele |
-| A2 | a2, other_allele, hm_other_allele, nea, ref, allele2 |
+| A2 | a2, other_allele, hm_other_allele, nea, ref, allele2, non_effect_allele |
 | Z | z, zscore, z_score, z-score, z_stat |
 | BETA | beta, hm_beta, b, effect, logor, log_or, log_odds |
 | OR | or, odds_ratio, hm_odds_ratio (converted to BETA = ln OR) |
@@ -273,7 +271,7 @@ they have rsIDs (see [Genome build and rsIDs](#genome-build-and-rsids)).
 
 | parameter | default | |
 |---|---|---|
-| `--methods` | `ldsc,lava` | |
+| `--methods` | `ldsc,lava` | comma-separated: `ldsc`, `lava`, `sumher`, `popcorn` |
 | `--lava_overlap` | `ldsc` | sample-overlap correction from LDSC intercepts (LAVA vignette recipe); `none`; or a matrix file |
 | `--lava_snp_set` | `pairwise` | `pairwise`: a pair uses SNPs shared by its two traits. `joint`: all traits loaded together, SNPs shared by **all** traits (LAVA's multi-trait behaviour) |
 | `--lava_univ_thresh` | `0.05` | bivariate test only if both local h2 p-values are below this. For genome-wide screens the LAVA authors suggest a stricter (e.g. Bonferroni) filter |
@@ -333,34 +331,44 @@ By default LAVA uses every harmonized SNP that is also in the LD reference.
 LDSC is not affected (it has its own list: `--ldsc_merge_alleles`). The SNP set
 used is recorded in every LAVA row (`extra.snp_set`: `all` or the file name).
 
-## 5. Running on UPPMAX (Pelle)
+## 5. Running on a SLURM cluster
 
 ```bash
-module load Nextflow           # or install Nextflow >= 25.10.4 yourself
-export NXF_HOME=/proj/<project>/nobackup/$USER/.nextflow
-export NXF_APPTAINER_CACHEDIR=/proj/<project>/nobackup/$USER/apptainer_cache
+# Nextflow >= 25.10.4 and Apptainer (or Singularity) on the login node
+export NXF_HOME=/path/on/project/storage/$USER/.nextflow
+export NXF_APPTAINER_CACHEDIR=/path/on/project/storage/$USER/apptainer_cache
 
-nextflow run mauricioroza/gencorr -profile apptainer -c pelle.config \
+nextflow run mauricioroza/gencorr -profile apptainer -c cluster.config \
     --input samplesheet.csv --outdir results ...
 ```
 
-with a small `pelle.config` (adjust account/partition to your allocation):
+with a small `cluster.config` (adjust account, partition and limits to your
+allocation):
 
 ```groovy
 process {
     executor       = 'slurm'
-    clusterOptions = '-A <naiss_project>'
+    clusterOptions = '-A <project_account>'
     resourceLimits = [ cpus: 16, memory: 120.GB, time: 240.h ]
 }
 executor { queueSize = 200; submitRateLimit = '10/1min' }
 ```
 
-nf-core/configs also has an `uppmax` institutional profile (`-profile uppmax`),
-loaded automatically from `--custom_config_base`. Check that it covers Pelle
-before relying on it.
+Many clusters have a ready-made institutional profile in
+[nf-core/configs](https://github.com/nf-core/configs) (`-profile <name>`,
+loaded automatically from `--custom_config_base`); check that it matches your
+system before relying on it.
+
+The `gencorr-tools` image is private (LAVA's licence): on a cluster without
+Docker, build it elsewhere and convert it once,
+`apptainer build gencorr-tools_0.1.0.sif docker-daemon://ghcr.io/mauricioroza/gencorr-tools:0.1.0`,
+or pull it from ghcr.io with a token that has access. Compute nodes need
+network access for GWAS Catalog accessions and the default `--lava_loci` URL
+(or give local copies).
 
 Memory: harmonization loads one GWAS file at a time in pandas (`process_low`,
-12 GB). For very large files (> 20 M rows) raise it in a config:
+12 GB; a 9.5 M-row file peaks at about 4.4 GB). For very large files
+(> 20 M rows) raise it in a config:
 `process { withName: 'HARMONIZE_SUMSTATS' { memory = 32.GB } }`.
 
 `-resume` works as usual. Changing a LAVA parameter re-runs only LAVA.

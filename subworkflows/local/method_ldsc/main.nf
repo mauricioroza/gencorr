@@ -4,7 +4,7 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     Follows the gencorr method interface (docs/extending.md):
 
-      take:  ch_harmonized  [ meta, harmonized.tsv.gz ]      (all traits)
+      take:  ch_harmonized  [ meta, harmonized.tsv.gz ]      (traits of the pairs)
              ch_pairs       [ meta1, meta2 ]                 (pairs to analyse)
              + method-specific reference inputs
       emit:  results        path: standard results table (one row per pair)
@@ -36,8 +36,8 @@ workflow METHOD_LDSC {
     EXPORT_SUMSTATS ( ch_harmonized, 'ldsc', [] )   // LDSC restricts SNPs via --merge-alleles in munge
     LDSC_MUNGE      ( EXPORT_SUMSTATS.out.sumstats, merge_alleles )
 
-    // h2 per trait with its ancestry's LD scores (traits of an ancestry without
-    // LD scores are only in cross-ancestry pairs and are skipped)
+    // h2 per trait with its ancestry's LD scores (ch_harmonized holds only traits
+    // of same-ancestry pairs, whose LD scores are checked at start-up)
     def ch_h2_in = LDSC_MUNGE.out.sumstats
         .map      { meta, f -> [ traitAncestry(meta), meta, f ] }
         .combine  ( ch_ld_by_ancestry, by: 0 )

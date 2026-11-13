@@ -64,10 +64,10 @@ mention it only as a comparison reference.
 ## Testing / validation (docs/validation.md, docs/bigagwas_comparison.md)
 
 - Principle: oracle tests — the reference is always the original tool run directly.
-- Python unit + oracle: 54 tests (`tests/python`; 6 oracle tests skip unless LDSC/LAVA are on PATH).
+- Python unit + oracle: 99 tests (`tests/python`; the oracle tests skip unless LDSC/LAVA are on PATH).
   Run with the venv active: `source ~/venvs/gencorr/bin/activate && pytest tests/python` (scripts are
-  called as `python3`, so the venv must be first on PATH). nf-test: module (22), function (6),
-  pipeline (3: `-profile test`, `-stub`, target + joint).
+  called as `python3`, so the venv must be first on PATH). nf-test: module (34), function (9),
+  pipeline (6).
 - nf-core tools 4.2.1 is in `~/venvs/gencorr`: `nf-core pipelines lint`, `nf-core modules lint --all --local`
   (run from the repo root). Module warnings about the private container, custom meta keys, underscores in
   names and `process_single`+`process_long` are expected for this private pipeline.
@@ -106,7 +106,7 @@ mention it only as a comparison reference.
   use rsIDs; older ones (BigaGWAS) use GRCh37 CHR:BP -> `--sumher_snp_positions` only for those. `--calc-tagging` needs ~9 GB RAM by default: use `--bit-size 400` in WSL.
 - Ancestry: samplesheet `ancestry` (EUR default, EAS); refs `--ldsc_ld[_eas]`, `--ldsc_w_ld[_eas]`,
   `--lava_ref[_eas]` (see ancestryParam/traitAncestry in utils subworkflow). Same-ancestry pairs only go
-  to methods; cross-ancestry pairs become `cross_ancestry` rows (gencorr.nf crossAncestryRow).
+  to methods; cross-ancestry pairs become `cross_ancestry` rows (gencorr.nf notEstimatedRow).
 - Genome builds: all methods match variants by rsID and take positions from their references, so
   sumstats need rsIDs, not a particular build. Files without rsIDs get them from an rsID map
   (samplesheet `build`, `--rsid_map_grch37/38`; `.bim` or CHR/BP/SNP/A1/A2 table). No liftover.
@@ -135,7 +135,7 @@ mention it only as a comparison reference.
 
 1. First real genome-wide pair (e.g. MDD × another trait). Expect ~1.5–3.5 CPU-hours per pair for LAVA.
    Remote compute is still to be found (Pelle/UPPMAX was the user's old SU job: no longer available;
-   docs/usage.md §5 still has a Pelle/SLURM example).
+   docs/usage.md §5 is a generic SLURM example).
 2. CI workflow: build/push private gencorr-tools image to ghcr.io and run nf-test in it.
 3. `lava/gencorr.lava_native.tsv` output in LAVA/BigaGWAS column layout.
 4. Option to skip FRQ in LDSC munge; LAVA 0.1.0 container variant (exact BigaGWAS reproduction).

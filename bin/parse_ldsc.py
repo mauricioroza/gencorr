@@ -12,10 +12,14 @@ Inputs (file names carry the trait IDs, as written by the LDSC modules):
 Outputs (--out prefix):
   <prefix>.ldsc.tsv             standard results table (gencorr_common.RESULT_COLUMNS)
   <prefix>.ldsc_h2.tsv          one row per trait: h2 (obs/liab), intercept, ratio, ...
+                                and status: ok, h2_error (LDSC error in the
+                                log) or h2_not_estimable (no h2 value printed)
   <prefix>.sample_overlap.txt   sampling-correlation matrix for LAVA, built as in
                                 the LAVA sample-overlap vignette: diagonal = h2
                                 intercept, off-diagonal = cross-trait gcov_int,
-                                then cov2cor. Pairs that were not run are 0.
+                                then cov2cor. Pairs that were not run, and all
+                                pairs of a trait without a usable h2
+                                intercept, are 0 (no correction).
 
 Every number is taken verbatim from LDSC's own log output (LDSC prints most
 values with 4 decimals; that is the precision of these tables).
@@ -83,8 +87,17 @@ def parse_h2_log(path: Path) -> dict:
     out["samp_prev"] = find(rf"--samp-prev {NUM}", text)
     out["pop_prev"] = find(rf"--pop-prev {NUM}", text)
     if "ERROR" in text or "Traceback" in text:
-        out["error"] = True
+        messages = re.findall(r"^\w*(?:Error|Exception): .+$", text, re.MULTILINE)
+        out["error"] = messages[-1].strip() if messages else "LDSC reported an error (see the log)"
     return out
+
+
+def h2_status(row: dict) -> str:
+    """ok, or why a trait has no observed-scale h2."""
+    if row.get("error"):
+        return "h2_error"
+    h2 = row.get("h2_obs", np.nan)
+    return "ok" if h2 is not None and not np.isnan(h2) else "h2_not_estimable"
 
 
 def collect_h2(paths: list[Path]) -> pd.DataFrame:
@@ -111,9 +124,20 @@ def collect_h2(paths: list[Path]) -> pd.DataFrame:
             row["h2_liab_se"] = parsed.get("h2_liab_se", np.nan)
             row["samp_prev"] = parsed.get("samp_prev", np.nan)
             row["pop_prev"] = parsed.get("pop_prev", np.nan)
+            if parsed.get("error"):
+                row["liab_error"] = parsed["error"]
+    # A trait without h2 is never silent: status says why, and the task log
+    # carries LDSC's message.
+    for trait, row in rows.items():
+        row["status"] = h2_status(row)
+        for key, what in (("error", "h2"), ("liab_error", "liability-scale h2")):
+            if row.get(key):
+                print(f"WARNING: LDSC {what} failed for '{trait}': {row[key]}", file=sys.stderr)
+        if row["status"] == "h2_not_estimable":
+            print(f"WARNING: no observed-scale h2 in the LDSC log of '{trait}'", file=sys.stderr)
     cols = ["trait", "n_snps", "h2_obs", "h2_obs_se", "h2_liab", "h2_liab_se",
             "samp_prev", "pop_prev", "intercept", "intercept_se", "lambda_gc",
-            "mean_chi2", "ratio", "ratio_se"]
+            "mean_chi2", "ratio", "ratio_se", "status"]
     df = pd.DataFrame(list(rows.values()))
     for c in cols:
         if c not in df.columns:
@@ -203,15 +227,19 @@ def build_results(rg: pd.DataFrame, h2: pd.DataFrame) -> pd.DataFrame:
 def sample_overlap_matrix(rg: pd.DataFrame, h2: pd.DataFrame) -> pd.DataFrame:
     traits = sorted(h2["trait"])
     cov = pd.DataFrame(0.0, index=traits, columns=traits)
+    unusable = set()
     for t, intercept in zip(h2["trait"], h2["intercept"]):
         if np.isnan(intercept) or intercept <= 0:
             print(f"WARNING: no usable h2 intercept for '{t}'; its overlap row is "
                   "set to 0 (no correction)", file=sys.stderr)
             cov.loc[t, t] = 1.0
+            unusable.add(t)
         else:
             cov.loc[t, t] = intercept
     seen: dict[tuple, list] = {}
     for _, r in rg.iterrows():
+        if unusable & {r["trait1"], r["trait2"]}:
+            continue   # no diagonal to scale gcov_int with: leave the pair at 0
         if r["trait1"] in cov.index and r["trait2"] in cov.index and not np.isnan(r["gcov_int"]):
             key = tuple(sorted((r["trait1"], r["trait2"])))
             seen.setdefault(key, []).append(r["gcov_int"])

@@ -94,6 +94,52 @@ nextflow_function {
         }
     }
 
+    test("validatePopcornAncestries: score-file order is kept, either pair order accepted") {
+        function "validatePopcornAncestries"
+        when {
+            function {
+                """
+                input[0] = 'EAS, EUR'
+                input[1] = [['EUR', 'EAS'], ['EAS', 'EUR']]
+                """
+            }
+        }
+        then {
+            assert function.success
+            assert function.result == ['EAS', 'EUR']
+        }
+    }
+
+    test("validatePopcornAncestries: one ancestry twice fails") {
+        function "validatePopcornAncestries"
+        when {
+            function {
+                """
+                input[0] = 'EUR,EUR'
+                input[1] = [['EUR', 'EAS']]
+                """
+            }
+        }
+        then {
+            assert function.failed
+        }
+    }
+
+    test("validatePopcornAncestries: pair outside the score file's populations fails") {
+        function "validatePopcornAncestries"
+        when {
+            function {
+                """
+                input[0] = 'EUR,AFR'
+                input[1] = [['EUR', 'EAS']]
+                """
+            }
+        }
+        then {
+            assert function.failed
+        }
+    }
+
     test("cleanMeta: empty samplesheet cells are dropped") {
         function "cleanMeta"
         when {

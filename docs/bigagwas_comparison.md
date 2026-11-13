@@ -167,7 +167,7 @@ to us or to the BigaGWAS team.
 | LAVA sample overlap | from LDSC intercepts by default | option for 2-trait jobs only |
 | pairs without estimate | kept with a `status` | rows dropped (e.g. LDSC `NA` → "9999") |
 | SumHer | LDAK 6.1, `--genomic-control NO` passed explicitly | LDAK 5.2 |
-| SumHer Z | harmonized Z (from P by default) | BETA/SE for SumHer, P for LDSC; `--z_priority beta_se,p` reproduces its SumHer input |
+| SumHer Z | harmonized Z (a Z column, else from P, by default) | BETA/SE for SumHer, P for LDSC; `--z_priority beta_se,p` reproduces its SumHer input |
 | ancestry | per trait; LAVA also for EAS | EUR or EAS LD scores per job; LAVA only for EUR |
 | input handling | one harmonized file per trait, matched by rsID | per-tool conversion; liftover to GRCh38, dbSNP rsIDs, reference-VCF alignment, liftover back |
 | pair selection | `--pair_mode target` / `pairs` | "massive" (one vs group) / "2 traits" jobs |

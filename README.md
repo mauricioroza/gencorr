@@ -1,8 +1,8 @@
 # mauricioroza/gencorr
 
 Global and local **genetic correlation** from GWAS summary statistics: a
-reproducible Nextflow pipeline (nf-core template) that runs LDSC and LAVA on any
-set of traits and returns one tidy results table.
+reproducible Nextflow pipeline (nf-core template) that runs LDSC, SumHer, LAVA
+and Popcorn on any set of traits and returns one tidy results table.
 
 ```
    __ _  ___ _ __   ___ ___  _ __ _ __
@@ -22,14 +22,15 @@ set of traits and returns one tidy results table.
 * **Checked against the original tools.** Oracle tests run LDSC and LAVA
   directly and require the same numbers from the pipeline
   ([validation](docs/validation.md)).
-* **Fast.** No rsID mapping step, LAVA loci run in parallel chunks and empty
-  loci are skipped.
+* **Fast.** Variants are matched by the rsIDs already in the files (no dbSNP
+  lookup or liftover), LAVA loci run in parallel chunks and empty loci are
+  skipped.
 * **Reproducible.** Every tool version is pinned, LAVA's Monte Carlo steps are
   seeded per (locus, pair), and outputs are byte-identical on re-runs.
 * **Nothing disappears.** Pairs and loci that could not be estimated stay in
   the table with a `status` explaining why.
 * **Extensible.** Every method reads the same harmonized input and writes the
-  same table, so adding HDL, SumHer, Popcorn or HDL-L is one subworkflow
+  same table, so adding another method (e.g. HDL or HDL-L) is one subworkflow
   ([docs/extending.md](docs/extending.md)).
 
 ## How it works
@@ -42,7 +43,9 @@ set of traits and returns one tidy results table.
    unusable rows are removed. A QC report per trait records every decision.
 2. **LDSC** munges, estimates h2 per trait and rg for every pair, and builds
    the sample-overlap matrix from its intercepts.
-3. **LAVA** tests every pair in each of LAVA's 2,495 GRCh37 loci, corrected for
+3. **SumHer** (optional) estimates global rg with LDAK's heritability model,
+   and **Popcorn** (optional) estimates rg for EUR × EAS pairs.
+4. **LAVA** tests every pair in each of LAVA's 2,495 GRCh37 loci, corrected for
    sample overlap by default.
 
    *Sample overlap* means the original GWAS shared participants (e.g. UK Biobank
@@ -51,7 +54,7 @@ set of traits and returns one tidy results table.
    (no individual-level data needed); LDSC corrects itself, and gencorr passes
    the intercepts to LAVA as its overlap matrix (`--lava_overlap ldsc`; `none`
    to switch off).
-4. **Merge** checks every table against one schema and writes
+5. **Merge** checks every table against one schema and writes
    `gencorr_results.tsv`.
 
 ## Quick start
@@ -119,7 +122,7 @@ t2d,GCST000028,,,,,,Type 2 diabetes (GWAS Catalog)
 
 | option | default | |
 |---|---|---|
-| `--methods` | `ldsc,lava` | run one or both. With `--methods lava` alone, also set `--lava_overlap none` (the default overlap comes from LDSC) |
+| `--methods` | `ldsc,lava` | any of `ldsc`, `lava`, `sumher`, `popcorn`. With `lava` but not `ldsc`, also set `--lava_overlap none` (the default overlap comes from LDSC) |
 | `--pair_mode` | `all` | `all` pairs; `target --targets mdd,scz` = each target vs all others (one vs group); `pairs --pairs pairs.csv` = listed pairs only |
 | `--min_maf`, `--min_info` | off | variant QC for all methods; `0.01` / `0.9` recommended |
 | `--lava_snp_list` | all SNPs | e.g. `w_hm3.snplist` (HapMap3 SNPs only) |
@@ -136,6 +139,7 @@ results/
 ├── harmonized/             QC report per trait
 ├── ldsc/                   per-trait h2, sample-overlap matrix, LDSC logs
 ├── lava/                   LAVA rows, local h2 per locus and trait
+├── sumher/, popcorn/       SumHer and Popcorn rows and logs (when run)
 └── pipeline_info/          exact software versions, parameters, run reports
 ```
 
@@ -166,17 +170,18 @@ JSON `extra` column with `jsonlite::fromJSON`.
   by the other methods with status `cross_ancestry`
   ([details](docs/usage.md#ancestry)). For European data the LAVA authors
   recommend their UK Biobank reference over 1000 Genomes.
-* **conda:** LAVA has no conda package, so `-profile conda` works only with
-  `--methods ldsc`.
-* **Clusters:** see [docs/usage.md § UPPMAX](docs/usage.md#5-running-on-uppmax-pelle)
+* **conda:** LAVA and Popcorn have no conda package, so `-profile conda` is
+  accepted only for `--methods ldsc` and/or `sumher` (not yet tested).
+* **Clusters:** see [docs/usage.md § SLURM](docs/usage.md#5-running-on-a-slurm-cluster)
   for a SLURM config. `-resume` works as usual; changing a LAVA option re-runs
   only LAVA.
 * **Status:** v0.1.0dev, not yet released. Validated on the LAVA vignette and
-  other example data; no genome-wide production run yet.
+  other example data. A first genome-wide LDSC run (two GWAS Catalog studies,
+  about 8 minutes on a laptop) has completed; no genome-wide LAVA run yet.
 
 ## Testing
 
-54 Python tests, 23 nf-test module tests, 6 function tests and 3 pipeline
+99 Python tests, 34 nf-test module tests, 9 function tests and 6 pipeline
 tests, including *oracle* tests that run LDSC and LAVA directly and check that
 the pipeline gives the same numbers. `nf-core pipelines lint` and
 `nf-core modules lint` report no failures. How to run them:
@@ -186,7 +191,7 @@ the pipeline gives the same numbers. `nf-core pipelines lint` and
 
 | | |
 |---|---|
-| [usage.md](docs/usage.md) | samplesheet, all parameters, reference data, running on UPPMAX |
+| [usage.md](docs/usage.md) | samplesheet, all parameters, reference data, running on a SLURM cluster |
 | [output.md](docs/output.md) | every output file and column, status values |
 | [design.md](docs/design.md) | design decisions and their reasons |
 | [validation.md](docs/validation.md) | test layers and how to run them |
@@ -207,4 +212,8 @@ If you use gencorr, please cite the tools it runs: LDSC
 (Bulik-Sullivan et al. 2015, [10.1038/ng.3211](https://doi.org/10.1038/ng.3211);
 [10.1038/ng.3406](https://doi.org/10.1038/ng.3406)), LAVA (Werme et al. 2022,
 [10.1038/s41588-022-01017-y](https://doi.org/10.1038/s41588-022-01017-y)),
+SumHer (Speed & Balding 2019,
+[10.1038/s41588-018-0279-5](https://doi.org/10.1038/s41588-018-0279-5)),
+Popcorn (Brown et al. 2016,
+[10.1016/j.ajhg.2016.05.001](https://doi.org/10.1016/j.ajhg.2016.05.001)),
 Nextflow and nf-core. Full list: [CITATIONS.md](CITATIONS.md).

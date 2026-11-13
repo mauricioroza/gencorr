@@ -53,7 +53,7 @@
             "ancestry": {
                 "type": "string",
                 "enum": ["EUR", "EAS"],
-                "errorMessage": "ancestry must be EUR or EAS (GWAS ancestry; default EUR). It selects the LD references (--ldsc_ld/--lava_ref for EUR, --ldsc_ld_eas/--lava_ref_eas for EAS); pairs of different ancestry are not analysed by LDSC or LAVA.",
+                "errorMessage": "ancestry must be EUR or EAS (GWAS ancestry; default EUR). It selects the LD references (--ldsc_ld/--lava_ref for EUR, --ldsc_ld_eas/--lava_ref_eas for EAS); pairs of different ancestry are analysed only by Popcorn.",
                 "meta": ["ancestry"]
             },
             "build": {

@@ -5,7 +5,7 @@
  *     ldsc.py --rg trait1,traitA,traitB,...
  * LDSC estimates each (trait1, traitX) pair independently inside one call, so
  * batching only saves start-up/IO cost; it does not change any estimate
- * (verified by tests/python/test_ldsc_batching.py).
+ * (verified by tests/python/test_ldsc_oracle.py).
  *
  * meta.id    : batch name, e.g. "bmi__b1"
  * ld         : [ meta(prefix, split_by_chr), ref_ld_dir, w_ld_dir ]

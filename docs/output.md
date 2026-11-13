@@ -8,7 +8,7 @@ results/
 │   └── <id>.harmonized.tsv.gz     only with --save_harmonized
 ├── ldsc/
 │   ├── gencorr.ldsc.tsv           LDSC rows of the standard table
-│   ├── gencorr.ldsc_h2.tsv        per-trait h2 (observed + liability), intercept, ratio, lambda GC
+│   ├── gencorr.ldsc_h2.tsv        per-trait h2 (observed + liability), intercept, ratio, lambda GC, status
 │   ├── gencorr.sample_overlap.txt sampling-correlation matrix given to LAVA
 │   ├── logs/                      raw LDSC logs: <id>.h2.log, <id>.h2_liab.log, <trait1>__bN.rg.log
 │   └── munged/                    munge logs (+ .sumstats.gz with --save_intermediates)
@@ -24,7 +24,7 @@ results/
 │   └── logs/                      Popcorn output per pair: <eur>__<eas>.popcorn, .popcorn.o.log, .popcorn.e.log
 └── pipeline_info/
     ├── gencorr_software_versions.yml   exact tool versions used by every process
-    └── execution_{report,timeline,trace}_*.html/txt, params_*.json
+    └── execution_{report,timeline,trace}_*.html/txt, pipeline_dag_*.html, params_*.json
 ```
 
 ## The standard results table
@@ -57,8 +57,8 @@ with `pandas.read_csv(..., sep="\t", quoting=3)`. Parse `extra` with
 
 | status | method | meaning |
 |---|---|---|
-| `ok` | both | estimate available |
-| `rg_not_estimable` | ldsc, sumher | the tool returned NA for rg (usually h2 ≤ 0 for one trait) |
+| `ok` | all | estimate available |
+| `rg_not_estimable` | ldsc, sumher, popcorn | the tool returned no usable rg or SE (usually h2 ≤ 0 for one trait) |
 | `ldsc_error` | ldsc | LDSC raised an error for this pair; message in `extra.error` (e.g. incompatible alleles without `--ldsc_merge_alleles`) |
 | `univ_filtered` | lava | one or both traits have local univariate p ≥ `--lava_univ_thresh`; not tested (LAVA's standard practice) |
 | `estimate_out_of_bounds` | lava | LAVA set the estimate to NA because it exceeded `--lava_param_lim` |
@@ -69,7 +69,7 @@ with `pandas.read_csv(..., sep="\t", quoting=3)`. Parse `extra` with
 | `sumher_error` | sumher | LDAK stopped for this pair (e.g. no shared predictors with the tagging file); its message is in `extra.error` |
 | `popcorn_error` | popcorn | Popcorn stopped for this pair; the last error line is in `extra.error` |
 | `same_ancestry` | popcorn | both traits have the same ancestry; Popcorn is only run on cross-ancestry pairs (the other methods estimate this pair) |
-| `cross_ancestry` | ldsc, lava, sumher | the two traits have different `ancestry` in the samplesheet; LDSC and LAVA assume one population, so the pair is not estimated. One row per method (locus NA); `extra` holds `ancestry_1` / `ancestry_2` |
+| `cross_ancestry` | ldsc, lava, sumher | the two traits have different `ancestry` in the samplesheet; these methods assume one population, so the pair is not estimated (Popcorn estimates it). One row per method (locus NA); `extra` holds `ancestry_1` / `ancestry_2` |
 
 **Popcorn** (`method = popcorn`, `scope = global`, cross-ancestry pairs; trait1
 is from the score file's first population): `n_snps` = SNPs used after merging
@@ -80,6 +80,15 @@ population. `extra`: `correlation` (genetic_impact/genetic_effect), `fit`
 (regression/mle), **`z_pg_lt_1`, `p_pg_lt_1` (Popcorn's own test of rg < 1)**,
 `h2_1_liab`/`h2_2_liab` (binary traits with prevalences), `popcorn_version`,
 `error`, log name.
+
+## `ldsc/gencorr.ldsc_h2.tsv`
+
+One row per trait that is in at least one same-ancestry pair: `n_snps`,
+`h2_obs`/`h2_obs_se`, `h2_liab`/`h2_liab_se` with `samp_prev`/`pop_prev`
+(binary traits with `pop_prev`), `intercept`/`intercept_se`, `lambda_gc`,
+`mean_chi2`, `ratio`/`ratio_se`, and `status`: `ok`, `h2_error` (the LDSC log
+holds an error; message in the `LDSC_SUMMARISE` task log) or
+`h2_not_estimable` (LDSC printed no h2 value).
 
 ## `lava/gencorr.lava_univ.tsv`
 
@@ -99,16 +108,20 @@ One row per (locus, trait) that LAVA processed:
 
 * LDSC values are copied from LDSC's logs, which print 4 decimals. That is
   the precision of all LDSC numbers here.
-* LAVA values are written with R's default 15 significant digits. CIs and
+* LAVA values are written with 10 significant digits in the results tables
+  (15 in `gencorr.lava_univ.tsv`). CIs and
   p-values are Monte Carlo estimates (1e4 to 1e6 draws). They are exactly
   reproducible for a given `--lava_seed`, but a different seed gives slightly
   different values.
+* SumHer and Popcorn values are the tools' own printed numbers (LDAK prints
+  6 decimals).
 
 ## `harmonized/<id>.qc.json`
 
 `rows_in`, `rows_out`, the detected `column_mapping`, `z_source_counts` (how
 many Z-scores came from a Z column / P / BETA-SE), `removed` (per filter),
-`p_recomputed_from_z`, `lambda_gc`, `mean_chi2`, `median_n`, the QC
+`p_recomputed_from_z`, `p_floored_at_1e-300`, `beta_from_or` (BETA = ln OR),
+`n_source` (N column or samplesheet), `lambda_gc`, `mean_chi2`, `median_n`, the QC
 `thresholds` used (`min_info`, `min_maf`), where MAF came from (`maf_source`),
 how many variants without INFO/MAF were kept (`info_missing_kept`,
 `maf_missing_kept`), and warnings such as `warning_effective_n`,

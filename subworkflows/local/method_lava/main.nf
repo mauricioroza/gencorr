@@ -20,7 +20,7 @@
     SNP set: by default every harmonized SNP is used. With --lava_snp_list
     (e.g. w_hm3.snplist) the input is first restricted to that list.
     Results are identical however the loci are chunked: run_lava.R seeds each
-    (locus, pair) separately (tests/python/test_lava_runner.py).
+    (locus, pair) separately (tests/python/test_lava_oracle.py).
 */
 
 include { EXPORT_SUMSTATS } from '../../../modules/local/export_sumstats'

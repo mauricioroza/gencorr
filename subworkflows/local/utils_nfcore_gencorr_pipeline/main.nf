@@ -25,8 +25,11 @@ include { UTILS_NEXTFLOW_PIPELINE   } from '../../nf-core/utils_nextflow_pipelin
     ancestry_params are per-ancestry references: the plain name is the EUR
     reference, '<name>_eas' the EAS one (see ancestryParam()). They are required
     only for ancestries that have at least one same-ancestry pair.
+    conda_ok: false stops the run at start-up under -profile conda/mamba.
+    cross_ancestry: true = the method takes the cross-ancestry pairs instead of
+    the same-ancestry ones.
     To add a method: add an entry here, a subworkflow under subworkflows/local/,
-    and one line in workflows/gencorr.nf. See docs/extending.md.
+    and one block in workflows/gencorr.nf. See docs/extending.md.
 */
 def methodRegistry() {
     return [
@@ -133,8 +136,9 @@ workflow PIPELINE_INITIALISATION {
     def meta_by_id = samples.collectEntries { row -> [ (row[0].id): row[0] ] }
 
     //
-    // Ancestry: LDSC/LAVA analyse same-ancestry pairs with that ancestry's
-    // references; cross-ancestry pairs are reported with status cross_ancestry.
+    // Ancestry: LDSC, LAVA and SumHer analyse same-ancestry pairs with that
+    // ancestry's references and report cross-ancestry pairs with status
+    // cross_ancestry; Popcorn estimates the cross-ancestry pairs.
     //
     def same_ancestry = pair_list.findAll { p -> traitAncestry(meta_by_id[p[0]]) == traitAncestry(meta_by_id[p[1]]) }
     def n_cross       = pair_list.size() - same_ancestry.size()
@@ -143,6 +147,11 @@ workflow PIPELINE_INITIALISATION {
         log.warn "${n_cross} of ${pair_list.size()} pairs have traits of different ancestry; LDSC, LAVA and SumHer assume one population, so they report these pairs with status 'cross_ancestry'.${by_popcorn}"
     }
     validateReferences(params, methods, same_ancestry.collect { p -> traitAncestry(meta_by_id[p[0]]) }.unique().sort())
+    if ('popcorn' in methods) {
+        def cross = pair_list.findAll { p -> !(p in same_ancestry) }
+        validatePopcornAncestries(params.popcorn_cfile_ancestries as String,
+            cross.collect { p -> [ traitAncestry(meta_by_id[p[0]]), traitAncestry(meta_by_id[p[1]]) ] })
+    }
 
     emit:
     samplesheet = channel.fromList(samples)                                        // [ meta, sumstats ]
@@ -180,9 +189,6 @@ workflow PIPELINE_COMPLETION {
 */
 
 //
-// Drop null / empty-list meta values produced by empty samplesheet cells
-//
-//
 // Start-up banner, printed before the parameter summary and the --help text.
 // Plain ASCII so it renders in any terminal and in cluster log files.
 //
@@ -200,6 +206,9 @@ def gencorrLogo(monochrome_logs = true) {
     return '\n' + lines.join('\n') + "\n${c.dim}${'-' * 60}${c.reset}\n"
 }
 
+//
+// Drop null / empty-list / empty-string meta values produced by empty samplesheet cells
+//
 def cleanMeta(Map meta) {
     return meta.findAll { _k, v -> v != null && v != [] && v != '' }
 }
@@ -354,12 +363,21 @@ def validateReferences(Map p, List methods, List ancestries) {
 }
 
 //
-// Citations for the tools actually used (printed at the end of docs/output.md)
+// Popcorn: --popcorn_cfile_ancestries names the score file's populations 1 and 2.
+// It must be two different ancestries, and every cross-ancestry pair must be
+// one trait of each (METHOD_POPCORN orders the pair by it; a wrong value would
+// give Popcorn the traits in the wrong populations without any error).
+// pair_ancestries: [ [ancestry1, ancestry2], ... ] of the cross-ancestry pairs.
+// Returns the two ancestries.
 //
-def toolCitationText() {
-    return [
-        "Tools used in the workflow included:",
-        "LDSC (Bulik-Sullivan et al. 2015),",
-        "LAVA (Werme et al. 2022)."
-    ].join(' ').trim()
+def validatePopcornAncestries(String cfile_ancestries, List pair_ancestries) {
+    def pops = (cfile_ancestries ?: '').tokenize(',').collect { a -> a.trim() }
+    if (pops.size() != 2 || pops[0] == pops[1]) {
+        error("--popcorn_cfile_ancestries must name two different ancestries, in the score file's order, e.g. 'EUR,EAS' (got '${cfile_ancestries}').")
+    }
+    def other = pair_ancestries.find { pair -> (pair as Set) != (pops as Set) }
+    if (other) {
+        error("--methods popcorn: a ${other[0]} x ${other[1]} pair cannot be estimated with a score file for ${pops[0]} and ${pops[1]} (--popcorn_cfile_ancestries).")
+    }
+    return pops
 }

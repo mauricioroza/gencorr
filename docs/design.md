@@ -48,7 +48,7 @@ caused by input handling.
 | LAVA version | 0.1.5 | current release at the time of writing; 0.1.5 changed the model for binary traits |
 | LAVA case/control | used when `n_cases`/`n_controls` are given | binary traits use LAVA's case/control model instead of being treated as continuous |
 | SumHer version | LDAK 6.1 | LDAK 6 writes `SE` where 5.x wrote `SD` (the parser accepts both); its default without `--genomic-control` models multiplicative inflation, so gencorr passes `--genomic-control NO` explicitly (`--sumher_genomic_control`) |
-| SumHer Z | the harmonized Z (from P by default, `--z_priority`) for every method | all methods see the same Z; `--z_priority beta_se,p` gives Z = BETA/SE instead |
+| SumHer Z | the harmonized Z (a Z column, else from P, by default; `--z_priority`) for every method | all methods see the same Z; `--z_priority beta_se,p` gives Z = BETA/SE instead |
 | Popcorn p-value | `p` tests rg ≠ 0 (z = rg/SE), like the other methods; Popcorn's own rg < 1 test kept in `extra` | Popcorn reports the p for rg < 1; mixing the two in one column would make cross-ancestry results look significant for the opposite reason |
 | Popcorn input | harmonized Z only (no beta/SE), so every method uses the same Z | Popcorn recomputes Z from beta/SE when both are given; on Popcorn's test data the two routes agree to 9 digits |
 | ancestry | per trait (`ancestry` column); each same-ancestry pair uses its ancestry's references; cross-ancestry pairs kept as `cross_ancestry` | mixed-ancestry sets run in one job; LAVA runs for EAS too when an EAS reference is given |

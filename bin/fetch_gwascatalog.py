@@ -9,7 +9,7 @@ harmonize_sumstats.py reads with --source-info:
 
   accession, url, file, md5, genome_assembly, metadata date, trait, the
   samples (ancestry categories, size, case/control), n (total sample size,
-  only when the study has a single ancestry matching --ancestry), and
+  only when the metadata lists one sample group, of the --ancestry), and
   warnings.
 
 Finding the file. Studies live in <base>/<range>/<accession>/harmonised/,

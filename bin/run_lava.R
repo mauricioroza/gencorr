@@ -33,6 +33,10 @@
 #   1. run.bivar() is called with exactly two phenotypes. Called with more, LAVA
 #      draws the CIs for all pairs from one joint simulation, which would tie a
 #      pair's CI to the other traits present.
+#   2. Within one task, every trait listed in --info is loaded with
+#      process.input(), and LAVA keeps only SNPs present in ALL loaded traits.
+#      The Nextflow subworkflow controls this: lava_snp_set = 'pairwise' loads
+#      2 traits per task, 'joint' loads every trait.
 #   3. Loci without any analysis SNP are skipped BEFORE process.locus() and get
 #      status "no_snps_in_locus". process.locus() scans the whole reference SNP
 #      table (twice) for every locus, ~1 s per locus with the full 1000G EUR
@@ -40,10 +44,6 @@
 #      most of the 2,495 loci are empty. The count uses the same rule as LAVA
 #      (reference CHR/POS within START..STOP, intersected with analysis SNPs),
 #      so no locus that LAVA could analyse is skipped.
-#   2. Within one task, every trait listed in --info is loaded with
-#      process.input(), and LAVA keeps only SNPs present in ALL loaded traits.
-#      The Nextflow subworkflow controls this: lava_snp_set = 'pairwise' loads
-#      2 traits per task, 'joint' loads every trait.
 # =============================================================================
 
 suppressPackageStartupMessages(library(LAVA))
@@ -89,6 +89,7 @@ seed_for <- function(base, ...) {
 
 json_value <- function(x) {
     if (is.null(x) || length(x) == 0 || is.na(x)) return("null")
+    if (is.numeric(x) && !is.finite(x)) return("null")   # Inf is not valid JSON
     if (is.numeric(x)) return(format(x, digits = 10, scientific = TRUE, trim = TRUE))
     if (is.logical(x)) return(tolower(as.character(x)))
     paste0("\"", gsub("[\"\\\\]", "", as.character(x)), "\"")

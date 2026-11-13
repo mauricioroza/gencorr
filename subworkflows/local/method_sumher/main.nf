@@ -4,7 +4,7 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     Follows the gencorr method interface (docs/extending.md):
 
-      take:  ch_harmonized  [ meta, harmonized.tsv.gz ]      (all traits)
+      take:  ch_harmonized  [ meta, harmonized.tsv.gz ]      (traits of the pairs)
              ch_pairs       [ meta1, meta2 ]                 (same-ancestry pairs)
              + method-specific reference inputs
       emit:  results        path: standard results table (one row per pair)

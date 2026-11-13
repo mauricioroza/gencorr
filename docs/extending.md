@@ -13,7 +13,7 @@ A method subworkflow therefore always looks like this:
 ```nextflow
 workflow METHOD_X {
     take:
-    ch_harmonized   // [ meta, harmonized.tsv.gz ]   every trait
+    ch_harmonized   // [ meta, harmonized.tsv.gz ]   the traits of those pairs
     ch_pairs        // [ meta1, meta2 ]              the pairs to analyse
     ...             // the method's own reference data
     main:
@@ -32,8 +32,8 @@ SumHer was added exactly this way, so the real files are the reference:
 `modules/local/sumher/summarise`, `bin/parse_sumher.py` (+
 `tests/python/test_parse_sumher.py` on real LDAK output),
 `subworkflows/local/method_sumher`, the `sumher` entry in `methodRegistry()`
-and the `2c` block in `workflows/gencorr.nf`. The five steps, as planned
-before it was built (details differ slightly from the final code):
+and the `2c` block in `workflows/gencorr.nf`. The five steps (shortened;
+the real files have the details):
 
 ### 1. Input format: one entry in `bin/export_sumstats.py`
 
@@ -44,7 +44,7 @@ FORMATS["sumher"] = {
     "columns": [("Predictor", "SNP"), ("A1", "A1"), ("A2", "A2"), ("n", "N"), ("Z", "Z")],
     "optional": [],
     "min_coverage": 1.0,
-    "sep": "\t",
+    "sep": " ",
     "compress": False,
 }
 ```
@@ -61,8 +61,8 @@ matching the channels 1:1, `versions_*` outputs and a `topics:` section).
 The command:
 
 ```bash
-ldak --sum-cors ${meta.id} --summary ${s1} --summary2 ${s2} \
-     --tagfile ${tagfile} --allow-ambiguous YES --check-sums NO ${args}
+ldak6 --sum-cors ${meta.id} --summary ${s1} --summary2 ${s2} \
+      --tagfile ${tagfile} ${args}    # options come from ext.args in conf/modules.config
 ```
 
 ### 3. Parser: `bin/parse_sumher.py`
@@ -86,18 +86,23 @@ Same `take:`/`emit:` as `METHOD_LDSC`. Reuse the pair-batching code from
 ```groovy
 def methodRegistry() {
     return [
-        ldsc:   [ scope: 'global', required_params: ['ldsc_ld'],               conda_ok: true  ],
-        lava:   [ scope: 'local',  required_params: ['lava_ref', 'lava_loci'], conda_ok: false ],
-        sumher: [ scope: 'global', required_params: ['sumher_tagfile'],        conda_ok: true  ],
+        ldsc:   [ scope: 'global', required_params: ['ldsc_ld'],               ancestry_params: ['ldsc_ld'],        conda_ok: true  ],
+        lava:   [ scope: 'local',  required_params: ['lava_ref', 'lava_loci'], ancestry_params: ['lava_ref'],       conda_ok: false ],
+        sumher: [ scope: 'global', required_params: ['sumher_tagfile'],        ancestry_params: ['sumher_tagfile'], conda_ok: true  ],
     ]
 }
 ```
+
+`ancestry_params` are the references that exist per ancestry (`<name>` for
+EUR, `<name>_eas` for EAS); `cross_ancestry: true` makes a method take the
+cross-ancestry pairs instead (Popcorn).
 
 `workflows/gencorr.nf`:
 
 ```groovy
 if ('sumher' in methods) {
-    METHOD_SUMHER ( ch_harmonized, ch_pairs, channel.value(file(params.sumher_tagfile)) )
+    // ch_tagfile: [ ancestry, tagging file ] for each ancestry with a tagging file
+    METHOD_SUMHER ( traitsInPairs(ch_harmonized, ch_same_pairs), ch_same_pairs, ch_tagfile, ch_positions )
     ch_results = ch_results.mix( METHOD_SUMHER.out.results )
 }
 ```

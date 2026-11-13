@@ -1,6 +1,7 @@
 # =============================================================================
-# gencorr-tools: everything gencorr runs except LDSC (which uses the official
-# biocontainer quay.io/biocontainers/ldsc:1.0.1--pyhdfd78af_2).
+# gencorr-tools: the helper scripts' runtime and LAVA. LDSC uses the official
+# biocontainer quay.io/biocontainers/ldsc:1.0.1--pyhdfd78af_2; LDAK (SumHer) and
+# Popcorn have their own images (containers/gencorr-ldak, gencorr-popcorn).
 #
 #   * Python 3 + pandas/numpy/scipy  -> bin/*.py helper scripts
 #   * R + LAVA (pinned commit)       -> bin/run_lava.R
@@ -17,7 +18,7 @@
 # Build and push (from the repository root):
 #   docker build -t ghcr.io/mauricioroza/gencorr-tools:0.1.0 containers/gencorr-tools
 #   docker push ghcr.io/mauricioroza/gencorr-tools:0.1.0
-# Apptainer on a cluster without Docker (e.g. UPPMAX):
+# Apptainer on a cluster without Docker:
 #   apptainer build gencorr-tools_0.1.0.sif docker://ghcr.io/mauricioroza/gencorr-tools:0.1.0
 #
 # LICENCE NOTE: LAVA's DESCRIPTION says "All rights reserved". Keep this image

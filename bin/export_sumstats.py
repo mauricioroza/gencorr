@@ -56,7 +56,8 @@ FORMATS = {
     },
     # Input for LDAK/SumHer --summary: Predictor A1 A2 n Z (space-separated).
     # Predictor names must match the tagging file: rsIDs by default, or chr:bp
-    # (GRCh37) with --predictor-positions, as in LDAK's pre-computed taggings.
+    # (GRCh37) with --predictor-positions, for older LDAK tagging files (the
+    # current pre-computed ones use rsIDs).
     "sumher": {
         "columns": [("Predictor", "SNP"), ("A1", "A1"), ("A2", "A2"), ("n", "N"),
                     ("Z", "Z")],
@@ -157,7 +158,7 @@ def main(argv=None):
     p.add_argument("--snp-list", help="keep only SNP IDs in this list (e.g. w_hm3.snplist)")
     p.add_argument("--predictor-positions",
                    help="name variants CHR:BP using this rsID -> position table (PLINK .bim or "
-                        "CHR/BP/SNP table), e.g. for LDAK's pre-computed GRCh37 tagging files")
+                        "CHR/BP/SNP table), for LDAK tagging files with CHR:BP names (older releases)")
     args = p.parse_args(argv)
 
     df = pd.read_csv(args.input, sep="\t", na_values=NA_VALUES, keep_default_na=False,

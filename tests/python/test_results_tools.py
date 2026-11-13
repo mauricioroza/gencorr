@@ -36,6 +36,22 @@ def test_h2_table_does_not_depend_on_log_order():
     assert rev.iloc[0].samp_prev == pytest.approx(170756 / 500199, abs=1e-6)
 
 
+def test_h2_status_reports_failed_and_empty_logs(tmp_path, capsys):
+    """A trait whose LDSC h2 run failed keeps its row, with a status and a warning."""
+    good = (LOGS / "bmi.h2.log").read_text()
+    (tmp_path / "bmi.h2.log").write_text(good)
+    (tmp_path / "bad.h2.log").write_text(
+        "* Version 1.0.1\nTraceback (most recent call last):\n  File \"ldsc.py\"\n"
+        "ValueError: After merging with reference panel LD, 0 SNPs remain.\n")
+    (tmp_path / "empty.h2.log").write_text("* Version 1.0.1\nAnalysis finished\n")
+    h2 = parse_ldsc.collect_h2(sorted(tmp_path.glob("*.h2.log"))).set_index("trait")
+    assert dict(h2.status) == {"bad": "h2_error", "bmi": "ok", "empty": "h2_not_estimable"}
+    assert np.isnan(h2.loc["bad", "h2_obs"])
+    err = capsys.readouterr().err
+    assert "LDSC h2 failed for 'bad': ValueError: After merging" in err
+    assert "no observed-scale h2 in the LDSC log of 'empty'" in err
+
+
 def test_liability_conversion_matches_ldsc():
     """LDSC's liability h2 equals the Lee et al. 2011 transform of its observed h2
     (up to the 4-decimal rounding of the log), i.e. the two runs are consistent."""
@@ -75,6 +91,18 @@ def test_sample_overlap_matrix_follows_lava_vignette():
     expected = 0.0158 / np.sqrt(hi["bmi"] * hi["neuro"])      # gcov_int / sqrt(int1 * int2)
     assert mat.loc["bmi", "neuro"] == pytest.approx(round(expected, 5))
     assert mat.loc["neuro", "rheuma"] == 0.0                   # pair not run -> no correction
+
+
+def test_sample_overlap_is_zero_for_trait_without_intercept():
+    """A trait whose h2 intercept is missing gets no overlap correction at all:
+    its gcov_int values are not scaled with a made-up diagonal."""
+    h2 = parse_ldsc.collect_h2([LOGS / f"{t}.h2.log" for t in ["bmi", "neuro", "depression", "rheuma"]])
+    h2.loc[h2.trait == "neuro", "intercept"] = np.nan
+    rg = parse_ldsc.parse_rg_log(LOGS / "bmi__b1.rg.log")
+    mat = parse_ldsc.sample_overlap_matrix(rg, h2)
+    assert mat.loc["bmi", "neuro"] == 0.0 and mat.loc["neuro", "bmi"] == 0.0
+    assert mat.loc["bmi", "depression"] != 0.0                # other pairs unchanged
+    assert (np.diag(mat.values) == 1).all()
 
 
 def test_parse_ldsc_cli(tmp_path):

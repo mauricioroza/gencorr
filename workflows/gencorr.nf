@@ -62,10 +62,10 @@ workflow GENCORR {
     def ch_harmonized = HARMONIZE_SUMSTATS.out.sumstats
 
     //
-    // Ancestry (samplesheet column, default EUR): LDSC and LAVA assume both traits
-    // come from one population, so they get same-ancestry pairs, each with its
-    // ancestry's references. Cross-ancestry pairs are kept in the results with
-    // status 'cross_ancestry' (a cross-ancestry method such as Popcorn is needed).
+    // Ancestry (samplesheet column, default EUR): LDSC, LAVA and SumHer assume both
+    // traits come from one population, so they get same-ancestry pairs, each with
+    // its ancestry's references. Cross-ancestry pairs go to Popcorn; each method
+    // reports the pairs it does not take with a status row (see below).
     //
     def ch_pairs_split = ch_pairs.branch { m1, m2 ->
         same:  traitAncestry(m1) == traitAncestry(m2)
@@ -76,6 +76,8 @@ workflow GENCORR {
     // Methods that cannot estimate a pair get one row with a status saying why:
     //   same-ancestry methods (ldsc, lava, sumher) on cross-ancestry pairs -> cross_ancestry
     //   cross-ancestry methods (popcorn) on same-ancestry pairs             -> same_ancestry
+    // Each method gets only the traits of the pairs it takes (traitsInPairs), so
+    // no trait is exported or munged for a method that will not use it.
     def same_methods  = methods.findAll { m -> !methodRegistry()[m].cross_ancestry }
     def cross_methods = methods.findAll { m ->  methodRegistry()[m].cross_ancestry }
     ch_results = ch_results.mix(
@@ -100,7 +102,7 @@ workflow GENCORR {
             ? channel.value(file(params.ldsc_merge_alleles, checkIfExists: true))
             : channel.value([])
 
-        METHOD_LDSC ( ch_harmonized, ch_same_pairs, ch_ld, ch_merge_alleles, params.ldsc_rg_batch_size )
+        METHOD_LDSC ( traitsInPairs(ch_harmonized, ch_same_pairs), ch_same_pairs, ch_ld, ch_merge_alleles, params.ldsc_rg_batch_size )
         ch_results = ch_results.mix( METHOD_LDSC.out.results )
 
         if (params.lava_overlap == 'ldsc') {
@@ -125,7 +127,7 @@ workflow GENCORR {
             : channel.value([])
 
         METHOD_LAVA (
-            ch_harmonized, ch_same_pairs, ch_reference, ch_loci, ch_overlap, ch_snp_list,
+            traitsInPairs(ch_harmonized, ch_same_pairs), ch_same_pairs, ch_reference, ch_loci, ch_overlap, ch_snp_list,
             params.lava_snp_set, params.lava_loci_per_chunk
         )
         ch_results = ch_results.mix( METHOD_LAVA.out.results )
@@ -143,7 +145,7 @@ workflow GENCORR {
             ? channel.value( file(params.sumher_snp_positions, checkIfExists: true) )
             : channel.value([])
 
-        METHOD_SUMHER ( ch_harmonized, ch_same_pairs, ch_tagfile, ch_positions )
+        METHOD_SUMHER ( traitsInPairs(ch_harmonized, ch_same_pairs), ch_same_pairs, ch_tagfile, ch_positions )
         ch_results = ch_results.mix( METHOD_SUMHER.out.results )
     }
 
@@ -154,7 +156,7 @@ workflow GENCORR {
         def ch_cfile = channel.value( file(params.popcorn_cfile, checkIfExists: true) )
         def cfile_ancestries = params.popcorn_cfile_ancestries.tokenize(',').collect { a -> a.trim() }
 
-        METHOD_POPCORN ( ch_harmonized, ch_cross_pairs, ch_cfile, cfile_ancestries )
+        METHOD_POPCORN ( traitsInPairs(ch_harmonized, ch_cross_pairs), ch_cross_pairs, ch_cfile, cfile_ancestries )
         ch_results = ch_results.mix( METHOD_POPCORN.out.results )
     }
 
@@ -206,6 +208,22 @@ workflow GENCORR {
     FUNCTIONS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+
+//
+// Harmonized files of the traits that occur in at least one of the pairs:
+// [ meta, harmonized ] for every trait in ch_pairs [ meta1, meta2 ].
+//
+def traitsInPairs(ch_harmonized, ch_pairs) {
+    def ch_ids = ch_pairs
+        .flatMap { m1, m2 -> [ m1.id, m2.id ] }
+        .unique()
+        .collect()
+        .map     { ids -> [ ids ] }                     // one item: the list of trait IDs
+    return ch_harmonized
+        .combine ( ch_ids )
+        .filter  { meta, _f, ids -> meta.id in ids }
+        .map     { meta, f, _ids -> [ meta, f ] }
+}
 
 //
 // Header of the standard results table (bin/gencorr_common.py RESULT_COLUMNS;

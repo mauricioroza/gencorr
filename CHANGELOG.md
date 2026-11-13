@@ -24,15 +24,21 @@ Initial version.
 - rsID mapping for summary statistics without rsIDs (e.g. GRCh38 `chr:pos:ref:alt` IDs, or no SNP column): samplesheet column `build` (`GRCh37`/`GRCh38`) and `--rsid_map_grch37` / `--rsid_map_grch38` (PLINK `.bim` or CHR/BP/SNP/A1/A2 table); matched by chromosome, position and alleles, no liftover needed. Without a map, the QC report warns when most IDs are not rsIDs.
 - `bin/compare_results.py` for comparison with other tools or runs.
 - BigaGWAS comparison kit (`tests/bigagwas/`, `docs/bigagwas_comparison.md`); LDSC and LAVA reproduce BigaGWAS jobs 966, 967, 971 and 972.
-- Tests: Python unit + oracle tests against LDSC and LAVA; nf-test module tests for all 8 local modules (real-data + stub), function and pipeline tests.
+- Tests: Python unit + oracle tests against LDSC and LAVA; nf-test module tests for all 13 local modules (real-data + stub), function and pipeline tests.
 
 ### Changed
 
+- Each method now exports (and LDSC munges) only the traits in the pairs it analyses. Traits that are only in cross-ancestry pairs, or in no pair at all (`--pair_mode pairs`), are still harmonized and get a QC report, but no longer appear in `gencorr.ldsc_h2.tsv`.
+- `gencorr.ldsc_h2.tsv` has a `status` column (`ok`, `h2_error`, `h2_not_estimable`); a trait without h2 is also named in the `LDSC_SUMMARISE` task log.
+- `--popcorn_cfile_ancestries` is checked at start-up: two different ancestries, matching every cross-ancestry pair.
+- docs/usage.md: the cluster section is a generic SLURM example.
 - Local modules follow the nf-core module specification: `task.ext.args` in every module, a `versions_<tool>` topic output for every tool used, `meta.yml` in the current nf-core format, test tags for modules run in `setup`. `nf-core modules lint` and `nf-core pipelines lint` report no failures.
 - The pipeline test snapshots `pipeline_info/gencorr_software_versions.yml`.
 - Module conda environments pin `python=3.12.3`, the Python the `gencorr-tools` image ships (was 3.12.8), so conda and container runs report the same versions.
 
 ### Fixed
+
+- LAVA sample-overlap matrix: a trait without a usable LDSC h2 intercept now gets 0 (no correction) for all its pairs, as the warning says; before, its cross-trait intercepts were still used, scaled with a diagonal of 1.
 
 - LDSC munge took hours on genome-wide files (a 9.3M-row file had not finished after 2 h; now 24 s). munge filters 5M-row chunks with `isin`, and the LDSC 1.0.1 container's pandas 0.20.3 switches `isin` above 1M rows to `np.in1d`, which compares every rsID with every `--merge-alleles` SNP. `LDSC_MUNGE` now passes `--chunksize 500000`; the output is byte-identical.
 - Harmonization ran out of memory on large files (a 9.5M-row, 24-column GWAS Catalog file needed > 6.5 GB and was killed). `harmonize_sumstats.py` now reads only the mapped columns, parses numbers while reading, shares repeated CHR/allele strings and copies the table once instead of once per filter: 4.4 GB peak, byte-identical output (new test `test_load_input_matches_plain_read`).

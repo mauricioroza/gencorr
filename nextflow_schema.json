@@ -2,7 +2,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://raw.githubusercontent.com/mauricioroza/gencorr/master/nextflow_schema.json",
     "title": "mauricioroza/gencorr pipeline parameters",
-    "description": "Global (LDSC) and local (LAVA) genetic correlation from GWAS summary statistics, with a pluggable method interface",
+    "description": "Global (LDSC, SumHer), local (LAVA) and cross-ancestry (Popcorn) genetic correlation from GWAS summary statistics, with a pluggable method interface",
     "type": "object",
     "$defs": {
         "input_output_options": {
@@ -22,7 +22,7 @@
                     "schema": "assets/schema_input.json",
                     "mimetype": "text/csv",
                     "pattern": "^\\S+\\.csv$",
-                    "description": "Samplesheet (CSV): one row per trait with columns id, sumstats [, n, n_cases, n_controls, pop_prev, colmap, label].",
+                    "description": "Samplesheet (CSV): one row per trait with columns id, sumstats [, n, n_cases, n_controls, pop_prev, colmap, ancestry, build, label].",
                     "help_text": "See docs/usage.md. Binary traits need n_cases and n_controls; add pop_prev to also get liability-scale h2.",
                     "fa_icon": "fas fa-file-csv"
                 },
@@ -35,7 +35,7 @@
                 "methods": {
                     "type": "string",
                     "description": "Comma-separated methods to run.",
-                    "help_text": "Available: ldsc (global rg), lava (local rg). New methods are added via the registry in subworkflows/local/utils_nfcore_gencorr_pipeline.",
+                    "help_text": "Available: ldsc (global rg), lava (local rg), sumher (global rg, LDAK), popcorn (cross-ancestry rg). New methods are added via the registry in subworkflows/local/utils_nfcore_gencorr_pipeline.",
                     "default": "ldsc,lava",
                     "pattern": "^[a-z0-9_]+(,[a-z0-9_]+)*$",
                     "fa_icon": "fas fa-list"
