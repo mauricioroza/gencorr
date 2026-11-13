@@ -278,6 +278,7 @@ they have rsIDs (see [Genome build and rsIDs](#genome-build-and-rsids)).
 | `--lava_loci_per_chunk` | `250` | parallelism only; results do not depend on it |
 | `--lava_seed` | `20201231` | base seed for LAVA's Monte Carlo CIs/p-values |
 | `--ldsc_rg_batch_size` | `50` | traits per `ldsc --rg` call; does not change estimates |
+| `--ldsc_impl` | `original` | `original`: LDSC 1.0.1 (Python 2.7). `py3`: CBIIT/ldsc Python 3 port, container only; rg, se, z, h2 identical on the comparison data; p printed with 4 significant digits ([ldsc_py3.md](ldsc_py3.md)) |
 | `--drop_ambiguous` | `false` | remove A/T, C/G SNPs for all methods (LDSC munge always removes them) |
 | `--min_info` | `0` (off) | remove variants with INFO ≤ value, for all methods (see 4a) |
 | `--min_maf` | `0` (off) | remove variants with MAF ≤ value, for all methods (see 4a) |

@@ -127,6 +127,12 @@ mention it only as a comparison reference.
   gencorr-tools:0.1.0 is NOT on ghcr.io (only local) and must stay private when pushed (LAVA).
   Pushing needs `gh auth refresh -s write:packages` + `gh auth token | docker login ghcr.io -u mauricioroza
   --password-stdin`, run by the user in the Ubuntu terminal (not sudo, not PowerShell).
+- Branch `ldsc-py3` (2026-11-13): `--ldsc_impl py3` = CBIIT/ldsc branch ldsc313 @128f996 (Python 3.13,
+  numpy 2.4.3, pandas 2.3.3) in `containers/gencorr-ldsc`, image `ghcr.io/mauricioroza/gencorr-ldsc:3.0.1-128f996`
+  (GPL-3.0; built locally, NOT pushed yet). Swapped in via `conf/ldsc_py3.config` (conditional includeConfig;
+  strict config forbids `if` blocks). Upstream tests run at image build (`run_upstream_tests.sh`: 164 passed,
+  3 deselected). Identical to 1.0.1 on BigaGWAS data (job 972 exact) except p printing: new pandas rounds the
+  summary-table p to 4 decimals, so parse_ldsc.py reads the pair's `P:` line. Details: docs/ldsc_py3.md.
 - Pipeline not yet run in the published containers on CI. No real genome-wide run yet.
 - BigaGWAS's own LAVA scripts (specific_lava.R, 2traits.R, lava_pgc.R) are not public, so its settings are
   partly unknown.

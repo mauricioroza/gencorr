@@ -14,7 +14,7 @@ and Popcorn on any set of traits and returns one tidy results table.
 
 | | method | tool | what you get |
 |---|---|---|---|
-| **global** | genome-wide rg | [LDSC](https://github.com/bulik/ldsc) 1.0.1 | rg, SE, p per trait pair; observed- and liability-scale h2 per trait |
+| **global** | genome-wide rg | [LDSC](https://github.com/bulik/ldsc) 1.0.1, or its Python 3 port [CBIIT/ldsc](https://github.com/CBIIT/ldsc) (`--ldsc_impl py3`) | rg, SE, p per trait pair; observed- and liability-scale h2 per trait |
 | **global** | genome-wide rg, LDAK heritability model | [SumHer](https://dougspeed.com/genetic-correlations/) (LDAK 6.1) | rg, SE, p per trait pair; h2 and coheritability |
 | **cross-ancestry** | rg between a EUR and an EAS GWAS | [Popcorn](https://github.com/brielin/popcorn) (commit `20a29e8`) | rg (genetic impact or effect), SE, p; h2 in each population |
 | **local** | rg per genomic locus | [LAVA](https://github.com/josefin-werme/LAVA) 0.1.5 (commit `e729a24`) | local rho, 95% CI, p per pair and locus; local h2 per trait |
@@ -71,7 +71,9 @@ or log in to ghcr.io with access to it:
 docker build -t ghcr.io/mauricioroza/gencorr-tools:0.1.0 containers/gencorr-tools
 ```
 
-LDSC comes from the public BioContainers image and needs no setup. The
+LDSC comes from the public BioContainers image and needs no setup
+(`--ldsc_impl py3`: image `ghcr.io/mauricioroza/gencorr-ldsc:3.0.1-128f996`,
+GPL-3.0, recipe in `containers/gencorr-ldsc`, see [docs/ldsc_py3.md](docs/ldsc_py3.md)). The
 SumHer and Popcorn images (`ghcr.io/mauricioroza/gencorr-ldak:6.1`,
 `ghcr.io/mauricioroza/gencorr-popcorn:1.0.0-20a29e8`, both GPL-3.0) are
 published on ghcr.io and pulled automatically; their recipes are in

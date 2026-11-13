@@ -332,6 +332,12 @@ def validateGencorrParams(Map p, String profile) {
             error("Method '${m}' has no conda package (it is installed from GitHub in its container). Use -profile docker, singularity or apptainer.")
         }
     }
+    if (!(p.ldsc_impl in ['original', 'py3'])) {
+        error("--ldsc_impl must be 'original' or 'py3' (got '${p.ldsc_impl}').")
+    }
+    if ('ldsc' in methods && p.ldsc_impl == 'py3' && (profile ?: '').tokenize(',').intersect(['conda', 'mamba'])) {
+        error("--ldsc_impl py3 (CBIIT/ldsc) has no conda package. Use -profile docker, singularity or apptainer, or --ldsc_impl original.")
+    }
     if ('lava' in methods && p.lava_overlap == 'ldsc' && !('ldsc' in methods)) {
         error("--lava_overlap ldsc estimates sample overlap from LDSC intercepts, so it needs --methods to include ldsc. Alternatively use --lava_overlap none or a matrix file.")
     }

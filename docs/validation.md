@@ -118,6 +118,7 @@ profile (LDSC only), and nf-test in CI with the private image.
 |---|---|---|
 | LAVA on harmonized vs raw files | rg differs in the 5th decimal, local h2 by ~1e-4 relative, for traits given only as OR/LogOR | variants with OR exactly 1 (435 in the vignette depression file): LAVA's reader gives them sign −1 (`ifelse(OR > 1, 1, -1)`); the harmonizer gives Z = 0 because there is no direction |
 | LDSC global rg vs BigaGWAS | identical on job 972; 4th-decimal difference on job 966 | same LDSC version and options; BigaGWAS' own harmonization can drop a few SNPs (966: 4) |
+| LDSC 1.0.1 vs CBIIT/ldsc Python 3 port (`--ldsc_impl py3`) | munged files, rg, se, z, h2, intercepts identical; p printed with 4 instead of 5 significant digits when p ≥ 5e-5 | the port's summary table rounds p to 4 decimals with current pandas; the parser reads the pair's `P:` line instead. See [ldsc_py3.md](ldsc_py3.md) |
 | LAVA vs BigaGWAS | rho within 1e-7 to 1e-5 with `--lava_snp_list w_hm3.snplist`; p/CIs differ by Monte Carlo noise | see [bigagwas_comparison.md](bigagwas_comparison.md#6-results-on-the-test-jobs) |
 
 ## Comparing with BigaGWAS

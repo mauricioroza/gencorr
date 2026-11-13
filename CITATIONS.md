@@ -38,6 +38,8 @@ Cite the method papers for the methods in `--methods`.
 
   > Lee SH, Wray NR, Goddard ME, Visscher PM. Estimating missing heritability for disease from genome-wide association studies. Am J Hum Genet. 2011;88(3):294-305. doi: 10.1016/j.ajhg.2011.02.002.
 
+- [CBIIT/ldsc](https://github.com/CBIIT/ldsc), the Python 3 port of LDSC, when `--ldsc_impl py3` (branch `ldsc313`, commit `128f996`; GPL-3.0)
+
 ### LAVA (`--methods lava`)
 
 - [LAVA: local genetic correlation](https://doi.org/10.1038/s41588-022-01017-y). Also the source of the default locus definitions (`--lava_loci`, 2,495 GRCh37 blocks) and of the sample-overlap correction from LDSC intercepts (`--lava_overlap ldsc`).

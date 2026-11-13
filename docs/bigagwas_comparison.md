@@ -191,6 +191,10 @@ Jobs 971/972 were re-checked on 2026-11-08 against all 2,495 standard loci
 | 972 | T2D × CHD | LDSC | identical: rg 0.3476, se 0.0796, z 4.3684, p 1.2518e-05, 2,937 SNPs; h2, intercepts and gencov identical in both logs |
 | 974 | T2D × CHD | SumHer | identical to all 6 decimals LDAK prints: rg 0.320501 (SE 0.081386), h2, coheritability, scaling and overlap; same SNPs (4,678 / 49,453, 2,962 shared; same 41 allele mismatches) |
 
+LDSC jobs 966 and 972 were also re-run with `--ldsc_impl py3` (the CBIIT/ldsc
+Python 3 port): job 972 is reproduced exactly (rg, se, z, p, SNP count,
+intercepts) and job 966's rg 0.1154 is unchanged; see [ldsc_py3.md](ldsc_py3.md).
+
 SumHer (job 974) was run as a BigaGWAS "2 traits" job with `--genomic-control
 YES` (as set on the job) on the harmonized files of job 971. gencorr's command:
 `--input samplesheet_971.csv --methods sumher --sumher_tagfile

@@ -1,0 +1,94 @@
+*********************************************************************
+* LD Score Regression (LDSC)
+* Version 1.0.1
+* (C) 2014-2019 Brendan Bulik-Sullivan and Hilary Finucane
+* Broad Institute of MIT and Harvard / MIT Department of Mathematics
+* GNU General Public License v3
+*********************************************************************
+Call: 
+./ldsc.py \
+--out neuro__b1.rg \
+--rg neuro.sumstats.gz,depression.sumstats.gz,rheuma.sumstats.gz \
+--w-ld w_ld/all \
+--ref-ld ref_ld/all 
+
+Beginning analysis at Fri Nov 13 18:31:43 2026
+Reading summary statistics from neuro.sumstats.gz ...
+Read summary statistics for 97121 SNPs.
+Reading reference panel LD Score from ref_ld/all ...
+Read reference panel LD Scores for 351471 SNPs.
+Removing partitioned LD Scores with zero variance.
+Reading regression weight LD Score from w_ld/all ...
+Read regression weight LD Scores for 351471 SNPs.
+After merging with reference panel LD, 97121 SNPs remain.
+After merging with regression SNP LD, 97121 SNPs remain.
+Computing rg for phenotype 2/3
+Reading summary statistics from depression.sumstats.gz ...
+Read summary statistics for 351471 SNPs.
+After merging with summary statistics, 97121 SNPs remain.
+76502 SNPs with valid alleles.
+WARNING: number of SNPs less than 200k; this is almost always bad.
+
+Heritability of phenotype 1
+---------------------------
+Total Observed scale h2: 0.005 (0.0008)
+Lambda GC: 2.1633
+Mean Chi^2: 3.0915
+Intercept: 1.1103 (0.058)
+Ratio: 0.0527 (0.0277)
+
+Heritability of phenotype 2/3
+-----------------------------
+Total Observed scale h2: 0.0027 (0.0003)
+Lambda GC: 1.8405
+Mean Chi^2: 2.7765
+Intercept: 1.0167 (0.0406)
+Ratio: 0.0094 (0.0229)
+
+Genetic Covariance
+------------------
+Total Observed scale gencov: 0.0027 (0.0005)
+Mean z1*z2: 1.74
+Intercept: 0.3358 (0.04)
+
+Genetic Correlation
+-------------------
+Genetic Correlation: 0.7279 (0.0593)
+Z-score: 12.2785
+P: 1.1824e-34
+
+Computing rg for phenotype 3/3
+Reading summary statistics from rheuma.sumstats.gz ...
+Read summary statistics for 351471 SNPs.
+After merging with summary statistics, 97121 SNPs remain.
+75542 SNPs with valid alleles.
+WARNING: number of SNPs less than 200k; this is almost always bad.
+
+Heritability of phenotype 3/3
+-----------------------------
+Total Observed scale h2: 0.0626 (0.0095)
+Lambda GC: 2.4607
+Mean Chi^2: 34.207
+Intercept: 0.6559 (0.1019)
+Ratio < 0 (usually indicates GC correction).
+
+Genetic Covariance
+------------------
+Total Observed scale gencov: 0.0014 (0.0007)
+Mean z1*z2: 1.7505
+Intercept: -0.0346 (0.0419)
+
+Genetic Correlation
+-------------------
+Genetic Correlation: 0.0825 (0.0423)
+Z-score: 1.9514
+P: 0.051
+
+
+Summary of Genetic Correlation Results
+p1                      p2      rg      se        z           p  h2_obs  h2_obs_se  h2_int  h2_int_se  gcov_int  gcov_int_se
+neuro.sumstats.gz  depression.sumstats.gz  0.7279  0.0593  12.2785  1.1824e-34  0.0027     0.0003  1.0167     0.0406    0.3358       0.0400
+neuro.sumstats.gz      rheuma.sumstats.gz  0.0825  0.0423   1.9514  5.1006e-02  0.0626     0.0095  0.6559     0.1019   -0.0346       0.0419
+
+Analysis finished at Fri Nov 13 18:31:44 2026
+Total time elapsed: 1.45s

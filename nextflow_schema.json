@@ -193,6 +193,13 @@
                     "description": "Maximum number of traits compared with one trait1 in a single ldsc --rg call. Batching does not change estimates.",
                     "default": 50,
                     "minimum": 1
+                },
+                "ldsc_impl": {
+                    "type": "string",
+                    "description": "LDSC implementation: 'original' (LDSC 1.0.1, Python 2.7, bioconda) or 'py3' (CBIIT/ldsc Python 3 port, container only).",
+                    "help_text": "Both run the same regressions; see docs/ldsc_py3.md for the comparison and the port's known differences. 'py3' needs -profile docker, singularity or apptainer.",
+                    "default": "original",
+                    "enum": ["original", "py3"]
                 }
             }
         },

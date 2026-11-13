@@ -158,14 +158,15 @@ def parse_rg_log(path: Path) -> pd.DataFrame:
     t1 = trait_from_file(files[0])
     others = [trait_from_file(f) for f in files[1:]]
 
-    # per-pair SNP counts and errors, in the order LDSC processed them
-    n_snps, errors = {}, {}
+    # per-pair SNP counts, errors and p, in the order LDSC processed them
+    n_snps, errors, block_p = {}, {}, {}
     blocks = re.split(r"Computing rg for phenotype (\d+)/\d+", text)
     for idx in range(1, len(blocks), 2):
         k = int(blocks[idx]) - 2           # phenotype 2 is others[0]
         body = blocks[idx + 1]
         trait = others[k]
         n_snps[trait] = find(r"(\d+) SNPs with valid alleles", body)
+        block_p[trait] = find(r"Genetic Correlation\n-+\n(?:.*\n)*?P: (\S+)", body)
         err = re.search(r"ERROR computing rg[^\n]*\n(?:.*\n)*?(\w*Error: [^\n]+)", body)
         if err:
             errors[trait] = err.group(1).strip()
@@ -180,8 +181,16 @@ def parse_rg_log(path: Path) -> pd.DataFrame:
     table["trait2"] = table["p2"].map(trait_from_file)
     if not (table["trait1"] == t1).all():
         die(f"{path}: summary p1 does not match the first --rg file")
+    # p: the summary table is printed by pandas' DataFrame.to_string. LDSC 1.0.1
+    # (pandas 0.20) prints it in scientific notation (1.2518e-05); with current
+    # pandas (CBIIT/ldsc Python 3 port) the column is fixed-point with 4
+    # decimals, so small p become 0.0000. The pair's own "P: " line (4
+    # significant digits) is then the more precise value.
+    fixed_p = ~table["p"].str.contains(r"[eE]", regex=True)
     for col in header[2:]:
         table[col] = table[col].map(to_float)
+    use_block = fixed_p & table["trait2"].map(block_p).notna()
+    table.loc[use_block, "p"] = table.loc[use_block, "trait2"].map(block_p)
     table["n_snps"] = table["trait2"].map(n_snps)
     table["error"] = table["trait2"].map(errors)
     table["log"] = path.name
