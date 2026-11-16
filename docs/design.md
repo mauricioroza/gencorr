@@ -5,7 +5,7 @@ from the tools' default behaviour.
 
 ## Why Nextflow + existing tools, not a Rust rewrite
 
-The statistics happen inside LDSC (Python 2), LAVA (R + C++), LDAK and
+The statistics happen inside LDSC (Python), LAVA (R + C++), LDAK and
 Popcorn, not in the orchestration. Rewriting the orchestration in a faster
 language would not speed up the computation. Rewriting LDSC/LAVA themselves means re-validating
 statistical methods, and LAVA's licence (*All rights reserved*) does not permit

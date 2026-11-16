@@ -9,20 +9,17 @@
  * The Z column carries the sign; munge recomputes |Z| from P.
  *
  * --chunksize 500000: munge reads the file in chunks (default 5M rows) and
- * filters each with Series.isin(merge-alleles SNPs). In this container's
- * pandas (0.20.3), isin on more than 1M rows switches to np.in1d, which for
- * text compares every SNP with every merge-alleles SNP: a 9M-row file took
- * hours instead of a minute. Chunks of <= 1M rows keep the hash-table path.
- * The per-chunk filters are row-wise, so results are identical.
+ * filters each chunk row by row, so results do not depend on the chunk size;
+ * smaller chunks keep peak memory lower. (With LDSC 1.0.1's pandas 0.20.3 they
+ * were also needed for speed: isin on > 1M rows compared every SNP with every
+ * merge-alleles SNP.)
  */
 process LDSC_MUNGE {
     tag "${meta.id}"
     label 'process_low'
 
     conda "${moduleDir}/environment.yml"
-    container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/ldsc:1.0.1--pyhdfd78af_2' :
-        'quay.io/biocontainers/ldsc:1.0.1--pyhdfd78af_2' }"
+    container "ghcr.io/mauricioroza/gencorr-ldsc:3.0.1-128f996"
 
     input:
     tuple val(meta), path(sumstats)
@@ -54,6 +51,6 @@ process LDSC_MUNGE {
     stub:
     """
     echo "SNP A1 A2 Z N" | gzip > ${meta.id}.sumstats.gz
-    printf '* Version 1.0.1\\n' > ${meta.id}.munge.log
+    printf '* Version 3.0.1\\n' > ${meta.id}.munge.log
     """
 }

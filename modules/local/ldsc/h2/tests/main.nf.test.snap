@@ -4,15 +4,15 @@
             [
                 [
                     "ldsc",
-                    "1.0.1"
+                    "3.0.1"
                 ]
             ]
         ],
+        "timestamp": "2026-11-16T10:00:27.013897974",
         "meta": {
-            "nf-test": "0.9.3",
-            "nextflow": "25.10.6"
-        },
-        "timestamp": "2026-11-06T19:43:41.156748734"
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.5"
+        }
     },
     "bmi + depression - observed and liability scale": {
         "content": [
@@ -40,14 +40,14 @@
             [
                 [
                     "ldsc",
-                    "1.0.1"
+                    "3.0.1"
                 ]
             ]
         ],
+        "timestamp": "2026-11-16T10:00:17.471751138",
         "meta": {
-            "nf-test": "0.9.3",
-            "nextflow": "25.10.6"
-        },
-        "timestamp": "2026-11-06T19:43:28.82656653"
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.5"
+        }
     }
 }

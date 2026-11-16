@@ -9,9 +9,9 @@ tools:
   - ldsc:
       description: LD Score Regression, for SNP heritability and genetic
         correlation from GWAS summary statistics
-      homepage: "https://github.com/bulik/ldsc"
+      homepage: "https://github.com/CBIIT/ldsc"
       documentation: "https://github.com/bulik/ldsc/wiki"
-      tool_dev_url: "https://github.com/bulik/ldsc"
+      tool_dev_url: "https://github.com/CBIIT/ldsc"
       doi: "10.1038/ng.3211"
       licence: ["GPL-3.0-only"]
       identifier: ""

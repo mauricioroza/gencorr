@@ -47,9 +47,10 @@ mention it only as a comparison reference.
   duplicates, optionally ambiguous; per-trait QC JSON (incl. lambda_gc). Byte-reproducible output
   (gzip mtime 0, `%.8g`) — preserve this. Memory: load_input reads only mapped columns (numerics
   parsed while reading, CHR/alleles shared strings), filters use one keep mask; 9.5M rows ~4.4 GB.
-- LDSC 1.0.1 (bioconda, same as BigaGWAS): munge with merge-alleles (`--signed-sumstats Z,0`,
-  `--chunksize 500000`: the container's pandas 0.20.3 `isin` on >1M rows uses np.in1d, O(n*m) for
-  rsIDs, hours on genome-wide files; keep chunks <= 1M), h2
+- LDSC = CBIIT/ldsc Python 3 port (branch ldsc313 @128f996, logs "Version 3.0.1"; BigaGWAS uses 1.0.1,
+  same estimates, docs/ldsc.md), image `ghcr.io/mauricioroza/gencorr-ldsc:3.0.1-128f996`, container only
+  (registry conda_ok false). munge with merge-alleles (`--signed-sumstats Z,0`,
+  `--chunksize 500000`, kept from 1.0.1 whose pandas 0.20.3 `isin` was O(n*m) on >1M rows), h2
   (observed + liability when n_cases/n_controls/pop_prev given), batched `--rg` (`ldsc_rg_batch_size=50`),
   summary step also builds the sample-overlap matrix from intercepts (used by LAVA).
 - LAVA 0.1.5 pinned at commit e729a24 (BigaGWAS uses 0.1.0 — known difference). `bin/run_lava.R`:
@@ -127,12 +128,12 @@ mention it only as a comparison reference.
   gencorr-tools:0.1.0 is NOT on ghcr.io (only local) and must stay private when pushed (LAVA).
   Pushing needs `gh auth refresh -s write:packages` + `gh auth token | docker login ghcr.io -u mauricioroza
   --password-stdin`, run by the user in the Ubuntu terminal (not sudo, not PowerShell).
-- Branch `ldsc-py3` (2026-11-13): `--ldsc_impl py3` = CBIIT/ldsc branch ldsc313 @128f996 (Python 3.13,
-  numpy 2.4.3, pandas 2.3.3) in `containers/gencorr-ldsc`, image `ghcr.io/mauricioroza/gencorr-ldsc:3.0.1-128f996`
-  (GPL-3.0; built locally, NOT pushed yet). Swapped in via `conf/ldsc_py3.config` (conditional includeConfig;
-  strict config forbids `if` blocks). Upstream tests run at image build (`run_upstream_tests.sh`: 164 passed,
+- Branch `ldsc-py3` (2026-11-16): LDSC 1.0.1 removed; the CBIIT Python 3 port (Python 3.13, numpy 2.4.3,
+  pandas 2.3.3, `containers/gencorr-ldsc`, GPL-3.0) is the only LDSC. Image built locally, NOT pushed yet.
+  Commit f307c1d still had both (`--ldsc_impl original|py3`, conditional includeConfig: strict config
+  forbids `if` blocks). Upstream tests run at image build (`run_upstream_tests.sh`: 164 passed,
   3 deselected). Identical to 1.0.1 on BigaGWAS data (job 972 exact) except p printing: new pandas rounds the
-  summary-table p to 4 decimals, so parse_ldsc.py reads the pair's `P:` line. Details: docs/ldsc_py3.md.
+  summary-table p to 4 decimals, so parse_ldsc.py reads the pair's `P:` line. Details: docs/ldsc.md.
 - Pipeline not yet run in the published containers on CI. No real genome-wide run yet.
 - BigaGWAS's own LAVA scripts (specific_lava.R, 2traits.R, lava_pgc.R) are not public, so its settings are
   partly unknown.

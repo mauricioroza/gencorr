@@ -1,6 +1,7 @@
 // Module test: LDSC_SUMMARISE
 // Inputs: LDSC logs in tests/python/fixtures/ldsc (real LDSC 1.0.1 output for
-// the four LAVA vignette traits, also used by tests/python/test_results_tools.py).
+// the four LAVA vignette traits, also used by tests/python/test_results_tools.py;
+// the parser reads both 1.0.1 and Python 3 port logs).
 //   bmi__b1.rg.log   bmi vs neuro, depression, rheuma
 //   bmi__err.rg.log  a failed rg run -> status ldsc_error
 nextflow_process {

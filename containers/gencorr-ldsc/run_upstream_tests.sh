@@ -15,7 +15,7 @@
 #      always passes a float there (Hsq.__init__: M_tot = float(np.sum(M))).
 #
 # Deselected, because they test behaviour the port changed (documented in
-# docs/ldsc_py3.md; neither affects gencorr, which only reads .gz LD scores and
+# docs/ldsc.md; neither affects gencorr, which only reads .gz LD scores and
 # munge output):
 #   - test_parse.py::Test_ldscore::test_ldscore_fromlist / test_ldscore_loop:
 #     read .bz2 LD score files, no longer supported.

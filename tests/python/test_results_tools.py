@@ -172,8 +172,10 @@ def test_rg_p_from_python3_ldsc_log_equals_original():
     # CBIIT/ldsc (Python 3, current pandas) prints the summary-table p with 4
     # fixed decimals (1.1824e-34 -> 0.0000); the parser then takes the pair's
     # own "P:" line. Every other value is printed identically by both versions.
-    orig = parse_ldsc.parse_rg_log(LOGS / "neuro__orig.rg.log").set_index("trait2")
-    py3 = parse_ldsc.parse_rg_log(LOGS / "neuro__py3.rg.log").set_index("trait2")
+    # Same run (neuro vs depression, rheuma) logged by LDSC 1.0.1 and by the port.
+    versions = FIXTURES / "ldsc_versions"
+    orig = parse_ldsc.parse_rg_log(versions / "neuro__ldsc1.0.1.rg.log").set_index("trait2")
+    py3 = parse_ldsc.parse_rg_log(versions / "neuro__ldsc3.0.1.rg.log").set_index("trait2")
     assert py3.loc["depression", "p"] == orig.loc["depression", "p"] == 1.1824e-34
     assert py3.loc["rheuma", "p"] == 0.051           # "P: 0.051" (4 significant digits)
     assert orig.loc["rheuma", "p"] == 0.051006       # LDSC 1.0.1 table: 5.1006e-02

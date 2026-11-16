@@ -148,7 +148,7 @@ SNPs this made no visible difference.
 
 | quantity | expectation | if it differs |
 |---|---|---|
-| LDSC rg, se, z, p | equal to the 4th decimal (same LDSC 1.0.1, same references) | BigaGWAS harmonizes against its own reference VCF first (drops or flips some variants). Compare the "SNPs with valid alleles" counts in both logs |
+| LDSC rg, se, z, p | equal to the 4th decimal (LDSC 1.0.1 there, its Python 3 port here: same estimates, [ldsc.md](ldsc.md); same references) | BigaGWAS harmonizes against its own reference VCF first (drops or flips some variants). Compare the "SNPs with valid alleles" counts in both logs |
 | LAVA rho | close (≤ 1e-3) | different SNP set after BigaGWAS harmonization; a different LAVA version on their server; case/control handling |
 | LAVA p, CIs | similar but not identical | Monte Carlo; different seeds. Compare on the log scale |
 | which loci are tested | same `univ_filtered` pattern | univariate p near the 0.05 threshold can flip with tiny input differences |
@@ -161,6 +161,7 @@ to us or to the BigaGWAS team.
 | topic | gencorr | BigaGWAS |
 |---|---|---|
 | LAVA SNP set | all SNPs (`--lava_snp_list` to restrict) | HapMap3-based list (~16k of ~100k SNPs on the test data); with the same list gencorr reproduces its rho to ~1e-5 |
+| LDSC | CBIIT/ldsc Python 3 port (`3.0.1`, [ldsc.md](ldsc.md)) | 1.0.1 (Python 2.7); same estimates, p printed with 4 instead of 5 significant digits when p >= 5e-5 |
 | LAVA version | 0.1.5 | 0.1.0; identical SNPs and continuous traits matched to 5–7 decimals; binary traits differ by design (0.1.5 changed the binary model) |
 | LAVA case/control | used when `n_cases`/`n_controls` are given | 2-trait form treats every trait as continuous |
 | LAVA seeds | per (locus, trait1, trait2) | not seed-reproducible |
@@ -191,9 +192,10 @@ Jobs 971/972 were re-checked on 2026-11-08 against all 2,495 standard loci
 | 972 | T2D × CHD | LDSC | identical: rg 0.3476, se 0.0796, z 4.3684, p 1.2518e-05, 2,937 SNPs; h2, intercepts and gencov identical in both logs |
 | 974 | T2D × CHD | SumHer | identical to all 6 decimals LDAK prints: rg 0.320501 (SE 0.081386), h2, coheritability, scaling and overlap; same SNPs (4,678 / 49,453, 2,962 shared; same 41 allele mismatches) |
 
-LDSC jobs 966 and 972 were also re-run with `--ldsc_impl py3` (the CBIIT/ldsc
-Python 3 port): job 972 is reproduced exactly (rg, se, z, p, SNP count,
-intercepts) and job 966's rg 0.1154 is unchanged; see [ldsc_py3.md](ldsc_py3.md).
+The LDSC rows were first run with LDSC 1.0.1 (as BigaGWAS) and re-run after
+gencorr moved to the CBIIT/ldsc Python 3 port: job 972 is reproduced exactly
+(rg, se, z, p, SNP count, intercepts) and job 966's rg 0.1154 is unchanged;
+see [ldsc.md](ldsc.md).
 
 SumHer (job 974) was run as a BigaGWAS "2 traits" job with `--genomic-control
 YES` (as set on the job) on the harmonized files of job 971. gencorr's command:

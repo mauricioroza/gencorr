@@ -46,7 +46,7 @@ NXF_SYNTAX_PARSER=v1 nf-test test --tag ldsc/rg --profile +docker
 Snapshots hold only values that are deterministic across machines: md5 of our
 own outputs (nf-test hashes `.gz` files on their uncompressed content), LDSC's
 printed summary lines, and LAVA rho rounded to 3 decimals. Module snapshots
-record only the tool's own version (`ldsc 1.0.1`, `lava 0.1.5`), so they hold
+record only the tool's own version (`ldsc 3.0.1`, `lava 0.1.5`), so they hold
 with conda, Docker or tools on `PATH`. The **pipeline** snapshot also records
 `pipeline_info/gencorr_software_versions.yml` (nf-core template), which includes
 the Python and R builds; it holds for Docker/Apptainer and for conda because the
@@ -75,11 +75,11 @@ to hang. Check the speed first, e.g.
 `curl -o /dev/null -w '%{speed_download}\n' <one of the URLs in tests/data/samplesheet.csv>`.
 
 Oracle tests need `ldsc.py`/`munge_sumstats.py` and R with LAVA on `PATH`, and
-are skipped otherwise. The tools are in the containers, but **the
-`gencorr-tools` image does not contain pytest** (and the LDSC biocontainer is
-Python 2), so the oracle tests cannot yet be run inside them as is. Options:
-add `pytest` to `containers/gencorr-tools/Dockerfile` at the next image
-version, or run them on a machine with LDSC and LAVA installed.
+are skipped otherwise. The LDSC image contains pytest, so the LDSC oracle tests
+run inside it ([ldsc.md](ldsc.md#tests-inside-the-image)). **The
+`gencorr-tools` image does not contain pytest** yet, so the LAVA oracle tests
+need it added to `containers/gencorr-tools/Dockerfile` at the next image
+version, or a machine with LAVA installed.
 
 ## Status of the test suite (v0.1.0dev)
 
@@ -118,7 +118,7 @@ profile (LDSC only), and nf-test in CI with the private image.
 |---|---|---|
 | LAVA on harmonized vs raw files | rg differs in the 5th decimal, local h2 by ~1e-4 relative, for traits given only as OR/LogOR | variants with OR exactly 1 (435 in the vignette depression file): LAVA's reader gives them sign −1 (`ifelse(OR > 1, 1, -1)`); the harmonizer gives Z = 0 because there is no direction |
 | LDSC global rg vs BigaGWAS | identical on job 972; 4th-decimal difference on job 966 | same LDSC version and options; BigaGWAS' own harmonization can drop a few SNPs (966: 4) |
-| LDSC 1.0.1 vs CBIIT/ldsc Python 3 port (`--ldsc_impl py3`) | munged files, rg, se, z, h2, intercepts identical; p printed with 4 instead of 5 significant digits when p ≥ 5e-5 | the port's summary table rounds p to 4 decimals with current pandas; the parser reads the pair's `P:` line instead. See [ldsc_py3.md](ldsc_py3.md) |
+| LDSC 1.0.1 vs CBIIT/ldsc Python 3 port (used since 2026-11-16) | munged files, rg, se, z, h2, intercepts identical; p printed with 4 instead of 5 significant digits when p ≥ 5e-5 | the port's summary table rounds p to 4 decimals with current pandas; the parser reads the pair's `P:` line instead. See [ldsc.md](ldsc.md) |
 | LAVA vs BigaGWAS | rho within 1e-7 to 1e-5 with `--lava_snp_list w_hm3.snplist`; p/CIs differ by Monte Carlo noise | see [bigagwas_comparison.md](bigagwas_comparison.md#6-results-on-the-test-jobs) |
 
 ## Comparing with BigaGWAS

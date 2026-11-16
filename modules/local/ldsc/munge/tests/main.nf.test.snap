@@ -14,22 +14,22 @@
                     {
                         "id": "bmi"
                     },
-                    "bmi.munge.log:md5,d78f894311d930c742bb858c3c7018ce"
+                    "bmi.munge.log:md5,4c39b4d88e5e66958f251e012d2015ec"
                 ]
             ],
             [
                 [
                     "LDSC_MUNGE",
                     "ldsc",
-                    "1.0.1"
+                    "3.0.1"
                 ]
             ]
         ],
+        "timestamp": "2026-11-16T10:01:02.773645792",
         "meta": {
-            "nf-test": "0.9.3",
-            "nextflow": "25.10.6"
-        },
-        "timestamp": "2026-11-06T19:41:52.057698116"
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.5"
+        }
     },
     "bmi - with merge-alleles": {
         "content": [
@@ -46,14 +46,14 @@
                 [
                     "LDSC_MUNGE",
                     "ldsc",
-                    "1.0.1"
+                    "3.0.1"
                 ]
             ]
         ],
+        "timestamp": "2026-11-16T10:00:41.268331558",
         "meta": {
-            "nf-test": "0.9.3",
-            "nextflow": "25.10.6"
-        },
-        "timestamp": "2026-11-06T19:41:40.946935017"
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.5"
+        }
     }
 }

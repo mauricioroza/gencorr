@@ -4,7 +4,7 @@
 # CBIIT/ldsc is a port of LDSC 1.0.1 (Bulik-Sullivan et al.) to Python 3 with
 # current numpy/pandas/scipy; it reports "Version 3.0.1" in its logs. The
 # statistics are the original ones: the port changes Python 2 idioms and
-# pandas/numpy API calls, not the regressions (see docs/ldsc_py3.md).
+# pandas/numpy API calls, not the regressions (see docs/ldsc.md).
 #
 #   /opt/ldsc            CBIIT/ldsc checkout (ldsc.py, munge_sumstats.py, ldscore/)
 #   /opt/ldsc/test       upstream unit tests; run with pytest at build time

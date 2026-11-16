@@ -16,9 +16,7 @@ process LDSC_H2 {
     label 'process_low'
 
     conda "${moduleDir}/environment.yml"
-    container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/ldsc:1.0.1--pyhdfd78af_2' :
-        'quay.io/biocontainers/ldsc:1.0.1--pyhdfd78af_2' }"
+    container "ghcr.io/mauricioroza/gencorr-ldsc:3.0.1-128f996"
 
     input:
     tuple val(meta), path(sumstats)
@@ -46,6 +44,6 @@ process LDSC_H2 {
 
     stub:
     """
-    printf '* Version 1.0.1\\n' > ${meta.id}.h2.log
+    printf '* Version 3.0.1\\n' > ${meta.id}.h2.log
     """
 }

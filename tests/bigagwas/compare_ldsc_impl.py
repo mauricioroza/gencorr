@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-compare_ldsc_impl.py - compare two gencorr runs that differ only in --ldsc_impl
-(LDSC 1.0.1 vs the CBIIT/ldsc Python 3 port), output by output.
+compare_ldsc_impl.py - compare the LDSC outputs of two gencorr runs output by
+output, e.g. LDSC 1.0.1 vs the CBIIT/ldsc Python 3 port (docs/ldsc.md; commit
+f307c1d ran both with --ldsc_impl original|py3).
 
 Compared (both runs need --save_intermediates true for the munged files):
   ldsc/gencorr.ldsc.tsv           every column, incl. the JSON `extra` fields
@@ -13,7 +14,7 @@ Compared (both runs need --save_intermediates true for the munged files):
 Numbers are compared as printed by LDSC (4 decimals, p in %.4g), so "identical"
 means identical output, not just within tolerance.
 
-    compare_ldsc_impl.py --a run_original --b run_py3 [--report prefix]
+    compare_ldsc_impl.py --a run_a --b run_b [--report prefix]
 
 Exit status 0 when everything is identical, 1 otherwise.
 """
@@ -88,8 +89,8 @@ def munge_counts(log):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--a", required=True, type=Path, help="gencorr outdir, --ldsc_impl original")
-    ap.add_argument("--b", required=True, type=Path, help="gencorr outdir, --ldsc_impl py3")
+    ap.add_argument("--a", required=True, type=Path, help="gencorr outdir (reference run)")
+    ap.add_argument("--b", required=True, type=Path, help="gencorr outdir (run to check)")
     ap.add_argument("--report", help="write the report to <prefix>.txt")
     args = ap.parse_args()
 

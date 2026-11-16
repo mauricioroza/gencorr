@@ -1,6 +1,17 @@
-# LDSC 1.0.1 (Bulik-Sullivan et al.), the Python 2.7 release.
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/environment-schema.json
+# LDSC from CBIIT/ldsc (Python 3 port of LDSC 1.0.1, GPL-3.0; branch ldsc313,
+# pinned commit). Not on conda; must match containers/gencorr-ldsc/Dockerfile.
+# Not tested with -profile conda (the pipeline refuses it for ldsc,
+# methodRegistry conda_ok: false); kept as the recipe of the container's
+# environment. The ldsc package's setup.py pins old numpy/pandas, so the
+# scripts are used from a checkout (PYTHONPATH), not pip-installed.
 channels:
   - conda-forge
-  - bioconda
 dependencies:
-  - bioconda::ldsc=1.0.1
+  - conda-forge::bitarray=2.9.3
+  - conda-forge::git=2.47.1
+  - conda-forge::numpy=2.4.3
+  - conda-forge::pandas=2.3.3
+  - conda-forge::python=3.13.7
+  - conda-forge::scipy=1.15.0

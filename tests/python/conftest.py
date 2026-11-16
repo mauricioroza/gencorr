@@ -5,7 +5,7 @@ Test layers (run all with `pytest tests/python`):
 
   unit         pure-Python checks of bin/ scripts on small synthetic data
                (always run, need only pandas/scipy)
-  ldsc         oracle tests against the real LDSC 1.0.1 (need ldsc.py and
+  ldsc         oracle tests against the real LDSC (need ldsc.py and
                munge_sumstats.py on PATH; skipped otherwise)
   lava         oracle tests against the real LAVA R package (need Rscript with
                LAVA installed; skipped otherwise)

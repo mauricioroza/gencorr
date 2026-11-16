@@ -1,6 +1,6 @@
 # =============================================================================
-# gencorr-tools: the helper scripts' runtime and LAVA. LDSC uses the official
-# biocontainer quay.io/biocontainers/ldsc:1.0.1--pyhdfd78af_2; LDAK (SumHer) and
+# gencorr-tools: the helper scripts' runtime and LAVA. LDSC (containers/gencorr-ldsc),
+# LDAK (SumHer) and
 # Popcorn have their own images (containers/gencorr-ldak, gencorr-popcorn).
 #
 #   * Python 3 + pandas/numpy/scipy  -> bin/*.py helper scripts

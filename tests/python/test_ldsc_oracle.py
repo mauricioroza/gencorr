@@ -1,5 +1,5 @@
 """
-Oracle tests: gencorr's LDSC path vs running LDSC 1.0.1 directly.
+Oracle tests: gencorr's LDSC path vs running LDSC directly.
 
 These answer "does the pipeline give the same numbers as the tool?":
 

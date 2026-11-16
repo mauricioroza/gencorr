@@ -33,7 +33,7 @@ include { UTILS_NEXTFLOW_PIPELINE   } from '../../nf-core/utils_nextflow_pipelin
 */
 def methodRegistry() {
     return [
-        ldsc: [ scope: 'global', required_params: ['ldsc_ld'],              ancestry_params: ['ldsc_ld'],  conda_ok: true  ],
+        ldsc: [ scope: 'global', required_params: ['ldsc_ld'],              ancestry_params: ['ldsc_ld'],  conda_ok: false ],
         lava: [ scope: 'local',  required_params: ['lava_ref', 'lava_loci'], ancestry_params: ['lava_ref'], conda_ok: false ],
         sumher: [ scope: 'global', required_params: ['sumher_tagfile'],     ancestry_params: ['sumher_tagfile'], conda_ok: true ],
         // Popcorn estimates the CROSS-ancestry pairs (the others take same-ancestry pairs)
@@ -331,12 +331,6 @@ def validateGencorrParams(Map p, String profile) {
         if (conda && !registry[m].conda_ok) {
             error("Method '${m}' has no conda package (it is installed from GitHub in its container). Use -profile docker, singularity or apptainer.")
         }
-    }
-    if (!(p.ldsc_impl in ['original', 'py3'])) {
-        error("--ldsc_impl must be 'original' or 'py3' (got '${p.ldsc_impl}').")
-    }
-    if ('ldsc' in methods && p.ldsc_impl == 'py3' && (profile ?: '').tokenize(',').intersect(['conda', 'mamba'])) {
-        error("--ldsc_impl py3 (CBIIT/ldsc) has no conda package. Use -profile docker, singularity or apptainer, or --ldsc_impl original.")
     }
     if ('lava' in methods && p.lava_overlap == 'ldsc' && !('ldsc' in methods)) {
         error("--lava_overlap ldsc estimates sample overlap from LDSC intercepts, so it needs --methods to include ldsc. Alternatively use --lava_overlap none or a matrix file.")
