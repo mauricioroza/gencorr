@@ -372,3 +372,9 @@ Memory: harmonization loads one GWAS file at a time in pandas (`process_low`,
 `process { withName: 'HARMONIZE_SUMSTATS' { memory = 32.GB } }`.
 
 `-resume` works as usual. Changing a LAVA parameter re-runs only LAVA.
+
+## 6. Running on a cloud VM
+
+[cloud_oci.md](cloud_oci.md) sets up one Oracle Cloud VM that runs the pipeline
+with the local executor and Docker (scripts in `cloud/oci/`), with the reasons
+for each choice.

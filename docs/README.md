@@ -1,6 +1,7 @@
 # mauricioroza/gencorr: Documentation
 
 - [Usage](usage.md): samplesheet, parameters, reference data, running on a SLURM cluster
+- [Oracle Cloud VM](cloud_oci.md): setting up an OCI VM to run the pipeline, step by step, with reasons
 - [Output](output.md): output files, the standard results table, status values
 - [Validation](validation.md): test layers and how to compare with other results
 - [BIGA comparison](bigagwas_comparison.md): comparison with BIGA results, used to test the pipeline

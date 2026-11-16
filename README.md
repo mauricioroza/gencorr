@@ -175,6 +175,8 @@ JSON `extra` column with `jsonlite::fromJSON`.
 * **Clusters:** see [docs/usage.md § SLURM](docs/usage.md#5-running-on-a-slurm-cluster)
   for a SLURM config. `-resume` works as usual; changing a LAVA option re-runs
   only LAVA.
+* **Cloud VM:** [docs/cloud_oci.md](docs/cloud_oci.md) sets up one Oracle Cloud
+  VM (scripts in `cloud/oci/`).
 * **Status:** v0.1.0dev, not yet released. Validated on the LAVA vignette and
   other example data. A first genome-wide LDSC run (two GWAS Catalog studies,
   about 8 minutes on a laptop) has completed; no genome-wide LAVA run yet.
@@ -192,6 +194,7 @@ the pipeline gives the same numbers. `nf-core pipelines lint` and
 | | |
 |---|---|
 | [usage.md](docs/usage.md) | samplesheet, all parameters, reference data, running on a SLURM cluster |
+| [cloud_oci.md](docs/cloud_oci.md) | running on an Oracle Cloud VM: setup step by step, with reasons |
 | [output.md](docs/output.md) | every output file and column, status values |
 | [design.md](docs/design.md) | design decisions and their reasons |
 | [validation.md](docs/validation.md) | test layers and how to run them |
