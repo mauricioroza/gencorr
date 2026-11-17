@@ -1,5 +1,16 @@
 # mauricioroza/gencorr
 
+[![GitHub Actions CI Status](https://github.com/mauricioroza/gencorr/actions/workflows/nf-test.yml/badge.svg)](https://github.com/mauricioroza/gencorr/actions/workflows/nf-test.yml)
+[![GitHub Actions Linting Status](https://github.com/mauricioroza/gencorr/actions/workflows/linting.yml/badge.svg)](https://github.com/mauricioroza/gencorr/actions/workflows/linting.yml)
+[![Python tests](https://github.com/mauricioroza/gencorr/actions/workflows/python-tests.yml/badge.svg)](https://github.com/mauricioroza/gencorr/actions/workflows/python-tests.yml)
+[![nf-test](https://img.shields.io/badge/unit_tests-nf--test-337ab7.svg)](https://www.nf-test.com)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+[![Nextflow](https://img.shields.io/badge/version-%E2%89%A525.10.4-green?style=flat&logo=nextflow&logoColor=white&color=%230DC09D&link=https%3A%2F%2Fnextflow.io)](https://www.nextflow.io/)
+[![nf-core template version](https://img.shields.io/badge/nf--core_template-4.2.1-green?style=flat&logo=nfcore&logoColor=white&color=%2324B064&link=https%3A%2F%2Fnf-co.re)](https://github.com/nf-core/tools/releases/tag/4.2.1)
+[![run with docker](https://img.shields.io/badge/run%20with-docker-0db7ed?labelColor=000000&logo=docker)](https://www.docker.com/)
+[![run with singularity](https://img.shields.io/badge/run%20with-singularity-1d355c.svg?labelColor=000000)](https://sylabs.io/docs/)
+
 Global and local **genetic correlation** from GWAS summary statistics: a
 reproducible Nextflow pipeline (nf-core template) that runs LDSC, SumHer, LAVA
 and Popcorn on any set of traits and returns one tidy results table.
