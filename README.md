@@ -1,5 +1,7 @@
 # mauricioroza/gencorr
 
+[![GitHub Actions CI Status](https://github.com/mauricioroza/gencorr/actions/workflows/nf-test.yml/badge.svg)](https://github.com/mauricioroza/gencorr/actions/workflows/nf-test.yml)
+[![GitHub Actions Linting Status](https://github.com/mauricioroza/gencorr/actions/workflows/linting.yml/badge.svg)](https://github.com/mauricioroza/gencorr/actions/workflows/linting.yml)
 [![Python tests](https://github.com/mauricioroza/gencorr/actions/workflows/python-tests.yml/badge.svg)](https://github.com/mauricioroza/gencorr/actions/workflows/python-tests.yml)
 [![nf-test](https://img.shields.io/badge/unit_tests-nf--test-337ab7.svg)](https://www.nf-test.com)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -21,24 +23,24 @@ and Popcorn on any set of traits and returns one tidy results table.
   |___/   global + local genetic correlation
 ```
 
-| | method | tool | what you get |
-|---|---|---|---|
-| **global** | genome-wide rg | [LDSC](https://github.com/bulik/ldsc) (Python 3 port [CBIIT/ldsc](https://github.com/CBIIT/ldsc), [docs/ldsc.md](docs/ldsc.md)) | rg, SE, p per trait pair; observed- and liability-scale h2 per trait |
-| **global** | genome-wide rg, LDAK heritability model | [SumHer](https://dougspeed.com/genetic-correlations/) (LDAK 6.1) | rg, SE, p per trait pair; h2 and coheritability |
-| **cross-ancestry** | rg between a EUR and an EAS GWAS | [Popcorn](https://github.com/brielin/popcorn) (commit `20a29e8`) | rg (genetic impact or effect), SE, p; h2 in each population |
-| **local** | rg per genomic locus | [LAVA](https://github.com/josefin-werme/LAVA) 0.1.5 (commit `e729a24`) | local rho, 95% CI, p per pair and locus; local h2 per trait |
+|                    | method                                  | tool                                                                                                                            | what you get                                                         |
+| ------------------ | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| **global**         | genome-wide rg                          | [LDSC](https://github.com/bulik/ldsc) (Python 3 port [CBIIT/ldsc](https://github.com/CBIIT/ldsc), [docs/ldsc.md](docs/ldsc.md)) | rg, SE, p per trait pair; observed- and liability-scale h2 per trait |
+| **global**         | genome-wide rg, LDAK heritability model | [SumHer](https://dougspeed.com/genetic-correlations/) (LDAK 6.1)                                                                | rg, SE, p per trait pair; h2 and coheritability                      |
+| **cross-ancestry** | rg between a EUR and an EAS GWAS        | [Popcorn](https://github.com/brielin/popcorn) (commit `20a29e8`)                                                                | rg (genetic impact or effect), SE, p; h2 in each population          |
+| **local**          | rg per genomic locus                    | [LAVA](https://github.com/josefin-werme/LAVA) 0.1.5 (commit `e729a24`)                                                          | local rho, 95% CI, p per pair and locus; local h2 per trait          |
 
-* **Checked against the original tools.** Oracle tests run LDSC and LAVA
+- **Checked against the original tools.** Oracle tests run LDSC and LAVA
   directly and require the same numbers from the pipeline
   ([validation](docs/validation.md)).
-* **Fast.** Variants are matched by the rsIDs already in the files (no dbSNP
+- **Fast.** Variants are matched by the rsIDs already in the files (no dbSNP
   lookup or liftover), LAVA loci run in parallel chunks and empty loci are
   skipped.
-* **Reproducible.** Every tool version is pinned, LAVA's Monte Carlo steps are
+- **Reproducible.** Every tool version is pinned, LAVA's Monte Carlo steps are
   seeded per (locus, pair), and outputs are byte-identical on re-runs.
-* **Nothing disappears.** Pairs and loci that could not be estimated stay in
+- **Nothing disappears.** Pairs and loci that could not be estimated stay in
   the table with a `status` explaining why.
-* **Extensible.** Every method reads the same harmonized input and writes the
+- **Extensible.** Every method reads the same harmonized input and writes the
   same table, so adding another method (e.g. HDL or HDL-L) is one subworkflow
   ([docs/extending.md](docs/extending.md)).
 
@@ -57,12 +59,13 @@ and Popcorn on any set of traits and returns one tidy results table.
 4. **LAVA** tests every pair in each of LAVA's 2,495 GRCh37 loci, corrected for
    sample overlap by default.
 
-   *Sample overlap* means the original GWAS shared participants (e.g. UK Biobank
+   _Sample overlap_ means the original GWAS shared participants (e.g. UK Biobank
    in both). Their estimation errors are then correlated, which inflates rg.
    LDSC's cross-trait intercepts measure this from the summary statistics alone
    (no individual-level data needed); LDSC corrects itself, and gencorr passes
    the intercepts to LAVA as its overlap matrix (`--lava_overlap ldsc`; `none`
    to switch off).
+
 5. **Merge** checks every table against one schema and writes
    `gencorr_results.tsv`.
 
@@ -71,7 +74,7 @@ and Popcorn on any set of traits and returns one tidy results table.
 **1. Requirements:** [Nextflow](https://www.nextflow.io/) ≥ 25.10.4 and Docker,
 Apptainer or Singularity.
 
-**2. Build the helper image once.** LAVA's licence (*All rights reserved*) does
+**2. Build the helper image once.** LAVA's licence (_All rights reserved_) does
 not allow a public image, so `ghcr.io/mauricioroza/gencorr-tools:0.1.0` is
 private. Build it from [containers/gencorr-tools](containers/gencorr-tools/Dockerfile),
 or log in to ghcr.io with access to it:
@@ -117,25 +120,25 @@ scz,/data/scz.txt,,53386,77258,0.01,"Z=STAT",Schizophrenia
 t2d,GCST000028,,,,,,Type 2 diabetes (GWAS Catalog)
 ```
 
-* `sumstats` is a path, a URL, or a **GWAS Catalog accession** (`GCST…`): the
+- `sumstats` is a path, a URL, or a **GWAS Catalog accession** (`GCST…`): the
   study's harmonised file is downloaded and md5-checked, and its sample size
   is used when `n` is empty and the study has one sample group, of the trait's ancestry
   ([details](docs/usage.md#gwas-catalog-studies)).
-* `n` is used only when the file has no N column.
-* `n_cases`/`n_controls` mark a binary trait (LAVA case/control model, N fallback);
+- `n` is used only when the file has no N column.
+- `n_cases`/`n_controls` mark a binary trait (LAVA case/control model, N fallback);
   with `pop_prev` you also get liability-scale h2.
-* `colmap` overrides column detection, e.g. `Z=STAT`. `STAT` is never mapped
+- `colmap` overrides column detection, e.g. `Z=STAT`. `STAT` is never mapped
   automatically, because it is not always a Z-score.
 
 ### Common options
 
-| option | default | |
-|---|---|---|
-| `--methods` | `ldsc,lava` | any of `ldsc`, `lava`, `sumher`, `popcorn`. With `lava` but not `ldsc`, also set `--lava_overlap none` (the default overlap comes from LDSC) |
-| `--pair_mode` | `all` | `all` pairs; `target --targets mdd,scz` = each target vs all others (one vs group); `pairs --pairs pairs.csv` = listed pairs only |
-| `--min_maf`, `--min_info` | off | variant QC for all methods; `0.01` / `0.9` recommended |
-| `--lava_snp_list` | all SNPs | e.g. `w_hm3.snplist` (HapMap3 SNPs only) |
-| `--lava_univ_thresh` | `0.05` | local h2 p-value both traits must pass before a pair is tested |
+| option                    | default     |                                                                                                                                              |
+| ------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--methods`               | `ldsc,lava` | any of `ldsc`, `lava`, `sumher`, `popcorn`. With `lava` but not `ldsc`, also set `--lava_overlap none` (the default overlap comes from LDSC) |
+| `--pair_mode`             | `all`       | `all` pairs; `target --targets mdd,scz` = each target vs all others (one vs group); `pairs --pairs pairs.csv` = listed pairs only            |
+| `--min_maf`, `--min_info` | off         | variant QC for all methods; `0.01` / `0.9` recommended                                                                                       |
+| `--lava_snp_list`         | all SNPs    | e.g. `w_hm3.snplist` (HapMap3 SNPs only)                                                                                                     |
+| `--lava_univ_thresh`      | `0.05`      | local h2 p-value both traits must pass before a pair is tested                                                                               |
 
 All parameters: [docs/usage.md](docs/usage.md) or
 `nextflow run mauricioroza/gencorr --help --show_hidden`.
@@ -154,11 +157,11 @@ results/
 
 `gencorr_results.tsv`, main columns (all columns: [docs/output.md](docs/output.md)):
 
-| method | scope | trait1 | trait2 | locus | rg | rg_se | rg_ci_low | rg_ci_high | p | status | extra |
-|---|---|---|---|---|---|---|---|---|---|---|---|
-| ldsc | global | bmi | mdd | NA | 0.11 | 0.07 | … | … | 0.11 | ok | {"gcov_int": …} |
-| lava | local | bmi | mdd | 464 | 0.51 | NA | 0.27 | 0.81 | 1.1e-4 | ok | {"r2": …} |
-| lava | local | bmi | mdd | 100 | NA | NA | NA | NA | NA | univ_filtered | … |
+| method | scope  | trait1 | trait2 | locus | rg   | rg_se | rg_ci_low | rg_ci_high | p      | status        | extra           |
+| ------ | ------ | ------ | ------ | ----- | ---- | ----- | --------- | ---------- | ------ | ------------- | --------------- |
+| ldsc   | global | bmi    | mdd    | NA    | 0.11 | 0.07  | …         | …          | 0.11   | ok            | {"gcov_int": …} |
+| lava   | local  | bmi    | mdd    | 464   | 0.51 | NA    | 0.27      | 0.81       | 1.1e-4 | ok            | {"r2": …}       |
+| lava   | local  | bmi    | mdd    | 100   | NA   | NA    | NA        | NA         | NA     | univ_filtered | …               |
 
 `status` is `ok` when there is an estimate; otherwise it says why not
 (`univ_filtered`, `no_snps_in_locus`, `ldsc_error`, `estimate_out_of_bounds`, …).
@@ -167,49 +170,49 @@ JSON `extra` column with `jsonlite::fromJSON`.
 
 ## Good to know
 
-* **Genome build:** variants are matched by rsID, so summary statistics on
+- **Genome build:** variants are matched by rsID, so summary statistics on
   GRCh37 or GRCh38 work without liftover if they have rsIDs. Files without
   rsIDs (`1:12345:A:G`-style IDs) get them from an rsID map for their build:
   set `build` in the samplesheet and `--rsid_map_grch37` / `--rsid_map_grch38`
   ([details](docs/usage.md#genome-build-and-rsids)).
-* **Ancestry:** set `ancestry` (`EUR` default, `EAS`) per trait in the
+- **Ancestry:** set `ancestry` (`EUR` default, `EAS`) per trait in the
   samplesheet. Each same-ancestry pair runs with that ancestry's references
   (`--ldsc_ld`/`--lava_ref` for EUR, `--ldsc_ld_eas`/`--lava_ref_eas` for EAS);
   EUR × EAS pairs are estimated by Popcorn (`--methods popcorn`) and reported
   by the other methods with status `cross_ancestry`
   ([details](docs/usage.md#ancestry)). For European data the LAVA authors
   recommend their UK Biobank reference over 1000 Genomes.
-* **conda:** LAVA and Popcorn have no conda package, so `-profile conda` is
+- **conda:** LAVA and Popcorn have no conda package, so `-profile conda` is
   accepted only for `--methods ldsc` and/or `sumher` (not yet tested).
-* **Clusters:** see [docs/usage.md § SLURM](docs/usage.md#5-running-on-a-slurm-cluster)
+- **Clusters:** see [docs/usage.md § SLURM](docs/usage.md#5-running-on-a-slurm-cluster)
   for a SLURM config. `-resume` works as usual; changing a LAVA option re-runs
   only LAVA.
-* **Cloud VM:** [docs/cloud_oci.md](docs/cloud_oci.md) sets up one Oracle Cloud
+- **Cloud VM:** [docs/cloud_oci.md](docs/cloud_oci.md) sets up one Oracle Cloud
   VM (scripts in `cloud/oci/`).
-* **Status:** v0.1.0dev, not yet released. Validated on the LAVA vignette and
+- **Status:** v0.1.0dev, not yet released. Validated on the LAVA vignette and
   other example data. A first genome-wide LDSC run (two GWAS Catalog studies,
   about 8 minutes on a laptop) has completed; no genome-wide LAVA run yet.
 
 ## Testing
 
 99 Python tests, 34 nf-test module tests, 9 function tests and 6 pipeline
-tests, including *oracle* tests that run LDSC and LAVA directly and check that
+tests, including _oracle_ tests that run LDSC and LAVA directly and check that
 the pipeline gives the same numbers. `nf-core pipelines lint` and
 `nf-core modules lint` report no failures. How to run them:
 [docs/validation.md](docs/validation.md).
 
 ## Documentation
 
-| | |
-|---|---|
-| [usage.md](docs/usage.md) | samplesheet, all parameters, reference data, running on a SLURM cluster |
-| [cloud_oci.md](docs/cloud_oci.md) | running on an Oracle Cloud VM: setup step by step, with reasons |
-| [output.md](docs/output.md) | every output file and column, status values |
-| [design.md](docs/design.md) | design decisions and their reasons |
-| [validation.md](docs/validation.md) | test layers and how to run them |
-| [bigagwas_comparison.md](docs/bigagwas_comparison.md) | comparison with BIGA results, used to test the pipeline |
-| [extending.md](docs/extending.md) | adding a new method, step by step |
-| [CONTRIBUTING.md](docs/CONTRIBUTING.md) | conventions and checks before a pull request |
+|                                                       |                                                                         |
+| ----------------------------------------------------- | ----------------------------------------------------------------------- |
+| [usage.md](docs/usage.md)                             | samplesheet, all parameters, reference data, running on a SLURM cluster |
+| [cloud_oci.md](docs/cloud_oci.md)                     | running on an Oracle Cloud VM: setup step by step, with reasons         |
+| [output.md](docs/output.md)                           | every output file and column, status values                             |
+| [design.md](docs/design.md)                           | design decisions and their reasons                                      |
+| [validation.md](docs/validation.md)                   | test layers and how to run them                                         |
+| [bigagwas_comparison.md](docs/bigagwas_comparison.md) | comparison with BIGA results, used to test the pipeline                 |
+| [extending.md](docs/extending.md)                     | adding a new method, step by step                                       |
+| [CONTRIBUTING.md](docs/CONTRIBUTING.md)               | conventions and checks before a pull request                            |
 
 ## Credits and citation
 

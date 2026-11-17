@@ -1,0 +1,44 @@
+name: "Build gencorr images"
+description: >
+  Builds the images in containers/ with the GitHub Actions cache. The images are
+  never pushed: gencorr-tools contains LAVA ("All rights reserved"), so it must not
+  go through a registry. Each image is tagged with the name its Dockerfile gives in
+  its `docker build -t` comment, which is the name the modules use.
+inputs:
+  mode:
+    description: "'cache' fills the cache only; 'load' also loads the images into the local Docker"
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    # Exposes the cache URL and token that `docker buildx --cache-to type=gha` needs
+    - name: Expose GitHub runtime
+      uses: crazy-max/ghaction-github-runtime@v3
+
+    - name: Build images
+      shell: bash
+      env:
+        MODE: ${{ inputs.mode }}
+      run: |
+        set -euo pipefail
+        for df in containers/*/Dockerfile; do
+          dir=$(dirname "$df")
+          name=$(basename "$dir")
+          tag=$(grep -oE 'ghcr\.io/mauricioroza/[A-Za-z0-9._-]+:[A-Za-z0-9._-]+' "$df" | head -1)
+          if [ -z "$tag" ]; then
+            echo "::error::No 'docker build -t ghcr.io/mauricioroza/...' line in $df"
+            exit 1
+          fi
+          echo "::group::$tag"
+          if [ "$MODE" = "load" ]; then
+            docker buildx build --cache-from "type=gha,scope=$name" --load -t "$tag" "$dir"
+          else
+            docker buildx build --cache-from "type=gha,scope=$name" \
+              --cache-to "type=gha,scope=$name,mode=max" -t "$tag" "$dir"
+          fi
+          echo "::endgroup::"
+        done
+        docker image ls 'ghcr.io/mauricioroza/*'

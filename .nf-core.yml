@@ -17,6 +17,7 @@ lint:
     - assets/email_template.txt
     - docs/README.md
     - README.md
+    - .github/workflows/linting.yml # also runs on pushes to dev/master (README badge)
   nextflow_config:
     - manifest.name
     - manifest.homePage
@@ -38,6 +39,9 @@ lint:
   readme:
     - nextflow_badge
     - nfcore_template_badge
+  # its docker image ls --format string is Go template syntax, not Jinja
+  template_strings:
+    - cloud/oci/build_images.sh
 
 template:
   org: mauricioroza

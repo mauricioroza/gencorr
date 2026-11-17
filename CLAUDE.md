@@ -127,14 +127,17 @@ mention it only as a comparison reference.
   (225 MB); both were created private (GitHub default) and may be made public by the user (GPL-3.0).
   gencorr-tools:0.1.0 is NOT on ghcr.io (only local) and must stay private when pushed (LAVA).
   Pushing needs `gh auth refresh -s write:packages` + `gh auth token | docker login ghcr.io -u mauricioroza
-  --password-stdin`, run by the user in the Ubuntu terminal (not sudo, not PowerShell).
+--password-stdin`, run by the user in the Ubuntu terminal (not sudo, not PowerShell).
 - Branch `ldsc-py3` (2026-11-16): LDSC 1.0.1 removed; the CBIIT Python 3 port (Python 3.13, numpy 2.4.3,
   pandas 2.3.3, `containers/gencorr-ldsc`, GPL-3.0) is the only LDSC. Image built locally, NOT pushed yet.
   Commit f307c1d still had both (`--ldsc_impl original|py3`, conditional includeConfig: strict config
   forbids `if` blocks). Upstream tests run at image build (`run_upstream_tests.sh`: 164 passed,
   3 deselected). Identical to 1.0.1 on BigaGWAS data (job 972 exact) except p printing: new pandas rounds the
   summary-table p to 4 decimals, so parse_ldsc.py reads the pair's `P:` line. Details: docs/ldsc.md.
-- Pipeline not yet run in the published containers on CI. No real genome-wide run yet.
+- CI (2026-11-17): nf-test and linting also run on pushes to dev/master (README badges). nf-test builds
+  the four images from containers/ into the Actions cache (`.github/actions/build-images`, never pushed:
+  LAVA licence) and runs docker only. pre-commit excludes `tests/python/fixtures/` (raw tool outputs).
+  No real genome-wide run yet.
 - BigaGWAS's own LAVA scripts (specific_lava.R, 2traits.R, lava_pgc.R) are not public, so its settings are
   partly unknown.
 
