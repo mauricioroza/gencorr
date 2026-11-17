@@ -1,7 +1,5 @@
 # mauricioroza/gencorr
 
-[![GitHub Actions CI Status](https://github.com/mauricioroza/gencorr/actions/workflows/nf-test.yml/badge.svg)](https://github.com/mauricioroza/gencorr/actions/workflows/nf-test.yml)
-[![GitHub Actions Linting Status](https://github.com/mauricioroza/gencorr/actions/workflows/linting.yml/badge.svg)](https://github.com/mauricioroza/gencorr/actions/workflows/linting.yml)
 [![Python tests](https://github.com/mauricioroza/gencorr/actions/workflows/python-tests.yml/badge.svg)](https://github.com/mauricioroza/gencorr/actions/workflows/python-tests.yml)
 [![nf-test](https://img.shields.io/badge/unit_tests-nf--test-337ab7.svg)](https://www.nf-test.com)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
