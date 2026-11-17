@@ -161,7 +161,7 @@ If you update images or graphics, follow the nf-core [style guidelines](https://
 - **Strict syntax**: `nextflow lint .` must report no errors (no implicit `it`,
   no `switch`/`for` in workflow code, unused closure parameters prefixed `_`).
 - **Before opening a PR**: `pytest tests/python`, `NXF_SYNTAX_PARSER=v1 nf-test test
-  --profile +docker --ci`, `nf-core pipelines lint` and
+--profile +docker --ci`, `nf-core pipelines lint` and
   `nf-core modules lint --all --local` (see [validation.md](validation.md)).
 - **Pin versions in both places**: a tool version changed in a container must
   be changed in the module's `environment.yml` too, and vice versa.

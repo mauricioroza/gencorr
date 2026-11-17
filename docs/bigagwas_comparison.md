@@ -8,13 +8,13 @@ the **same references and settings**, and check that the numbers agree.
 The test profile uses small test references (LD scores computed from 42
 regions, a 1000G subset). BigaGWAS uses the full references:
 
-| | BigaGWAS (from its source code) | gencorr `-profile test` |
-|---|---|---|
-| LDSC LD scores | `eur_w_ld_chr` | `tests/data/ldsc` (test only) |
-| LDSC SNP list | `w_hm3.snplist` | test allele list |
-| LAVA reference | 1000 Genomes EUR (PLINK) | `g1000_test` (vignette subset) |
-| LAVA sample overlap | one number per job, default 0 | from LDSC intercepts |
-| LAVA case/control | not asked in the 2-trait form | from `n_cases`/`n_controls` |
+|                     | BigaGWAS (from its source code) | gencorr `-profile test`        |
+| ------------------- | ------------------------------- | ------------------------------ |
+| LDSC LD scores      | `eur_w_ld_chr`                  | `tests/data/ldsc` (test only)  |
+| LDSC SNP list       | `w_hm3.snplist`                 | test allele list               |
+| LAVA reference      | 1000 Genomes EUR (PLINK)        | `g1000_test` (vignette subset) |
+| LAVA sample overlap | one number per job, default 0   | from LDSC intercepts           |
+| LAVA case/control   | not asked in the 2-trait form   | from `n_cases`/`n_controls`    |
 
 So gencorr is re-run below with BigaGWAS' references and settings.
 
@@ -25,12 +25,12 @@ BigaGWAS accepts (it needs `a1 a2 se pvalue n` + `beta` or `OR`; the raw
 `neuro`, `depression` and `rheuma` files would be rejected). The same files are
 used as gencorr input, so both tools start from identical data.
 
-| file | trait | effect column | notes |
-|---|---|---|---|
-| `bmi_biga.txt.gz` | Body mass index | BETA | |
-| `neuro_biga.txt.gz` | Neuroticism | BETA | Z column removed: both tools derive Z from P |
-| `depression_biga.txt.gz` | Major depression | OR | SE = SE of log OR |
-| `rheuma_biga.txt.gz` | Rheumatoid arthritis | OR | SE derived from OR and P (raw file has none); OR = 1.00 variants kept with SE at the rounding bound; 391 variants with P = 1 dropped |
+| file                     | trait                | effect column | notes                                                                                                                                |
+| ------------------------ | -------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `bmi_biga.txt.gz`        | Body mass index      | BETA          |                                                                                                                                      |
+| `neuro_biga.txt.gz`      | Neuroticism          | BETA          | Z column removed: both tools derive Z from P                                                                                         |
+| `depression_biga.txt.gz` | Major depression     | OR            | SE = SE of log OR                                                                                                                    |
+| `rheuma_biga.txt.gz`     | Rheumatoid arthritis | OR            | SE derived from OR and P (raw file has none); OR = 1.00 variants kept with SE at the rounding bound; 391 variants with P = 1 dropped |
 
 Regenerate with:
 `python3 tests/bigagwas/prepare_upload.py <LAVA vignettes/data dir> biga_upload/`
@@ -40,13 +40,14 @@ Regenerate with:
 Use the **2 traits** analysis. One job per pair and method:
 
 | pairs (6) | bmi–neuro, bmi–depression, bmi–rheuma, neuro–depression, neuro–rheuma, depression–rheuma |
-|---|---|
+| --------- | ---------------------------------------------------------------------------------------- |
 
 For every job:
-* Upload both files; genome build **hg19 / GRCh37**; population **European**.
-* Column names should be detected automatically (SNP, CHR, BP, A1, A2, BETA or OR, SE, P, N).
+
+- Upload both files; genome build **hg19 / GRCh37**; population **European**.
+- Column names should be detected automatically (SNP, CHR, BP, A1, A2, BETA or OR, SE, P, N).
   Check the job log's "Interpreting columns as" section.
-* Name the traits exactly `bmi`, `neuro`, `depression`, `rheuma`. Then no
+- Name the traits exactly `bmi`, `neuro`, `depression`, `rheuma`. Then no
   trait map is needed when comparing.
 
 **LDSC jobs:** method LDSC; leave the liability (sample/population prevalence)
@@ -88,11 +89,11 @@ nextflow run . -profile docker \
     --lava_snp_set pairwise
 ```
 
-* `samplesheet_biga.csv` points to `biga_upload/…`: put the `biga_upload/`
+- `samplesheet_biga.csv` points to `biga_upload/…`: put the `biga_upload/`
   folder inside `~/gencorr/` (paths are relative to where you launch).
-* It has no `n_cases`/`n_controls`, so LAVA treats every trait as continuous,
+- It has no `n_cases`/`n_controls`, so LAVA treats every trait as continuous,
   as BigaGWAS' 2-trait form appears to (it does not ask for cases/controls).
-* `--lava_loci` = the 42 vignette loci. All of them are standard LAVA blocks,
+- `--lava_loci` = the 42 vignette loci. All of them are standard LAVA blocks,
   so their IDs match BigaGWAS' 2,495-locus output. Loci outside these 42 have no
   data in these files anyway.
 
@@ -146,35 +147,35 @@ SNPs this made no visible difference.
 
 ## 5. What agreement to expect
 
-| quantity | expectation | if it differs |
-|---|---|---|
-| LDSC rg, se, z, p | equal to the 4th decimal (LDSC 1.0.1 there, its Python 3 port here: same estimates, [ldsc.md](ldsc.md); same references) | BigaGWAS harmonizes against its own reference VCF first (drops or flips some variants). Compare the "SNPs with valid alleles" counts in both logs |
-| LAVA rho | close (≤ 1e-3) | different SNP set after BigaGWAS harmonization; a different LAVA version on their server; case/control handling |
-| LAVA p, CIs | similar but not identical | Monte Carlo; different seeds. Compare on the log scale |
-| which loci are tested | same `univ_filtered` pattern | univariate p near the 0.05 threshold can flip with tiny input differences |
+| quantity              | expectation                                                                                                              | if it differs                                                                                                                                     |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| LDSC rg, se, z, p     | equal to the 4th decimal (LDSC 1.0.1 there, its Python 3 port here: same estimates, [ldsc.md](ldsc.md); same references) | BigaGWAS harmonizes against its own reference VCF first (drops or flips some variants). Compare the "SNPs with valid alleles" counts in both logs |
+| LAVA rho              | close (≤ 1e-3)                                                                                                           | different SNP set after BigaGWAS harmonization; a different LAVA version on their server; case/control handling                                   |
+| LAVA p, CIs           | similar but not identical                                                                                                | Monte Carlo; different seeds. Compare on the log scale                                                                                            |
+| which loci are tested | same `univ_filtered` pattern                                                                                             | univariate p near the 0.05 threshold can flip with tiny input differences                                                                         |
 
 Differences that are not explained by this table are worth reporting, either
 to us or to the BigaGWAS team.
 
 ### Known differences in defaults
 
-| topic | gencorr | BigaGWAS |
-|---|---|---|
-| LAVA SNP set | all SNPs (`--lava_snp_list` to restrict) | HapMap3-based list (~16k of ~100k SNPs on the test data); with the same list gencorr reproduces its rho to ~1e-5 |
-| LDSC | CBIIT/ldsc Python 3 port (`3.0.1`, [ldsc.md](ldsc.md)) | 1.0.1 (Python 2.7); same estimates, p printed with 4 instead of 5 significant digits when p >= 5e-5 |
-| LAVA version | 0.1.5 | 0.1.0; identical SNPs and continuous traits matched to 5–7 decimals; binary traits differ by design (0.1.5 changed the binary model) |
-| LAVA case/control | used when `n_cases`/`n_controls` are given | 2-trait form treats every trait as continuous |
-| LAVA seeds | per (locus, trait1, trait2) | not seed-reproducible |
-| LAVA sample overlap | from LDSC intercepts by default | option for 2-trait jobs only |
-| pairs without estimate | kept with a `status` | rows dropped (e.g. LDSC `NA` → "9999") |
-| SumHer | LDAK 6.1, `--genomic-control NO` passed explicitly | LDAK 5.2 |
-| SumHer Z | harmonized Z (a Z column, else from P, by default) | BETA/SE for SumHer, P for LDSC; `--z_priority beta_se,p` reproduces its SumHer input |
-| ancestry | per trait; LAVA also for EAS | EUR or EAS LD scores per job; LAVA only for EUR |
-| input handling | one harmonized file per trait, matched by rsID | per-tool conversion; liftover to GRCh38, dbSNP rsIDs, reference-VCF alignment, liftover back |
-| pair selection | `--pair_mode target` / `pairs` | "massive" (one vs group) / "2 traits" jobs |
-| LAVA group jobs | `--lava_snp_set joint` comes closest | all traits loaded at once, SNPs shared by all |
-| GWAS Catalog | exact accession match | "Query from GWAS Catalog" matches a substring, which can pick another study |
-| LDSC munge input | harmonized Z (`--signed-sumstats Z,0`) | P + beta; the same information, so munged files are comparable |
+| topic                  | gencorr                                                | BigaGWAS                                                                                                                             |
+| ---------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| LAVA SNP set           | all SNPs (`--lava_snp_list` to restrict)               | HapMap3-based list (~16k of ~100k SNPs on the test data); with the same list gencorr reproduces its rho to ~1e-5                     |
+| LDSC                   | CBIIT/ldsc Python 3 port (`3.0.1`, [ldsc.md](ldsc.md)) | 1.0.1 (Python 2.7); same estimates, p printed with 4 instead of 5 significant digits when p >= 5e-5                                  |
+| LAVA version           | 0.1.5                                                  | 0.1.0; identical SNPs and continuous traits matched to 5–7 decimals; binary traits differ by design (0.1.5 changed the binary model) |
+| LAVA case/control      | used when `n_cases`/`n_controls` are given             | 2-trait form treats every trait as continuous                                                                                        |
+| LAVA seeds             | per (locus, trait1, trait2)                            | not seed-reproducible                                                                                                                |
+| LAVA sample overlap    | from LDSC intercepts by default                        | option for 2-trait jobs only                                                                                                         |
+| pairs without estimate | kept with a `status`                                   | rows dropped (e.g. LDSC `NA` → "9999")                                                                                               |
+| SumHer                 | LDAK 6.1, `--genomic-control NO` passed explicitly     | LDAK 5.2                                                                                                                             |
+| SumHer Z               | harmonized Z (a Z column, else from P, by default)     | BETA/SE for SumHer, P for LDSC; `--z_priority beta_se,p` reproduces its SumHer input                                                 |
+| ancestry               | per trait; LAVA also for EAS                           | EUR or EAS LD scores per job; LAVA only for EUR                                                                                      |
+| input handling         | one harmonized file per trait, matched by rsID         | per-tool conversion; liftover to GRCh38, dbSNP rsIDs, reference-VCF alignment, liftover back                                         |
+| pair selection         | `--pair_mode target` / `pairs`                         | "massive" (one vs group) / "2 traits" jobs                                                                                           |
+| LAVA group jobs        | `--lava_snp_set joint` comes closest                   | all traits loaded at once, SNPs shared by all                                                                                        |
+| GWAS Catalog           | exact accession match                                  | "Query from GWAS Catalog" matches a substring, which can pick another study                                                          |
+| LDSC munge input       | harmonized Z (`--signed-sumstats Z,0`)                 | P + beta; the same information, so munged files are comparable                                                                       |
 
 ## 6. Results on the test jobs
 
@@ -184,13 +185,13 @@ Jobs 971/972 were re-checked on 2026-11-08 against all 2,495 standard loci
 (**PASS**, tolerances as in section 4); 966/967 are from the first comparison
 (42 vignette loci).
 
-| BigaGWAS job | traits | method | result |
-|---|---|---|---|
-| 966 | bmi × depression | LDSC | rg 0.1154 (gencorr) vs 0.1153; BigaGWAS' harmonization used 4 fewer SNPs |
-| 967 | bmi × depression | LAVA | 32/32 loci in common; SNPs and PCs identical in 29/32 (3 differ by 1–2 SNPs BigaGWAS dropped); rho median difference 1e-5; same loci at p < 0.05 |
-| 971 | T2D × CHD | LAVA | same 8 loci tested; SNPs and PCs identical 8/8; rho within 1e-7; same 2 loci at p < 0.05 (1126, 1801); log10 p within 0.005, CI bounds within 0.019 (Monte Carlo); univariate h2 identical (63/63 locus × trait) |
-| 972 | T2D × CHD | LDSC | identical: rg 0.3476, se 0.0796, z 4.3684, p 1.2518e-05, 2,937 SNPs; h2, intercepts and gencov identical in both logs |
-| 974 | T2D × CHD | SumHer | identical to all 6 decimals LDAK prints: rg 0.320501 (SE 0.081386), h2, coheritability, scaling and overlap; same SNPs (4,678 / 49,453, 2,962 shared; same 41 allele mismatches) |
+| BigaGWAS job | traits           | method | result                                                                                                                                                                                                           |
+| ------------ | ---------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 966          | bmi × depression | LDSC   | rg 0.1154 (gencorr) vs 0.1153; BigaGWAS' harmonization used 4 fewer SNPs                                                                                                                                         |
+| 967          | bmi × depression | LAVA   | 32/32 loci in common; SNPs and PCs identical in 29/32 (3 differ by 1–2 SNPs BigaGWAS dropped); rho median difference 1e-5; same loci at p < 0.05                                                                 |
+| 971          | T2D × CHD        | LAVA   | same 8 loci tested; SNPs and PCs identical 8/8; rho within 1e-7; same 2 loci at p < 0.05 (1126, 1801); log10 p within 0.005, CI bounds within 0.019 (Monte Carlo); univariate h2 identical (63/63 locus × trait) |
+| 972          | T2D × CHD        | LDSC   | identical: rg 0.3476, se 0.0796, z 4.3684, p 1.2518e-05, 2,937 SNPs; h2, intercepts and gencov identical in both logs                                                                                            |
+| 974          | T2D × CHD        | SumHer | identical to all 6 decimals LDAK prints: rg 0.320501 (SE 0.081386), h2, coheritability, scaling and overlap; same SNPs (4,678 / 49,453, 2,962 shared; same 41 allele mismatches)                                 |
 
 The LDSC rows were first run with LDSC 1.0.1 (as BigaGWAS) and re-run after
 gencorr moved to the CBIIT/ldsc Python 3 port: job 972 is reproduced exactly

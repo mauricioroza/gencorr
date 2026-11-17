@@ -1,22 +1,22 @@
 # Validation and tests
 
-The question the tests answer is *"does the pipeline compute what LDSC and LAVA
-compute?"*. The trusted reference is always the original tool, run directly.
+The question the tests answer is _"does the pipeline compute what LDSC and LAVA
+compute?"_. The trusted reference is always the original tool, run directly.
 You don't need to read the pipeline code to trust it: the comparisons are
 short, readable scripts.
 
 ## Test layers
 
-| layer | command | what it proves | runtime |
-|---|---|---|---|
-| unit (Python) | `pytest tests/python -k "not oracle"` | harmonizer rules (column detection, Z derivation, filters, N fallback, rsID mapping, byte-identical reruns); GWAS Catalog lookup and metadata; LDSC, SumHer and Popcorn output parsing matches the numbers in real tool output; schema checks; comparison tool | 20 s |
-| **LDSC oracle** | `pytest tests/python/test_ldsc_oracle.py` | raw file → `munge_sumstats.py` → `ldsc --rg` (what you do by hand) gives **identical** rg/se/z/p/intercepts to the pipeline route; batching pairs into one `--rg` call changes nothing | 2 min |
-| **LAVA oracle** | `pytest tests/python/test_lava_oracle.py` | `bin/run_lava.R` gives **identical** rho, CIs, p and local h2 to LAVA called as in its vignette (`tests/oracle/lava_native.R`); splitting loci into chunks changes nothing; harmonized input vs LAVA reading raw files: same SNPs/statuses, rg within 1e-4 (explained below) | 15 min |
-| module (nf-test) | `nf-test test --tag modules_local` | each of the 13 local modules on its own, with small real inputs: output layout, the numbers the tool reports (LDSC summary lines; LAVA status, n SNPs, K and rho per locus), error paths (duplicated estimates rejected), and the `stub:` block | 10 min |
-| function (nf-test) | `nf-test test subworkflows/local/utils_nfcore_gencorr_pipeline/tests/` | pair construction for all/target/pairs modes, error cases | 40 s |
-| pipeline (nf-test) | `nf-test test tests/default.nf.test --profile +apptainer` | full test profile succeeds; row counts; snapshot of every (method, pair, locus, status, rg to 3 decimals) and of the software versions; `-stub` wiring; mixed-ancestry routing (same-ancestry pairs estimated, cross-ancestry pairs `cross_ancestry`, joint LAVA groups per ancestry); target + joint mode | 20 min |
-| command-line options | `GENCORR_NEXTFLOW_TESTS=1 pytest tests/python/test_cli_options.py` | `--option false` / `true` typed on the command line reach the tools as false / true, under Nextflow's default syntax parser (nf-test needs `NXF_SYNTAX_PARSER=v1`, which hides this case); runs `-profile test,docker -stub` twice | 3 min |
-| nf-core lint | `nf-core pipelines lint` and `nf-core modules lint --all --local` | template conformance; every module's `meta.yml` matches its channels (official schema) | 1 min |
+| layer                | command                                                                | what it proves                                                                                                                                                                                                                                                                                             | runtime |
+| -------------------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| unit (Python)        | `pytest tests/python -k "not oracle"`                                  | harmonizer rules (column detection, Z derivation, filters, N fallback, rsID mapping, byte-identical reruns); GWAS Catalog lookup and metadata; LDSC, SumHer and Popcorn output parsing matches the numbers in real tool output; schema checks; comparison tool                                             | 20 s    |
+| **LDSC oracle**      | `pytest tests/python/test_ldsc_oracle.py`                              | raw file → `munge_sumstats.py` → `ldsc --rg` (what you do by hand) gives **identical** rg/se/z/p/intercepts to the pipeline route; batching pairs into one `--rg` call changes nothing                                                                                                                     | 2 min   |
+| **LAVA oracle**      | `pytest tests/python/test_lava_oracle.py`                              | `bin/run_lava.R` gives **identical** rho, CIs, p and local h2 to LAVA called as in its vignette (`tests/oracle/lava_native.R`); splitting loci into chunks changes nothing; harmonized input vs LAVA reading raw files: same SNPs/statuses, rg within 1e-4 (explained below)                               | 15 min  |
+| module (nf-test)     | `nf-test test --tag modules_local`                                     | each of the 13 local modules on its own, with small real inputs: output layout, the numbers the tool reports (LDSC summary lines; LAVA status, n SNPs, K and rho per locus), error paths (duplicated estimates rejected), and the `stub:` block                                                            | 10 min  |
+| function (nf-test)   | `nf-test test subworkflows/local/utils_nfcore_gencorr_pipeline/tests/` | pair construction for all/target/pairs modes, error cases                                                                                                                                                                                                                                                  | 40 s    |
+| pipeline (nf-test)   | `nf-test test tests/default.nf.test --profile +apptainer`              | full test profile succeeds; row counts; snapshot of every (method, pair, locus, status, rg to 3 decimals) and of the software versions; `-stub` wiring; mixed-ancestry routing (same-ancestry pairs estimated, cross-ancestry pairs `cross_ancestry`, joint LAVA groups per ancestry); target + joint mode | 20 min  |
+| command-line options | `GENCORR_NEXTFLOW_TESTS=1 pytest tests/python/test_cli_options.py`     | `--option false` / `true` typed on the command line reach the tools as false / true, under Nextflow's default syntax parser (nf-test needs `NXF_SYNTAX_PARSER=v1`, which hides this case); runs `-profile test,docker -stub` twice                                                                         | 3 min   |
+| nf-core lint         | `nf-core pipelines lint` and `nf-core modules lint --all --local`      | template conformance; every module's `meta.yml` matches its channels (official schema)                                                                                                                                                                                                                     | 1 min   |
 
 ### Running the Python tests
 
@@ -64,7 +64,7 @@ strict parser rejects. Run nf-test with the legacy parser:
 NXF_SYNTAX_PARSER=v1 nf-test test tests/default.nf.test --profile +docker
 ```
 
-nf-test's own `-c` option is the *nf-test* config file, not a Nextflow config,
+nf-test's own `-c` option is the _nf-test_ config file, not a Nextflow config,
 so it cannot pass `local.config`; the test config (`tests/nextflow.config`) is
 used instead.
 
@@ -86,16 +86,16 @@ version, or a machine with LAVA installed.
 **2026-11-09, in Docker** (`--profile +docker`, `gencorr-tools:0.1.0` + LDSC
 biocontainer), Nextflow 26.10.5, nf-test 0.9.5, WSL2 Ubuntu:
 
-* nf-test module tests: **31/31 pass** (incl. rsID mapping of a GRCh38-style
+- nf-test module tests: **31/31 pass** (incl. rsID mapping of a GRCh38-style
   file, SumHer with LDAK 6.1, Popcorn); function tests **6/6**; pipeline tests
   **5/5** (`-profile test` with LDSC + LAVA + SumHer, `-stub`, mixed EUR + EAS
   ancestry, Popcorn on a EUR × EAS pair, target + joint), all with `--ci`
-* Python: **60 pass, 6 skipped** (oracle tests: LDSC/LAVA not on `PATH`); the
+- Python: **60 pass, 6 skipped** (oracle tests: LDSC/LAVA not on `PATH`); the
   SumHer and Popcorn parsers are tested on real tool output
-* Same numbers as the tools run by hand: SumHer bmi × depression rg -0.093256
+- Same numbers as the tools run by hand: SumHer bmi × depression rg -0.093256
   (SE 0.057574); Popcorn on its own EUR/EAS test data pgi 0.5195109 (SE 0.153961)
   through gencorr's harmonize + export vs Popcorn on the raw files (agree to 9 digits)
-* `nf-core pipelines lint`: 248 passed, 0 failed; `nf-core modules lint`: 590 passed, 0 failed
+- `nf-core pipelines lint`: 248 passed, 0 failed; `nf-core modules lint`: 590 passed, 0 failed
   (remaining lint warnings are expected for a private pipeline: private
   container registry, custom meta keys, underscores in local module names)
 
@@ -103,23 +103,23 @@ biocontainer), Nextflow 26.10.5, nf-test 0.9.5, WSL2 Ubuntu:
 Nextflow 25.10.6, nf-test 0.9.3, LDSC 1.0.1 (bioconda, Python 2.7.15),
 LAVA 0.1.5 (`e729a24`) on R 4.3.3:
 
-* Python: **41/41 pass** including both oracle layers (the 2 tests added since
+- Python: **41/41 pass** including both oracle layers (the 2 tests added since
   are unit tests)
-* nf-test module, function and pipeline tests pass on Nextflow 25.10 and 26.10.5;
+- nf-test module, function and pipeline tests pass on Nextflow 25.10 and 26.10.5;
   module snapshots identical with pandas 2.2.3 and 3.0.5
-* `-profile test` on 25.10 and 26.10.5: identical results at zero tolerance (66/66 rows)
+- `-profile test` on 25.10 and 26.10.5: identical results at zero tolerance (66/66 rows)
 
 Not yet run: Apptainer/Singularity (`-profile test,apptainer`) and the `conda`
 profile (LDSC only), and nf-test in CI with the private image.
 
 ## Known, explained differences
 
-| comparison | difference | cause |
-|---|---|---|
-| LAVA on harmonized vs raw files | rg differs in the 5th decimal, local h2 by ~1e-4 relative, for traits given only as OR/LogOR | variants with OR exactly 1 (435 in the vignette depression file): LAVA's reader gives them sign −1 (`ifelse(OR > 1, 1, -1)`); the harmonizer gives Z = 0 because there is no direction |
-| LDSC global rg vs BigaGWAS | identical on job 972; 4th-decimal difference on job 966 | same LDSC version and options; BigaGWAS' own harmonization can drop a few SNPs (966: 4) |
-| LDSC 1.0.1 vs CBIIT/ldsc Python 3 port (used since 2026-11-16) | munged files, rg, se, z, h2, intercepts identical; p printed with 4 instead of 5 significant digits when p ≥ 5e-5 | the port's summary table rounds p to 4 decimals with current pandas; the parser reads the pair's `P:` line instead. See [ldsc.md](ldsc.md) |
-| LAVA vs BigaGWAS | rho within 1e-7 to 1e-5 with `--lava_snp_list w_hm3.snplist`; p/CIs differ by Monte Carlo noise | see [bigagwas_comparison.md](bigagwas_comparison.md#6-results-on-the-test-jobs) |
+| comparison                                                     | difference                                                                                                        | cause                                                                                                                                                                                  |
+| -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| LAVA on harmonized vs raw files                                | rg differs in the 5th decimal, local h2 by ~1e-4 relative, for traits given only as OR/LogOR                      | variants with OR exactly 1 (435 in the vignette depression file): LAVA's reader gives them sign −1 (`ifelse(OR > 1, 1, -1)`); the harmonizer gives Z = 0 because there is no direction |
+| LDSC global rg vs BigaGWAS                                     | identical on job 972; 4th-decimal difference on job 966                                                           | same LDSC version and options; BigaGWAS' own harmonization can drop a few SNPs (966: 4)                                                                                                |
+| LDSC 1.0.1 vs CBIIT/ldsc Python 3 port (used since 2026-11-16) | munged files, rg, se, z, h2, intercepts identical; p printed with 4 instead of 5 significant digits when p ≥ 5e-5 | the port's summary table rounds p to 4 decimals with current pandas; the parser reads the pair's `P:` line instead. See [ldsc.md](ldsc.md)                                             |
+| LAVA vs BigaGWAS                                               | rho within 1e-7 to 1e-5 with `--lava_snp_list w_hm3.snplist`; p/CIs differ by Monte Carlo noise                   | see [bigagwas_comparison.md](bigagwas_comparison.md#6-results-on-the-test-jobs)                                                                                                        |
 
 ## Comparing with BigaGWAS
 
@@ -147,11 +147,11 @@ Set the same parameters BigaGWAS used: `--lava_univ_thresh`,
 `--lava_param_lim`, CIs/p on, the same LD reference and loci. From the job logs
 of the test jobs (967, 971), BigaGWAS' **2-trait** LAVA form:
 
-* restricts LAVA to a HapMap3-based SNP list → use `--lava_snp_list w_hm3.snplist`
-* treats **all traits as continuous** ("All phenotypes treated as CONTINUOUS")
+- restricts LAVA to a HapMap3-based SNP list → use `--lava_snp_list w_hm3.snplist`
+- treats **all traits as continuous** ("All phenotypes treated as CONTINUOUS")
   → leave `n_cases`/`n_controls` empty in the samplesheet
-* uses sample overlap 0 unless set in the job → `--lava_overlap none`
-* runs LAVA 0.1.0 (gencorr: 0.1.5; no visible effect for continuous traits)
+- uses sample overlap 0 unless set in the job → `--lava_overlap none`
+- runs LAVA 0.1.0 (gencorr: 0.1.5; no visible effect for continuous traits)
 
 Still unknown, because the scripts are not in BigaGWAS' public code
 (`specific_lava.R`, `2traits.R`, `lava_pgc.R`): the settings of its group

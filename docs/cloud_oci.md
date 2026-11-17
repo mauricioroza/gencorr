@@ -35,22 +35,22 @@ One VM runs everything: Nextflow with the local executor, every task in Docker.
 
 ## 1. Decisions and reasons
 
-| Decision | Reason |
-|---|---|
-| **One VM, local executor** (no cluster, no batch service) | gencorr's heavy part, LAVA, is many independent 1-CPU tasks: one machine with many cores runs them in parallel with no scheduler to set up. A bigger machine is a resize away (Flex shapes). |
-| **x86 (AMD E5.Flex), not Ampere/ARM** | The images are built for amd64 and LDAK is distributed as an x86 binary. The free Ampere A1 shape would need arm64 rebuilds of all four images. |
-| **4 OCPUs / 48 GB** (8 vCPUs) | LAVA chunks peak at ~3.7 GB RAM each on one CPU (measured in earlier runs with the genome-wide `g1000_eur` reference), so ~5 GB per vCPU keeps every core busy. 8 OCPUs was the plan, but the new trial account only allowed 4. On x86, 1 OCPU = 2 vCPUs. |
-| **Oracle Linux 9** instead of Ubuntu | Ubuntu 24.04 offered no usable shape on the new account; Oracle Linux (OCI's own image) did. The scripts support both (`apt` or `dnf`); the login user is `opc` instead of `ubuntu`. |
-| **Boot volume enlarged to 200 GB**, no separate block volume | Attaching a block volume was not available on the trial account at first. A 200 GB boot volume holds images (~4 GB), references (~4 GB unpacked) and work files, and stays inside OCI's Always Free 200 GB of storage. Kept that way when volumes became available ([why](#5-disk-space-boot-volume-to-200-gb)). |
-| **Everything under `/data`** | One place for references, images, work dir and results; easy to check space (`df -h /data`) and to move onto a separate volume later. |
-| **Images built on the VM** from `containers/` | `gencorr-tools` contains LAVA ("All rights reserved") and must stay private: building on the VM means it never goes through a registry, and the VM needs no GitHub token. The Dockerfiles pin every version, so the build matches the local images. |
-| **Code copied with rsync of git-tracked files** | The repository is private; copying avoids putting credentials on the VM. Only tracked (and non-ignored) files go, so user data (`biga_*`, `results*`, `work/`) never leaves the laptop. |
-| **Nextflow 26.10.5 pinned** | Same version as the development machine, where the test suite passes. Ignore the "newer version available" notice. |
-| **One thread per task** (`OMP_NUM_THREADS=1`, data.table, BLAS) | Nextflow already runs one task per CPU; without the limit, R's data.table and BLAS start threads for every core in every task and overload the machine. Results do not change (LAVA seeds are per locus). |
-| **LAVA memory request 5 GB** (pipeline default 6 GB) | Matches the measured ~3.7 GB peak with headroom; at 6 GB, 8 tasks would need 48 GB and one core would sit idle. An out-of-memory kill retries with 10 GB. |
-| **SSH key with a passphrase + ssh-agent** | The key gives full access to the VM and its data; the agent means typing the passphrase once per terminal. |
-| **Runs inside `tmux`** | A genome-wide run takes longer than an SSH session may last; tmux keeps it running if the connection drops. |
-| **Stop the VM when idle, never terminate** | A stopped VM is not charged for CPU/memory. Terminating deletes the VM (and, by default, the disk with all data and images). |
+| Decision                                                        | Reason                                                                                                                                                                                                                                                                                                           |
+| --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **One VM, local executor** (no cluster, no batch service)       | gencorr's heavy part, LAVA, is many independent 1-CPU tasks: one machine with many cores runs them in parallel with no scheduler to set up. A bigger machine is a resize away (Flex shapes).                                                                                                                     |
+| **x86 (AMD E5.Flex), not Ampere/ARM**                           | The images are built for amd64 and LDAK is distributed as an x86 binary. The free Ampere A1 shape would need arm64 rebuilds of all four images.                                                                                                                                                                  |
+| **4 OCPUs / 48 GB** (8 vCPUs)                                   | LAVA chunks peak at ~3.7 GB RAM each on one CPU (measured in earlier runs with the genome-wide `g1000_eur` reference), so ~5 GB per vCPU keeps every core busy. 8 OCPUs was the plan, but the new trial account only allowed 4. On x86, 1 OCPU = 2 vCPUs.                                                        |
+| **Oracle Linux 9** instead of Ubuntu                            | Ubuntu 24.04 offered no usable shape on the new account; Oracle Linux (OCI's own image) did. The scripts support both (`apt` or `dnf`); the login user is `opc` instead of `ubuntu`.                                                                                                                             |
+| **Boot volume enlarged to 200 GB**, no separate block volume    | Attaching a block volume was not available on the trial account at first. A 200 GB boot volume holds images (~4 GB), references (~4 GB unpacked) and work files, and stays inside OCI's Always Free 200 GB of storage. Kept that way when volumes became available ([why](#5-disk-space-boot-volume-to-200-gb)). |
+| **Everything under `/data`**                                    | One place for references, images, work dir and results; easy to check space (`df -h /data`) and to move onto a separate volume later.                                                                                                                                                                            |
+| **Images built on the VM** from `containers/`                   | `gencorr-tools` contains LAVA ("All rights reserved") and must stay private: building on the VM means it never goes through a registry, and the VM needs no GitHub token. The Dockerfiles pin every version, so the build matches the local images.                                                              |
+| **Code copied with rsync of git-tracked files**                 | The repository is private; copying avoids putting credentials on the VM. Only tracked (and non-ignored) files go, so user data (`biga_*`, `results*`, `work/`) never leaves the laptop.                                                                                                                          |
+| **Nextflow 26.10.5 pinned**                                     | Same version as the development machine, where the test suite passes. Ignore the "newer version available" notice.                                                                                                                                                                                               |
+| **One thread per task** (`OMP_NUM_THREADS=1`, data.table, BLAS) | Nextflow already runs one task per CPU; without the limit, R's data.table and BLAS start threads for every core in every task and overload the machine. Results do not change (LAVA seeds are per locus).                                                                                                        |
+| **LAVA memory request 5 GB** (pipeline default 6 GB)            | Matches the measured ~3.7 GB peak with headroom; at 6 GB, 8 tasks would need 48 GB and one core would sit idle. An out-of-memory kill retries with 10 GB.                                                                                                                                                        |
+| **SSH key with a passphrase + ssh-agent**                       | The key gives full access to the VM and its data; the agent means typing the passphrase once per terminal.                                                                                                                                                                                                       |
+| **Runs inside `tmux`**                                          | A genome-wide run takes longer than an SSH session may last; tmux keeps it running if the connection drops.                                                                                                                                                                                                      |
+| **Stop the VM when idle, never terminate**                      | A stopped VM is not charged for CPU/memory. Terminating deletes the VM (and, by default, the disk with all data and images).                                                                                                                                                                                     |
 
 ## 2. SSH key (on the laptop)
 
@@ -75,17 +75,17 @@ ssh-add ~/.ssh/oci_gencorr
 ## 3. Network: VCN with a public subnet
 
 **☰ → Networking → Virtual cloud networks → Start VCN Wizard → Create VCN with
-Internet Connectivity** (the wizard, *not* the plain "Create VCN" form).
+Internet Connectivity** (the wizard, _not_ the plain "Create VCN" form).
 
 - Name `gencorr-vcn`, root compartment, default CIDRs (`10.0.0.0/16`,
   public subnet `10.0.0.0/24`, private subnet `10.0.1.0/24`).
 
 It creates the public subnet, an Internet Gateway, the route `0.0.0.0/0 → IGW`
 and a security list that allows SSH. Check under the VCN's **Gateways** tab that
-*Internet gateway-gencorr-vcn* is **Available** (the DRG section below it is
+_Internet gateway-gencorr-vcn_ is **Available** (the DRG section below it is
 expected to be empty).
 
-*Why:* the network the instance wizard created on the first try had no public
+_Why:_ the network the instance wizard created on the first try had no public
 IP option, so the VM could not be reached from home.
 
 Optional: in the default security list, change the SSH rule's source from
@@ -95,15 +95,15 @@ Optional: in the default security list, change the SSH rule's source from
 
 **☰ → Compute → Instances → Create instance**
 
-| Field | Value |
-|---|---|
-| Name | `gencorr` |
-| Placement | AD-1 (Vinhedo has one availability domain) |
-| Shape | **Change shape → Virtual machine → AMD → VM.Standard.E5.Flex**; expand the row (⌄) to set **4 OCPUs / 48 GB** |
-| Image | **Oracle Linux 9**, a build without `aarch64`/`GPU` in the name |
-| Networking | existing VCN `gencorr-vcn`, subnet **public subnet-gencorr-vcn**, **Automatically assign public IPv4 address: on** |
-| SSH keys | paste the `.pub` line |
-| Boot volume | default (enlarged in the next step) |
+| Field       | Value                                                                                                              |
+| ----------- | ------------------------------------------------------------------------------------------------------------------ |
+| Name        | `gencorr`                                                                                                          |
+| Placement   | AD-1 (Vinhedo has one availability domain)                                                                         |
+| Shape       | **Change shape → Virtual machine → AMD → VM.Standard.E5.Flex**; expand the row (⌄) to set **4 OCPUs / 48 GB**      |
+| Image       | **Oracle Linux 9**, a build without `aarch64`/`GPU` in the name                                                    |
+| Networking  | existing VCN `gencorr-vcn`, subnet **public subnet-gencorr-vcn**, **Automatically assign public IPv4 address: on** |
+| SSH keys    | paste the `.pub` line                                                                                              |
+| Boot volume | default (enlarged in the next step)                                                                                |
 
 Pick the shape **before** the image: the console then only lists images that
 fit the shape. When it is **Running**, copy the public IP and test:
@@ -129,7 +129,7 @@ ssh -i ~/.ssh/oci_gencorr opc@<public-ip> 'uname -m; nproc; free -g | head -2'
    shows the old size, wait a minute or `sudo reboot`, then run `oci-growfs`
    again.
 
-*Why the rescan:* resizing in the console enlarges the disk, but the running
+_Why the rescan:_ resizing in the console enlarges the disk, but the running
 kernel keeps the old size until told to re-read it. `oci-growfs` then grows the
 three layers in order: partition (`sda3`) → LVM volume (`ocivolume-root`) →
 XFS filesystem.
@@ -139,7 +139,7 @@ the same AD (200 GB, Balanced), attach it as **Paravirtualized** with device
 path **`/dev/oracleoci/oraclevdb`**, and run the bootstrap without `none`;
 it formats and mounts it at `/data`.
 
-*Why the boot disk was kept* when block volumes later became available: the
+_Why the boot disk was kept_ when block volumes later became available: the
 boot volume cannot be shrunk, so a second 200 GB volume would double the
 storage (200 GB above the Always Free allowance) for little gain. A Flex VM is
 resized in place with its disk, and when terminating the VM the boot volume
@@ -182,12 +182,12 @@ cloud/oci/push_to_vm.sh opc@<public-ip>
 3. **Images**: `build_images.sh` on the VM builds every image the modules
    reference, tagged exactly as in the modules:
 
-   | Image | Size |
-   |---|---|
-   | `gencorr-tools:0.1.0` (Python helpers, R + LAVA) | 1.96 GB |
-   | `gencorr-popcorn:1.0.0-20a29e8` | 918 MB |
-   | `gencorr-ldsc:3.0.1-128f996` (runs upstream tests while building) | 786 MB |
-   | `gencorr-ldak:6.1` | 192 MB |
+   | Image                                                             | Size    |
+   | ----------------------------------------------------------------- | ------- |
+   | `gencorr-tools:0.1.0` (Python helpers, R + LAVA)                  | 1.96 GB |
+   | `gencorr-popcorn:1.0.0-20a29e8`                                   | 918 MB  |
+   | `gencorr-ldsc:3.0.1-128f996` (runs upstream tests while building) | 786 MB  |
+   | `gencorr-ldak:6.1`                                                | 192 MB  |
 
 Re-run it after changing the code; existing images are skipped
 (`docker rmi` an image to force a rebuild after editing its Dockerfile).
@@ -245,11 +245,11 @@ starts from scratch).
 
 ## 10. Daily use and costs
 
-| | Running | Stopped | Terminated |
-|---|---|---|---|
-| Compute (OCPUs + memory) | billed per second | **not billed** | gone |
-| Boot volume (all data) | storage | storage (within Always Free 200 GB) | deleted unless kept |
-| Public IP | free | kept | released |
+|                          | Running           | Stopped                             | Terminated          |
+| ------------------------ | ----------------- | ----------------------------------- | ------------------- |
+| Compute (OCPUs + memory) | billed per second | **not billed**                      | gone                |
+| Boot volume (all data)   | storage           | storage (within Always Free 200 GB) | deleted unless kept |
+| Public IP                | free              | kept                                | released            |
 
 - **Stop** (not Force stop) on the instance page when idle, after checking no
   run is active (`docker ps` empty). **Start** brings everything back, same IP.
@@ -265,18 +265,18 @@ starts from scratch).
 
 ## 11. Errors met and their fixes
 
-| Message | Cause | Fix |
-|---|---|---|
-| Shape/OCPU settings not visible ("1 core OCPU, 12 GB") | The settings are inside the shape row | Change shape → expand the E5.Flex row (⌄) |
-| `Shape VM.Standard.E5.Flex is not valid for image …` | ARM (aarch64) or GPU image selected | Pick an x86 build; choose the shape first, then the image |
-| `Your resource creation limit has been reached` | Trial account limits (not missing credit) | Fewer OCPUs (4 worked), remove leftovers, check **Limits, Quotas and Usage**, request an increase |
-| Subscription shows R$0.00 | That column is *usage*; the credit is "Total commitment value" (R$1,500) | Nothing to fix |
-| `No shapes are available for this image` | Same limits, for that image | Try Oracle Linux 9 |
-| "The instance requires a public IP address" | VM in a private subnet / no public IP | VCN wizard network, public subnet, auto-assign public IPv4 |
-| `Permission denied (publickey…)` from a script | Key has a passphrase, no agent in that shell | `ssh-add` in the terminal you run commands from |
-| Attach block volume unavailable | No volume / trial restriction | Enlarge the boot volume instead (step 5) |
-| `oci-growfs`: `NOCHANGE: partition 3 could only be grown by 2015` | Kernel still sees the old disk size | Rescan (`echo 1 > /sys/class/block/sda/device/rescan`) or reboot |
-| Bootstrap: `install: cannot stat 'nextflow'` | The get.nextflow.io installer put the launcher elsewhere | Fixed: the script downloads the launcher from the GitHub release |
-| `ERROR ~ .nextflow/history.lock (No such file or directory)` | `/data` owned by root | Fixed in the script (`/data` owned by `opc`); by hand: `sudo chown opc:opc /data` |
-| `tput: unknown terminal "unknown"` | No terminal in a non-interactive `ssh` command | Harmless |
-| `Nextflow 26.10.6 is available` | Notice only | Keep 26.10.5 |
+| Message                                                           | Cause                                                                    | Fix                                                                                               |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| Shape/OCPU settings not visible ("1 core OCPU, 12 GB")            | The settings are inside the shape row                                    | Change shape → expand the E5.Flex row (⌄)                                                         |
+| `Shape VM.Standard.E5.Flex is not valid for image …`              | ARM (aarch64) or GPU image selected                                      | Pick an x86 build; choose the shape first, then the image                                         |
+| `Your resource creation limit has been reached`                   | Trial account limits (not missing credit)                                | Fewer OCPUs (4 worked), remove leftovers, check **Limits, Quotas and Usage**, request an increase |
+| Subscription shows R$0.00                                         | That column is _usage_; the credit is "Total commitment value" (R$1,500) | Nothing to fix                                                                                    |
+| `No shapes are available for this image`                          | Same limits, for that image                                              | Try Oracle Linux 9                                                                                |
+| "The instance requires a public IP address"                       | VM in a private subnet / no public IP                                    | VCN wizard network, public subnet, auto-assign public IPv4                                        |
+| `Permission denied (publickey…)` from a script                    | Key has a passphrase, no agent in that shell                             | `ssh-add` in the terminal you run commands from                                                   |
+| Attach block volume unavailable                                   | No volume / trial restriction                                            | Enlarge the boot volume instead (step 5)                                                          |
+| `oci-growfs`: `NOCHANGE: partition 3 could only be grown by 2015` | Kernel still sees the old disk size                                      | Rescan (`echo 1 > /sys/class/block/sda/device/rescan`) or reboot                                  |
+| Bootstrap: `install: cannot stat 'nextflow'`                      | The get.nextflow.io installer put the launcher elsewhere                 | Fixed: the script downloads the launcher from the GitHub release                                  |
+| `ERROR ~ .nextflow/history.lock (No such file or directory)`      | `/data` owned by root                                                    | Fixed in the script (`/data` owned by `opc`); by hand: `sudo chown opc:opc /data`                 |
+| `tput: unknown terminal "unknown"`                                | No terminal in a non-interactive `ssh` command                           | Harmless                                                                                          |
+| `Nextflow 26.10.6 is available`                                   | Notice only                                                              | Keep 26.10.5                                                                                      |

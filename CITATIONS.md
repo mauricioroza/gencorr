@@ -4,8 +4,8 @@
 
 gencorr has no DOI yet. Until its first release, cite the repository and the
 version you ran (`pipeline_info/gencorr_software_versions.yml`, entry
-`Workflow`), e.g. *mauricioroza/gencorr v0.1.0dev,
-https://github.com/mauricioroza/gencorr*.
+`Workflow`), e.g. _mauricioroza/gencorr v0.1.0dev,
+https://github.com/mauricioroza/gencorr_.
 
 Please also cite the **methods** you ran and the **reference data** you used
 (sections below), and the nf-core and Nextflow papers.

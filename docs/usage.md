@@ -4,17 +4,17 @@
 
 CSV, one row per trait. Only `id` and `sumstats` are required.
 
-| column | meaning |
-|---|---|
-| `id` | short trait ID: starts with a letter; letters, digits, `_ . -`. Becomes file names and the LAVA phenotype ID. |
-| `sumstats` | path or URL to the summary statistics (plain or `.gz`; tab, comma or whitespace separated), **or a GWAS Catalog accession** such as `GCST90000016` (see [GWAS Catalog studies](#gwas-catalog-studies)) |
-| `n` | total sample size, used **only** if the file has no N column |
-| `n_cases`, `n_controls` | binary traits. Used for N when missing, for LAVA's case/control model and for LDSC liability h2 |
-| `pop_prev` | population prevalence (binary traits). Adds liability-scale h2 (LDSC) and LAVA `h2_latent` |
-| `colmap` | manual column mapping, e.g. `Z=STAT,N=NMISS` (standard=source) |
-| `ancestry` | `EUR` (default) or `EAS`: ancestry of the GWAS. Selects the LD references and decides which pairs LDSC and LAVA analyse (see [Ancestry](#ancestry)) |
-| `build` | `GRCh37` (default) or `GRCh38`: build of the file's positions. Only used to pick the rsID map for variants without an rsID (see [Genome build and rsIDs](#genome-build-and-rsids)) |
-| `label` | free-text display name (not used in computation) |
+| column                  | meaning                                                                                                                                                                                                |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `id`                    | short trait ID: starts with a letter; letters, digits, `_ . -`. Becomes file names and the LAVA phenotype ID.                                                                                          |
+| `sumstats`              | path or URL to the summary statistics (plain or `.gz`; tab, comma or whitespace separated), **or a GWAS Catalog accession** such as `GCST90000016` (see [GWAS Catalog studies](#gwas-catalog-studies)) |
+| `n`                     | total sample size, used **only** if the file has no N column                                                                                                                                           |
+| `n_cases`, `n_controls` | binary traits. Used for N when missing, for LAVA's case/control model and for LDSC liability h2                                                                                                        |
+| `pop_prev`              | population prevalence (binary traits). Adds liability-scale h2 (LDSC) and LAVA `h2_latent`                                                                                                             |
+| `colmap`                | manual column mapping, e.g. `Z=STAT,N=NMISS` (standard=source)                                                                                                                                         |
+| `ancestry`              | `EUR` (default) or `EAS`: ancestry of the GWAS. Selects the LD references and decides which pairs LDSC and LAVA analyse (see [Ancestry](#ancestry))                                                    |
+| `build`                 | `GRCh37` (default) or `GRCh38`: build of the file's positions. Only used to pick the rsID map for variants without an rsID (see [Genome build and rsIDs](#genome-build-and-rsids))                     |
+| `label`                 | free-text display name (not used in computation)                                                                                                                                                       |
 
 ### Ancestry
 
@@ -22,10 +22,10 @@ LDSC and LAVA model the LD between nearby variants, and LD differs between
 populations, so each needs an LD reference of the **same ancestry as the GWAS**.
 They also assume **both traits of a pair come from one population**.
 
-| pair | what happens |
-|---|---|
-| EUR × EUR | LDSC with `--ldsc_ld`, LAVA with `--lava_ref`, SumHer with `--sumher_tagfile` |
-| EAS × EAS | LDSC with `--ldsc_ld_eas` (`--ldsc_w_ld_eas`), LAVA with `--lava_ref_eas`, SumHer with `--sumher_tagfile_eas` |
+| pair      | what happens                                                                                                       |
+| --------- | ------------------------------------------------------------------------------------------------------------------ |
+| EUR × EUR | LDSC with `--ldsc_ld`, LAVA with `--lava_ref`, SumHer with `--sumher_tagfile`                                      |
+| EAS × EAS | LDSC with `--ldsc_ld_eas` (`--ldsc_w_ld_eas`), LAVA with `--lava_ref_eas`, SumHer with `--sumher_tagfile_eas`      |
 | EUR × EAS | **Popcorn** (`--methods popcorn`, see below); LDSC, LAVA and SumHer report the pair with `status = cross_ancestry` |
 
 A reference is only required if some pair needs it: a run where every trait is
@@ -44,20 +44,20 @@ Every method matches variants **by rsID** and takes positions from its own
 reference (LDSC LD scores, LAVA LD reference). The positions in your file are
 never used for the analysis, so:
 
-* **A file with rsIDs works on any build**, GRCh37 or GRCh38, without liftover.
+- **A file with rsIDs works on any build**, GRCh37 or GRCh38, without liftover.
   GWAS Catalog harmonised files (`hm_rsid`) are recognised automatically.
-* **A file without rsIDs** (SNP IDs like `1:12345:A:G`, `chr1_12345_G_A`, or no
+- **A file without rsIDs** (SNP IDs like `1:12345:A:G`, `chr1_12345_G_A`, or no
   SNP column at all) needs an **rsID map** for its build. The harmonizer then
   gives each such variant the rsID at the same chromosome and position with the
   same two alleles (either order, or the complementary strand). Variants that
   find no match are dropped and counted in `harmonized/<id>.qc.json`
   (`rsid_mapping`, `removed.no_rsid_after_mapping`).
 
-| | GRCh37 files | GRCh38 files |
-|---|---|---|
-| samplesheet `build` | empty or `GRCh37` | `GRCh38` |
-| map parameter | `--rsid_map_grch37` | `--rsid_map_grch38` |
-| ready-made map | the 1000 Genomes PLINK reference you use for LAVA: `--rsid_map_grch37 /refs/g1000_eur/g1000_eur.bim` | a GRCh38 `.bim` (e.g. 1000 Genomes high-coverage), or a table extracted from dbSNP |
+|                     | GRCh37 files                                                                                         | GRCh38 files                                                                       |
+| ------------------- | ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| samplesheet `build` | empty or `GRCh37`                                                                                    | `GRCh38`                                                                           |
+| map parameter       | `--rsid_map_grch37`                                                                                  | `--rsid_map_grch38`                                                                |
+| ready-made map      | the 1000 Genomes PLINK reference you use for LAVA: `--rsid_map_grch37 /refs/g1000_eur/g1000_eur.bim` | a GRCh38 `.bim` (e.g. 1000 Genomes high-coverage), or a table extracted from dbSNP |
 
 A map is a PLINK `.bim`, or a table (tab/comma/space separated, optionally
 gzipped) with a header containing CHR, BP and SNP columns and optionally A1/A2.
@@ -92,13 +92,13 @@ t2d_early,GCST000028,,EUR
 mdd,/data/mdd.txt.gz,500199,EUR
 ```
 
-* The file is found in `<range>/<accession>/harmonised/` (or, failing that, by
+- The file is found in `<range>/<accession>/harmonised/` (or, failing that, by
   an exact match in the Catalog's `harmonised_list.txt`). When a study has two
   harmonised files, the newer `<accession>.h.tsv.gz` is used.
-* It is checked against the md5 in the study's metadata (`-meta.yaml`); the
+- It is checked against the md5 in the study's metadata (`-meta.yaml`); the
   accession, URL, md5, metadata date, genome assembly, trait and samples are
   recorded under `source` in `harmonized/<id>.qc.json`.
-* **N**: harmonised files rarely have an N column. gencorr uses, in order, the
+- **N**: harmonised files rarely have an N column. gencorr uses, in order, the
   file's N column, the samplesheet `n` (or `n_cases + n_controls`), and the
   study's sample size from the metadata. The metadata size is used **only**
   when the study lists a single sample group, of the samplesheet's ancestry
@@ -108,37 +108,37 @@ mdd,/data/mdd.txt.gz,500199,EUR
   same sample twice), so their sum is not reliably the analysed N. A study
   whose ancestry does not include the samplesheet's gets a warning in the task
   log and the QC report.
-* Harmonised files carry rsIDs, so `build` and the rsID maps are not needed.
+- Harmonised files carry rsIDs, so `build` and the rsID maps are not needed.
   Older files keep the submitted columns next to the harmonised `hm_` ones;
   gencorr then uses the `hm_` alleles and effects together (`colmap` overrides).
-* Only harmonised studies can be given by accession. For others, download the
+- Only harmonised studies can be given by accession. For others, download the
   file yourself and give its path or URL.
-* Downloads need network access from the compute nodes. They are kept in the
+- Downloads need network access from the compute nodes. They are kept in the
   work directory (reused with `-resume`), or across runs with
   `--gwascatalog_cache <folder>` (one subfolder per accession).
-* `--gwascatalog_base` points at a mirror or a local copy with the same layout.
+- `--gwascatalog_base` points at a mirror or a local copy with the same layout.
 
 ### Column detection
 
 The harmonizer recognises the usual names case-insensitively (full list in
 `bin/harmonize_sumstats.py`, `COLUMN_SYNONYMS`):
 
-| standard | recognised source names (first match wins) |
-|---|---|
-| SNP | snp, rsid, rs_id, hm_rsid, variant_id, markername, snpid, snpid_ukb, … |
-| A1 (effect) | a1, effect_allele, hm_effect_allele, ea, alt, allele1, tested_allele |
-| A2 | a2, other_allele, hm_other_allele, nea, ref, allele2, non_effect_allele |
-| Z | z, zscore, z_score, z-score, z_stat |
-| BETA | beta, hm_beta, b, effect, logor, log_or, log_odds |
-| OR | or, odds_ratio, hm_odds_ratio (converted to BETA = ln OR) |
-| SE, P, N, EAF, INFO | the usual spellings |
+| standard            | recognised source names (first match wins)                              |
+| ------------------- | ----------------------------------------------------------------------- |
+| SNP                 | snp, rsid, rs_id, hm_rsid, variant_id, markername, snpid, snpid_ukb, …  |
+| A1 (effect)         | a1, effect_allele, hm_effect_allele, ea, alt, allele1, tested_allele    |
+| A2                  | a2, other_allele, hm_other_allele, nea, ref, allele2, non_effect_allele |
+| Z                   | z, zscore, z_score, z-score, z_stat                                     |
+| BETA                | beta, hm_beta, b, effect, logor, log_or, log_odds                       |
+| OR                  | or, odds_ratio, hm_odds_ratio (converted to BETA = ln OR)               |
+| SE, P, N, EAF, INFO | the usual spellings                                                     |
 
 `STAT` is **never** mapped automatically. Depending on the software it is a Z,
 t or chi-square statistic, so map it with `colmap` if you know it is a Z.
 
 **A1 must be the effect allele.** GWAS Catalog harmonised files
 (`hm_effect_allele`) are handled. Check files where "A1" means something else
-(e.g. PLINK 1.9 `.assoc` A1 = minor allele, which *is* the tested allele).
+(e.g. PLINK 1.9 `.assoc` A1 = minor allele, which _is_ the tested allele).
 
 ### Signed Z-score
 
@@ -153,11 +153,11 @@ files. That keeps results comparable.
 
 ## 2. Which pairs (`--pair_mode`)
 
-| mode | pairs |
-|---|---|
-| `all` (default) | every pair of samplesheet traits |
-| `target --targets mdd,scz` | each target vs every other trait (one vs group) |
-| `pairs --pairs pairs.csv` | exactly the listed pairs (`trait1,trait2` header) |
+| mode                       | pairs                                             |
+| -------------------------- | ------------------------------------------------- |
+| `all` (default)            | every pair of samplesheet traits                  |
+| `target --targets mdd,scz` | each target vs every other trait (one vs group)   |
+| `pairs --pairs pairs.csv`  | exactly the listed pairs (`trait1,trait2` header) |
 
 Every method analyses the same pairs.
 
@@ -165,10 +165,10 @@ Every method analyses the same pairs.
 
 ### LDSC
 
-| file | where |
-|---|---|
+| file                               | where                                                                          |
+| ---------------------------------- | ------------------------------------------------------------------------------ |
 | European LD scores `eur_w_ld_chr/` | Zenodo record 8182036 (`eur_w_ld_chr.tar.gz`, copy of the Alkes group archive) |
-| HapMap3 SNP list `w_hm3.snplist` | Zenodo record 7773502 (`w_hm3.snplist.gz`) |
+| HapMap3 SNP list `w_hm3.snplist`   | Zenodo record 7773502 (`w_hm3.snplist.gz`)                                     |
 
 ```bash
 --ldsc_ld /refs/eur_w_ld_chr          # files 1.l2.ldscore.gz ... 22.l2.ldscore.gz
@@ -181,10 +181,10 @@ pair as soon as one rsID has different alleles in the two traits.
 
 ### LAVA
 
-| reference | notes |
-|---|---|
-| **UK Biobank, LAVA LD format v1.1** (recommended for European data) | links in the LAVA repository's `REFERENCE.md`; ~15 GB unzipped, per chromosome; requires LAVA ≥ 0.1.5 |
-| 1000 Genomes PLINK files | smaller and quicker, but the LAVA authors report possible type I error inflation and biased local h2 with 1000G for European data |
+| reference                                                           | notes                                                                                                                             |
+| ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| **UK Biobank, LAVA LD format v1.1** (recommended for European data) | links in the LAVA repository's `REFERENCE.md`; ~15 GB unzipped, per chromosome; requires LAVA ≥ 0.1.5                             |
+| 1000 Genomes PLINK files                                            | smaller and quicker, but the LAVA authors report possible type I error inflation and biased local h2 with 1000G for European data |
 
 ```bash
 --lava_ref /refs/lava-ukb/lava-ukb-v1.1    # prefix WITHOUT the _chrN part
@@ -199,8 +199,8 @@ directory.
 SumHer (LDAK 6.1) estimates global rg with a different heritability model
 than LDSC. It needs an LDAK **tagging file** per ancestry:
 
-| file | where |
-|---|---|
+| file                                                                       | where                                                                                                                                         |
+| -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | `ldak.thin.hapmap.gbr.tagging` (EUR), `ldak.thin.hapmap.eas.tagging` (EAS) | dougspeed.com → Pre-computed Tagging Files (LDAK-Thin model, recommended by LDAK for genetic correlation; gunzip not needed, gencorr does it) |
 
 ```bash
@@ -211,9 +211,9 @@ than LDSC. It needs an LDAK **tagging file** per ancestry:
 SNP names in your data must match those in the tagging file. Check them with
 `zcat ldak.thin.hapmap.gbr.tagging.gz | head -3`:
 
-* **rsIDs** (`rs3094315`): the current pre-computed files (checked November
+- **rsIDs** (`rs3094315`): the current pre-computed files (checked November
   2026). Nothing else to set.
-* **`CHR:BP`** (`1:752566`): older releases and
+- **`CHR:BP`** (`1:752566`): older releases and
   tagging files you made from a `CHR:BP`-named reference. Add
   `--sumher_snp_positions` with a GRCh37 rsID → position table (the 1000
   Genomes `.bim` you use for LAVA works, or a `CHR BP SNP` table), and gencorr
@@ -236,22 +236,22 @@ the EUR × EAS pairs**; the other methods run on the same-ancestry pairs (and
 Popcorn reports those as `same_ancestry`). It needs a **score file** for the two
 populations:
 
-| file | where |
-|---|---|
+| file                        | where                                                                                                                                                                           |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | EUR/EAS 1000 Genomes scores | pre-computed by the Popcorn authors (link in Popcorn's README), or `popcorn compute -v 1 --bfile1 <EUR panel> --bfile2 <EAS panel> scores.txt` with the `gencorr-popcorn` image |
 
 ```bash
 --methods ldsc,lava,popcorn --popcorn_cfile /refs/popcorn/EUR_EAS.cscore
 ```
 
-* `--popcorn_cfile_ancestries` (default `EUR,EAS`): the populations of the
+- `--popcorn_cfile_ancestries` (default `EUR,EAS`): the populations of the
   score file in the order it was computed (`--bfile1`, `--bfile2`); gencorr puts
   each pair's traits in that order.
-* `--popcorn_gen_effect`: genetic effect instead of genetic impact correlation
+- `--popcorn_gen_effect`: genetic effect instead of genetic impact correlation
   (the score file must be computed with `--gen_effect` too).
-* `--popcorn_use_mle`: maximum likelihood instead of the regression fit the
+- `--popcorn_use_mle`: maximum likelihood instead of the regression fit the
   authors recommend.
-* Binary traits with `n_cases`, `n_controls` and `pop_prev` also get Popcorn's
+- Binary traits with `n_cases`, `n_controls` and `pop_prev` also get Popcorn's
   liability-scale h2 (`extra.h2_1_liab`, `h2_2_liab`).
 
 **p-values:** Popcorn's own p for the correlation tests **rg < 1** (is the
@@ -269,30 +269,30 @@ they have rsIDs (see [Genome build and rsIDs](#genome-build-and-rsids)).
 
 ## 4. Important parameters
 
-| parameter | default | |
-|---|---|---|
-| `--methods` | `ldsc,lava` | comma-separated: `ldsc`, `lava`, `sumher`, `popcorn` |
-| `--lava_overlap` | `ldsc` | sample-overlap correction from LDSC intercepts (LAVA vignette recipe); `none`; or a matrix file |
-| `--lava_snp_set` | `pairwise` | `pairwise`: a pair uses SNPs shared by its two traits. `joint`: all traits loaded together, SNPs shared by **all** traits (LAVA's multi-trait behaviour) |
-| `--lava_univ_thresh` | `0.05` | bivariate test only if both local h2 p-values are below this. For genome-wide screens the LAVA authors suggest a stricter (e.g. Bonferroni) filter |
-| `--lava_loci_per_chunk` | `250` | parallelism only; results do not depend on it |
-| `--lava_seed` | `20201231` | base seed for LAVA's Monte Carlo CIs/p-values |
-| `--ldsc_rg_batch_size` | `50` | traits per `ldsc --rg` call; does not change estimates |
-| `--drop_ambiguous` | `false` | remove A/T, C/G SNPs for all methods (LDSC munge always removes them) |
-| `--min_info` | `0` (off) | remove variants with INFO ≤ value, for all methods (see 4a) |
-| `--min_maf` | `0` (off) | remove variants with MAF ≤ value, for all methods (see 4a) |
-| `--lava_snp_list` | none (all SNPs) | run LAVA only on the SNP IDs in this list, e.g. `w_hm3.snplist` (see 4b) |
-| `--sumher_tagfile`, `--sumher_tagfile_eas` | none | LDAK tagging files for SumHer (EUR, EAS) |
-| `--sumher_snp_positions` | none | GRCh37 rsID → position table; SumHer variants named `CHR:BP`. Only for tagging files with `CHR:BP` names (older LDAK releases); current pre-computed files use rsIDs |
-| `--sumher_cutoff`, `--sumher_genomic_control` | `0.01`, `false` | LDAK `--cutoff`, `--genomic-control` |
-| `--popcorn_cfile` | none | Popcorn score file for EUR × EAS pairs |
-| `--popcorn_cfile_ancestries` | `EUR,EAS` | populations of the score file, in order |
-| `--popcorn_gen_effect`, `--popcorn_use_mle` | `false`, `false` | genetic effect correlation; MLE fit |
-| `--ldsc_ld_eas`, `--ldsc_w_ld_eas`, `--lava_ref_eas` | none | references for traits with `ancestry = EAS` (see [Ancestry](#ancestry)) |
-| `--rsid_map_grch37`, `--rsid_map_grch38` | none | rsID maps for files without rsIDs, per samplesheet `build` (see [Genome build and rsIDs](#genome-build-and-rsids)) |
-| `--gwascatalog_cache` | none | folder that keeps GWAS Catalog downloads across runs (see [GWAS Catalog studies](#gwas-catalog-studies)) |
-| `--gwascatalog_base` | GWAS Catalog FTP | mirror or local copy of the GWAS Catalog summary statistics |
-| `--save_harmonized` / `--save_intermediates` | `false` | publish intermediate files |
+| parameter                                            | default          |                                                                                                                                                                      |
+| ---------------------------------------------------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--methods`                                          | `ldsc,lava`      | comma-separated: `ldsc`, `lava`, `sumher`, `popcorn`                                                                                                                 |
+| `--lava_overlap`                                     | `ldsc`           | sample-overlap correction from LDSC intercepts (LAVA vignette recipe); `none`; or a matrix file                                                                      |
+| `--lava_snp_set`                                     | `pairwise`       | `pairwise`: a pair uses SNPs shared by its two traits. `joint`: all traits loaded together, SNPs shared by **all** traits (LAVA's multi-trait behaviour)             |
+| `--lava_univ_thresh`                                 | `0.05`           | bivariate test only if both local h2 p-values are below this. For genome-wide screens the LAVA authors suggest a stricter (e.g. Bonferroni) filter                   |
+| `--lava_loci_per_chunk`                              | `250`            | parallelism only; results do not depend on it                                                                                                                        |
+| `--lava_seed`                                        | `20201231`       | base seed for LAVA's Monte Carlo CIs/p-values                                                                                                                        |
+| `--ldsc_rg_batch_size`                               | `50`             | traits per `ldsc --rg` call; does not change estimates                                                                                                               |
+| `--drop_ambiguous`                                   | `false`          | remove A/T, C/G SNPs for all methods (LDSC munge always removes them)                                                                                                |
+| `--min_info`                                         | `0` (off)        | remove variants with INFO ≤ value, for all methods (see 4a)                                                                                                          |
+| `--min_maf`                                          | `0` (off)        | remove variants with MAF ≤ value, for all methods (see 4a)                                                                                                           |
+| `--lava_snp_list`                                    | none (all SNPs)  | run LAVA only on the SNP IDs in this list, e.g. `w_hm3.snplist` (see 4b)                                                                                             |
+| `--sumher_tagfile`, `--sumher_tagfile_eas`           | none             | LDAK tagging files for SumHer (EUR, EAS)                                                                                                                             |
+| `--sumher_snp_positions`                             | none             | GRCh37 rsID → position table; SumHer variants named `CHR:BP`. Only for tagging files with `CHR:BP` names (older LDAK releases); current pre-computed files use rsIDs |
+| `--sumher_cutoff`, `--sumher_genomic_control`        | `0.01`, `false`  | LDAK `--cutoff`, `--genomic-control`                                                                                                                                 |
+| `--popcorn_cfile`                                    | none             | Popcorn score file for EUR × EAS pairs                                                                                                                               |
+| `--popcorn_cfile_ancestries`                         | `EUR,EAS`        | populations of the score file, in order                                                                                                                              |
+| `--popcorn_gen_effect`, `--popcorn_use_mle`          | `false`, `false` | genetic effect correlation; MLE fit                                                                                                                                  |
+| `--ldsc_ld_eas`, `--ldsc_w_ld_eas`, `--lava_ref_eas` | none             | references for traits with `ancestry = EAS` (see [Ancestry](#ancestry))                                                                                              |
+| `--rsid_map_grch37`, `--rsid_map_grch38`             | none             | rsID maps for files without rsIDs, per samplesheet `build` (see [Genome build and rsIDs](#genome-build-and-rsids))                                                   |
+| `--gwascatalog_cache`                                | none             | folder that keeps GWAS Catalog downloads across runs (see [GWAS Catalog studies](#gwas-catalog-studies))                                                             |
+| `--gwascatalog_base`                                 | GWAS Catalog FTP | mirror or local copy of the GWAS Catalog summary statistics                                                                                                          |
+| `--save_harmonized` / `--save_intermediates`         | `false`          | publish intermediate files                                                                                                                                           |
 
 `nextflow run mauricioroza/gencorr --help --show_hidden` lists everything.
 
@@ -303,9 +303,9 @@ filtered variants. The rule is LDSC munge's: a variant is removed when its value
 is **≤** the threshold. Missing values are kept (genotyped SNPs often have no
 INFO).
 
-* INFO comes from the INFO column (`info`, `info_ukb`, `impinfo`, `r2`, …).
-* MAF comes from a `MAF` column if present, otherwise `min(EAF, 1 − EAF)`.
-* If a file has no such column the threshold cannot be applied: nothing is
+- INFO comes from the INFO column (`info`, `info_ukb`, `impinfo`, `r2`, …).
+- MAF comes from a `MAF` column if present, otherwise `min(EAF, 1 − EAF)`.
+- If a file has no such column the threshold cannot be applied: nothing is
   removed and `harmonized/<id>.qc.json` contains `warning_min_info` /
   `warning_min_maf` (also printed in the task log).
 
@@ -321,12 +321,12 @@ By default LAVA uses every harmonized SNP that is also in the LD reference.
 `--lava_snp_list w_hm3.snplist` restricts LAVA to the IDs in a list
 (first column; header optional; plain or gzipped).
 
-| | all SNPs (default) | HapMap3 only (`--lava_snp_list w_hm3.snplist`) |
-|---|---|---|
-| information per locus | all SNPs; LAVA compresses LD to PCs itself | ~15–20% of SNPs; some loci drop to a handful of SNPs |
-| robustness to imputation quality | depends on QC → use `--min_info`/`--min_maf` | common, well-imputed SNPs only |
-| same SNPs across GWAS | pairwise intersection | fixed list |
-| ancestry | whatever the reference covers | HapMap3 is less complete outside European ancestry |
+|                                  | all SNPs (default)                           | HapMap3 only (`--lava_snp_list w_hm3.snplist`)       |
+| -------------------------------- | -------------------------------------------- | ---------------------------------------------------- |
+| information per locus            | all SNPs; LAVA compresses LD to PCs itself   | ~15–20% of SNPs; some loci drop to a handful of SNPs |
+| robustness to imputation quality | depends on QC → use `--min_info`/`--min_maf` | common, well-imputed SNPs only                       |
+| same SNPs across GWAS            | pairwise intersection                        | fixed list                                           |
+| ancestry                         | whatever the reference covers                | HapMap3 is less complete outside European ancestry   |
 
 LDSC is not affected (it has its own list: `--ldsc_merge_alleles`). The SNP set
 used is recorded in every LAVA row (`extra.snp_set`: `all` or the file name).

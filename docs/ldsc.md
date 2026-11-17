@@ -4,12 +4,12 @@ gencorr runs LDSC (Bulik-Sullivan et al.) from
 [CBIIT/ldsc](https://github.com/CBIIT/ldsc), a port of LDSC 1.0.1, the last
 release of the original code (Python 2.7, pandas 0.20), to Python 3:
 
-| | |
-|---|---|
-| code | CBIIT/ldsc, branch `ldsc313`, commit `128f996` (2026-11-03); logs say `Version 3.0.1` |
-| Python, numpy, pandas, scipy | 3.13.7, 2.4.3, 2.3.3, 1.15.0 |
-| image | `ghcr.io/mauricioroza/gencorr-ldsc:3.0.1-128f996` (`containers/gencorr-ldsc`, GPL-3.0) |
-| conda | no (container only; `-profile docker`, `singularity` or `apptainer`) |
+|                              |                                                                                        |
+| ---------------------------- | -------------------------------------------------------------------------------------- |
+| code                         | CBIIT/ldsc, branch `ldsc313`, commit `128f996` (2026-11-03); logs say `Version 3.0.1`  |
+| Python, numpy, pandas, scipy | 3.13.7, 2.4.3, 2.3.3, 1.15.0                                                           |
+| image                        | `ghcr.io/mauricioroza/gencorr-ldsc:3.0.1-128f996` (`containers/gencorr-ldsc`, GPL-3.0) |
+| conda                        | no (container only; `-profile docker`, `singularity` or `apptainer`)                   |
 
 The port changes Python 2 idioms (`print`, `xrange`, `map` returning lists,
 relative imports) and pandas/numpy API calls. The regression, jackknife and
@@ -57,12 +57,12 @@ h2 table, sample-overlap matrix, munged files row by row, munge SNP counts).
 References as in [bigagwas_comparison.md](bigagwas_comparison.md):
 `eur_w_ld_chr`, `w_hm3.snplist`.
 
-| data | pairs | result |
-|---|---|---|
-| BigaGWAS job 971 files (T2D x CHD), as for job 972 | 1 | **identical**: munged Z and N for all 1,217,311 rows of both traits, rg, se, z, p, h2, intercepts, gencov intercept, 2,937 SNPs, overlap matrix |
-| same, vs BigaGWAS job 972's own LDSC log | 1 | **identical**: rg 0.3476, se 0.0796, z 4.3684, p 1.2518e-05, 2,937 SNPs, h2 intercepts 1.7697 / 0.474, gencov intercept 0.0643 |
-| BigaGWAS upload files (bmi, neuro, depression, rheuma), incl. job 966 (bmi x depression, rg 0.1154) | 6 | munged files, rg, se, z, h2 table and overlap matrix identical; p identical in 5/6 pairs, neuro x rheuma 0.0375 vs 0.037473 (printing, see below) |
-| `-profile test` (small test references) | 6 | rg, se, z, h2, overlap and every LAVA estimate identical; p as above |
+| data                                                                                                | pairs | result                                                                                                                                            |
+| --------------------------------------------------------------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| BigaGWAS job 971 files (T2D x CHD), as for job 972                                                  | 1     | **identical**: munged Z and N for all 1,217,311 rows of both traits, rg, se, z, p, h2, intercepts, gencov intercept, 2,937 SNPs, overlap matrix   |
+| same, vs BigaGWAS job 972's own LDSC log                                                            | 1     | **identical**: rg 0.3476, se 0.0796, z 4.3684, p 1.2518e-05, 2,937 SNPs, h2 intercepts 1.7697 / 0.474, gencov intercept 0.0643                    |
+| BigaGWAS upload files (bmi, neuro, depression, rheuma), incl. job 966 (bmi x depression, rg 0.1154) | 6     | munged files, rg, se, z, h2 table and overlap matrix identical; p identical in 5/6 pairs, neuro x rheuma 0.0375 vs 0.037473 (printing, see below) |
+| `-profile test` (small test references)                                                             | 6     | rg, se, z, h2, overlap and every LAVA estimate identical; p as above                                                                              |
 
 Run time and memory on these (small) inputs: h2 and rg the same (4-7 s), munge
 ~25% faster with the port (7.5 s vs 10 s), peak memory ~10-30% higher

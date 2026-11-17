@@ -3,10 +3,10 @@
 Every method plugs into the same two contracts, so the rest of the pipeline
 (harmonization, pairing, merging, comparison tool) works for it unchanged:
 
-| contract | defined in | what it fixes |
-|---|---|---|
-| harmonized input | `bin/gencorr_common.py` → `HARMONIZED_COLUMNS` | SNP, CHR, BP, A1 (effect), A2, Z, BETA, SE, P, N, EAF, INFO |
-| standard output | `bin/gencorr_common.py` → `RESULT_COLUMNS` | one row per (pair, locus); method-specific values go in the JSON `extra` column |
+| contract         | defined in                                     | what it fixes                                                                   |
+| ---------------- | ---------------------------------------------- | ------------------------------------------------------------------------------- |
+| harmonized input | `bin/gencorr_common.py` → `HARMONIZED_COLUMNS` | SNP, CHR, BP, A1 (effect), A2, Z, BETA, SE, P, N, EAF, INFO                     |
+| standard output  | `bin/gencorr_common.py` → `RESULT_COLUMNS`     | one row per (pair, locus); method-specific values go in the JSON `extra` column |
 
 A method subworkflow therefore always looks like this:
 
@@ -132,10 +132,10 @@ rules to `conf/modules.config`.
 
 ## Candidate methods
 
-| method | scope | tool | note |
-|---|---|---|---|
-| ~~SumHer~~ | global | LDAK | **done** (`--methods sumher`) |
-| ~~Popcorn~~ | global, cross-ancestry | Popcorn | **done** (`--methods popcorn`; registry flag `cross_ancestry: true` makes it take the cross-ancestry pairs) |
-| HDL | global | R package | lower variance than LDSC |
-| HDL-L | local | R package | random-effects local rg, a useful cross-check of LAVA |
-| SUPERGNOVA, rho-HESS | local | | alternatives with different models |
+| method               | scope                  | tool      | note                                                                                                        |
+| -------------------- | ---------------------- | --------- | ----------------------------------------------------------------------------------------------------------- |
+| ~~SumHer~~           | global                 | LDAK      | **done** (`--methods sumher`)                                                                               |
+| ~~Popcorn~~          | global, cross-ancestry | Popcorn   | **done** (`--methods popcorn`; registry flag `cross_ancestry: true` makes it take the cross-ancestry pairs) |
+| HDL                  | global                 | R package | lower variance than LDSC                                                                                    |
+| HDL-L                | local                  | R package | random-effects local rg, a useful cross-check of LAVA                                                       |
+| SUPERGNOVA, rho-HESS | local                  |           | alternatives with different models                                                                          |

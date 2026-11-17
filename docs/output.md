@@ -32,22 +32,22 @@ results/
 Defined once in `bin/gencorr_common.py` (`RESULT_COLUMNS`) and enforced by
 `merge_results.py`. A table that does not follow it stops the pipeline.
 
-| column | LDSC | LAVA | SumHer |
-|---|---|---|---|
-| `method` | `ldsc` | `lava` | `sumher` |
-| `scope` | `global` | `local` | `global` |
-| `trait1`, `trait2` | IDs from the samplesheet (pairs are unordered; rg is symmetric) | same | same |
-| `locus`, `chr`, `start`, `stop` | NA | locus ID and coordinates from the locus file | NA |
-| `n_snps` | SNPs in the rg regression ("SNPs with valid alleles") | SNPs in the locus after alignment | NA (LDAK does not report the shared count; per-trait counts in `extra`) |
-| `rg` | genetic correlation | local rho | `Cor_All` |
-| `rg_se` | LDSC SE | NA (LAVA reports CIs, not SEs) | LDAK jackknife SE |
-| `rg_ci_low`, `rg_ci_high` | rg ± 1.96·SE (computed here) | LAVA 95% simulation CI | rg ± 1.96·SE (computed here) |
-| `z` | LDSC Z | NA | rg / SE (computed here) |
-| `p` | LDSC p | LAVA simulation p (bivariate) | two-sided normal p from z (computed here; LDAK gives none) |
-| `h2_1`, `h2_2` | observed-scale SNP-h2 of each trait from its own `--h2` run | local observed h2 (`run.univ`) | `Her1_All`, `Her2_All` |
-| `h2_1_se`, `h2_2_se` | LDSC SE | NA | LDAK SE |
-| `status` | see below | see below | see below |
-| `extra` | JSON: `gcov_int`, `gcov_int_se`, pair-specific h2/intercept of trait2, LDSC error text, log name | JSON: `univ_p_1/2`, `h2_latent_1/2`, `r2` and its CI, `K` (#PCs), `univ_thresh`, `seed`, `snp_set` (`all` or the `--lava_snp_list` file name) | JSON: `coher`/`coher_se` (coheritability), `overlap`/`overlap_se`, `scaling_1/2` (+SE, with genomic control), `n_snps_1/2` (tagging predictors found per trait), `p_method`, LDAK `error`, log name |
+| column                          | LDSC                                                                                             | LAVA                                                                                                                                          | SumHer                                                                                                                                                                                              |
+| ------------------------------- | ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `method`                        | `ldsc`                                                                                           | `lava`                                                                                                                                        | `sumher`                                                                                                                                                                                            |
+| `scope`                         | `global`                                                                                         | `local`                                                                                                                                       | `global`                                                                                                                                                                                            |
+| `trait1`, `trait2`              | IDs from the samplesheet (pairs are unordered; rg is symmetric)                                  | same                                                                                                                                          | same                                                                                                                                                                                                |
+| `locus`, `chr`, `start`, `stop` | NA                                                                                               | locus ID and coordinates from the locus file                                                                                                  | NA                                                                                                                                                                                                  |
+| `n_snps`                        | SNPs in the rg regression ("SNPs with valid alleles")                                            | SNPs in the locus after alignment                                                                                                             | NA (LDAK does not report the shared count; per-trait counts in `extra`)                                                                                                                             |
+| `rg`                            | genetic correlation                                                                              | local rho                                                                                                                                     | `Cor_All`                                                                                                                                                                                           |
+| `rg_se`                         | LDSC SE                                                                                          | NA (LAVA reports CIs, not SEs)                                                                                                                | LDAK jackknife SE                                                                                                                                                                                   |
+| `rg_ci_low`, `rg_ci_high`       | rg ± 1.96·SE (computed here)                                                                     | LAVA 95% simulation CI                                                                                                                        | rg ± 1.96·SE (computed here)                                                                                                                                                                        |
+| `z`                             | LDSC Z                                                                                           | NA                                                                                                                                            | rg / SE (computed here)                                                                                                                                                                             |
+| `p`                             | LDSC p                                                                                           | LAVA simulation p (bivariate)                                                                                                                 | two-sided normal p from z (computed here; LDAK gives none)                                                                                                                                          |
+| `h2_1`, `h2_2`                  | observed-scale SNP-h2 of each trait from its own `--h2` run                                      | local observed h2 (`run.univ`)                                                                                                                | `Her1_All`, `Her2_All`                                                                                                                                                                              |
+| `h2_1_se`, `h2_2_se`            | LDSC SE                                                                                          | NA                                                                                                                                            | LDAK SE                                                                                                                                                                                             |
+| `status`                        | see below                                                                                        | see below                                                                                                                                     | see below                                                                                                                                                                                           |
+| `extra`                         | JSON: `gcov_int`, `gcov_int_se`, pair-specific h2/intercept of trait2, LDSC error text, log name | JSON: `univ_p_1/2`, `h2_latent_1/2`, `r2` and its CI, `K` (#PCs), `univ_thresh`, `seed`, `snp_set` (`all` or the `--lava_snp_list` file name) | JSON: `coher`/`coher_se` (coheritability), `overlap`/`overlap_se`, `scaling_1/2` (+SE, with genomic control), `n_snps_1/2` (tagging predictors found per trait), `p_method`, LDAK `error`, log name |
 
 Read it in R with `read.delim("gencorr_results.tsv", quote = "")` or in Python
 with `pandas.read_csv(..., sep="\t", quoting=3)`. Parse `extra` with
@@ -55,21 +55,21 @@ with `pandas.read_csv(..., sep="\t", quoting=3)`. Parse `extra` with
 
 ### `status` values
 
-| status | method | meaning |
-|---|---|---|
-| `ok` | all | estimate available |
-| `rg_not_estimable` | ldsc, sumher, popcorn | the tool returned no usable rg or SE (usually h2 ≤ 0 for one trait) |
-| `ldsc_error` | ldsc | LDSC raised an error for this pair; message in `extra.error` (e.g. incompatible alleles without `--ldsc_merge_alleles`) |
-| `univ_filtered` | lava | one or both traits have local univariate p ≥ `--lava_univ_thresh`; not tested (LAVA's standard practice) |
-| `estimate_out_of_bounds` | lava | LAVA set the estimate to NA because it exceeded `--lava_param_lim` |
-| `trait_dropped_in_locus` | lava | LAVA dropped a trait in this locus (invalid local estimates) |
-| `no_snps_in_locus` | lava | no SNP shared by the traits and the reference falls in the locus; skipped without calling LAVA (fast) |
-| `locus_not_processed` | lava | LAVA could not process the locus (e.g. too few SNPs or PCs) |
-| `bivar_error` | lava | `run.bivar` raised an error (message in the task log) |
-| `sumher_error` | sumher | LDAK stopped for this pair (e.g. no shared predictors with the tagging file); its message is in `extra.error` |
-| `popcorn_error` | popcorn | Popcorn stopped for this pair; the last error line is in `extra.error` |
-| `same_ancestry` | popcorn | both traits have the same ancestry; Popcorn is only run on cross-ancestry pairs (the other methods estimate this pair) |
-| `cross_ancestry` | ldsc, lava, sumher | the two traits have different `ancestry` in the samplesheet; these methods assume one population, so the pair is not estimated (Popcorn estimates it). One row per method (locus NA); `extra` holds `ancestry_1` / `ancestry_2` |
+| status                   | method                | meaning                                                                                                                                                                                                                         |
+| ------------------------ | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ok`                     | all                   | estimate available                                                                                                                                                                                                              |
+| `rg_not_estimable`       | ldsc, sumher, popcorn | the tool returned no usable rg or SE (usually h2 ≤ 0 for one trait)                                                                                                                                                             |
+| `ldsc_error`             | ldsc                  | LDSC raised an error for this pair; message in `extra.error` (e.g. incompatible alleles without `--ldsc_merge_alleles`)                                                                                                         |
+| `univ_filtered`          | lava                  | one or both traits have local univariate p ≥ `--lava_univ_thresh`; not tested (LAVA's standard practice)                                                                                                                        |
+| `estimate_out_of_bounds` | lava                  | LAVA set the estimate to NA because it exceeded `--lava_param_lim`                                                                                                                                                              |
+| `trait_dropped_in_locus` | lava                  | LAVA dropped a trait in this locus (invalid local estimates)                                                                                                                                                                    |
+| `no_snps_in_locus`       | lava                  | no SNP shared by the traits and the reference falls in the locus; skipped without calling LAVA (fast)                                                                                                                           |
+| `locus_not_processed`    | lava                  | LAVA could not process the locus (e.g. too few SNPs or PCs)                                                                                                                                                                     |
+| `bivar_error`            | lava                  | `run.bivar` raised an error (message in the task log)                                                                                                                                                                           |
+| `sumher_error`           | sumher                | LDAK stopped for this pair (e.g. no shared predictors with the tagging file); its message is in `extra.error`                                                                                                                   |
+| `popcorn_error`          | popcorn               | Popcorn stopped for this pair; the last error line is in `extra.error`                                                                                                                                                          |
+| `same_ancestry`          | popcorn               | both traits have the same ancestry; Popcorn is only run on cross-ancestry pairs (the other methods estimate this pair)                                                                                                          |
+| `cross_ancestry`         | ldsc, lava, sumher    | the two traits have different `ancestry` in the samplesheet; these methods assume one population, so the pair is not estimated (Popcorn estimates it). One row per method (locus NA); `extra` holds `ancestry_1` / `ancestry_2` |
 
 **Popcorn** (`method = popcorn`, `scope = global`, cross-ancestry pairs; trait1
 is from the score file's first population): `n_snps` = SNPs used after merging
@@ -94,26 +94,26 @@ holds an error; message in the `LDSC_SUMMARISE` task log) or
 
 One row per (locus, trait) that LAVA processed:
 
-| column | meaning |
-|---|---|
-| `locus`, `chr`, `start`, `stop` | locus ID and coordinates |
-| `phenotype` | trait ID |
-| `h2_obs` | local observed-scale h2 (`run.univ`) |
-| `h2_latent` | local liability-scale h2; only for binary traits with `pop_prev` (else NA) |
-| `p` | univariate p-value (compared with `--lava_univ_thresh`) |
-| `n_snps`, `K` | SNPs in the locus and number of PCs LAVA kept |
-| `loaded_traits` | traits loaded together in that LAVA call (`;`-separated): the pair with `pairwise`, all traits with `joint` |
+| column                          | meaning                                                                                                     |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `locus`, `chr`, `start`, `stop` | locus ID and coordinates                                                                                    |
+| `phenotype`                     | trait ID                                                                                                    |
+| `h2_obs`                        | local observed-scale h2 (`run.univ`)                                                                        |
+| `h2_latent`                     | local liability-scale h2; only for binary traits with `pop_prev` (else NA)                                  |
+| `p`                             | univariate p-value (compared with `--lava_univ_thresh`)                                                     |
+| `n_snps`, `K`                   | SNPs in the locus and number of PCs LAVA kept                                                               |
+| `loaded_traits`                 | traits loaded together in that LAVA call (`;`-separated): the pair with `pairwise`, all traits with `joint` |
 
 ## Precision
 
-* LDSC values are copied from LDSC's logs, which print 4 decimals. That is
+- LDSC values are copied from LDSC's logs, which print 4 decimals. That is
   the precision of all LDSC numbers here.
-* LAVA values are written with 10 significant digits in the results tables
+- LAVA values are written with 10 significant digits in the results tables
   (15 in `gencorr.lava_univ.tsv`). CIs and
   p-values are Monte Carlo estimates (1e4 to 1e6 draws). They are exactly
   reproducible for a given `--lava_seed`, but a different seed gives slightly
   different values.
-* SumHer and Popcorn values are the tools' own printed numbers (LDAK prints
+- SumHer and Popcorn values are the tools' own printed numbers (LDAK prints
   6 decimals).
 
 ## `harmonized/<id>.qc.json`
