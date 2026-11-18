@@ -264,6 +264,29 @@ def sample_overlap_matrix(rg: pd.DataFrame, h2: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(np.round(corr, 5), index=traits, columns=traits)
 
 
+def overlap_problems(mat: pd.DataFrame) -> list[str]:
+    """Why the sampling-correlation matrix is not a valid correlation matrix
+    (empty if it is positive definite). LAVA does not check this itself; with
+    --lava_snp_set joint all traits are used together, with pairwise only 2x2
+    blocks (positive definite iff |r| < 1). run_lava.R stops on the block it
+    actually uses; here the whole matrix is only reported."""
+    if mat.empty:
+        return []
+    problems = []
+    traits = list(mat.index)
+    v = mat.to_numpy(dtype=float)
+    for i in range(len(traits)):
+        for j in range(i + 1, len(traits)):
+            if abs(v[i, j]) >= 1:
+                problems.append(f"{traits[i]} x {traits[j]}: |r| = {abs(v[i, j]):.5f} >= 1 "
+                                "(gcov_int too large for the h2 intercepts)")
+    min_eig = float(np.linalg.eigvalsh(v).min())
+    if min_eig <= 1e-8:
+        problems.append(f"smallest eigenvalue {min_eig:.3g}: the matrix of all traits is not "
+                        "positive definite (matters for --lava_snp_set joint)")
+    return problems
+
+
 def write_overlap(mat: pd.DataFrame, path: str) -> None:
     # R read.table() format: header holds only column names; each row starts
     # with its row name. This is what LAVA's process.sample.overlap() expects.
@@ -290,8 +313,12 @@ def main(argv=None):
 
     write_tsv(results, f"{args.out}.ldsc.tsv")
     write_tsv(h2, f"{args.out}.ldsc_h2.tsv")
-    write_overlap(sample_overlap_matrix(rg, h2) if len(h2) else pd.DataFrame(),
-                  f"{args.out}.sample_overlap.txt")
+    overlap = sample_overlap_matrix(rg, h2) if len(h2) else pd.DataFrame()
+    for problem in overlap_problems(overlap):
+        print(f"WARNING: sample-overlap matrix: {problem}. LAVA stops if it needs this part "
+              "of the matrix; check the LDSC intercepts or run without --lava_overlap.",
+              file=sys.stderr)
+    write_overlap(overlap, f"{args.out}.sample_overlap.txt")
     print(f"ldsc: {len(h2)} traits, {len(results)} pairs, "
           f"status {results['status'].value_counts().to_dict() if len(results) else {}}")
 

@@ -105,6 +105,22 @@ def test_sample_overlap_is_zero_for_trait_without_intercept():
     assert (np.diag(mat.values) == 1).all()
 
 
+def test_overlap_problems_reports_invalid_matrices():
+    h2 = parse_ldsc.collect_h2([LOGS / f"{t}.h2.log" for t in ["bmi", "neuro", "depression", "rheuma"]])
+    rg = parse_ldsc.parse_rg_log(LOGS / "bmi__b1.rg.log")
+    assert parse_ldsc.overlap_problems(parse_ldsc.sample_overlap_matrix(rg, h2)) == []
+    assert parse_ldsc.overlap_problems(pd.DataFrame()) == []
+
+    t = ["a", "b", "c"]
+    too_big = pd.DataFrame([[1, 1.2, 0], [1.2, 1, 0], [0, 0, 1]], index=t, columns=t)
+    problems = parse_ldsc.overlap_problems(too_big)
+    assert any("a x b" in p for p in problems) and any("eigenvalue" in p for p in problems)
+    # every pair valid (|r| < 1) but the three together are not: only joint mode is affected
+    joint_only = pd.DataFrame([[1, 0.9, -0.9], [0.9, 1, 0.9], [-0.9, 0.9, 1]], index=t, columns=t)
+    problems = parse_ldsc.overlap_problems(joint_only)
+    assert len(problems) == 1 and "joint" in problems[0]
+
+
 def test_parse_ldsc_cli(tmp_path):
     logs = [LOGS / f"{t}.h2.log" for t in ["bmi", "neuro", "depression", "rheuma"]]
     run(["python3", BIN / "parse_ldsc.py", "--h2-logs", *logs, LOGS / "depression.h2_liab.log",
@@ -138,6 +154,43 @@ def test_merge_rejects_wrong_schema(tmp_path):
     bad.to_csv(tmp_path / "bad.tsv", sep="\t", index=False)
     with pytest.raises(AssertionError, match="missing result columns"):
         run(["python3", BIN / "merge_results.py", "--out", tmp_path / "m.tsv", tmp_path / "bad.tsv"])
+
+
+def test_bh_qvalues_match_r_p_adjust():
+    import merge_results
+    p = np.array([0.01, 0.04, 0.03, 0.5, 0.001, 0.04])
+    # R: p.adjust(c(0.01, 0.04, 0.03, 0.5, 0.001, 0.04), "BH")
+    expected = [0.03, 0.048, 0.048, 0.5, 0.006, 0.048]
+    assert np.allclose(merge_results.bh_qvalues(p), expected)
+
+
+def test_merge_adjust_p_counts_only_tested_rows(tmp_path):
+    lava = dict(method="lava", scope="local", trait1="a", trait2="b", chr="1", start=1, stop=2)
+    rows = [
+        _results(**lava, locus="1", p=0.01, extra='{"K":2,"univ_p_1":1e-04}'),
+        _results(**lava, locus="2", p=0.04, extra='{"K":3}'),
+        _results(**lava, locus="3", p=np.nan, status="univ_filtered", extra='{"K":NA}'.replace("NA", "null")),
+        _results(**lava, locus="4", p=0.5, status="estimate_out_of_bounds", extra="{}"),
+        _results(locus=np.nan, p=0.2),                      # ldsc: its own family of one
+    ]
+    for i, r in enumerate(rows):
+        write_tsv(r, tmp_path / f"{i}.tsv")
+    run(["python3", BIN / "merge_results.py", "--adjust-p", "--out", tmp_path / "m.tsv",
+         *[tmp_path / f"{i}.tsv" for i in range(len(rows))]])
+    m = read_tsv(tmp_path / "m.tsv").set_index(["method", "locus"], drop=False)
+    e1 = m.loc[("lava", "1"), "extra"]
+    assert e1.startswith('{"K":2,"univ_p_1":1e-04,')                  # R's text kept as is
+    x1, x2 = json.loads(e1), json.loads(m.loc[("lava", "2"), "extra"])
+    assert (x1["n_tests"], x1["p_bonferroni"], x1["q_fdr"]) == (2, 0.02, 0.02)
+    assert (x2["p_bonferroni"], x2["q_fdr"]) == (0.08, 0.04)
+    assert "q_fdr" not in json.loads(m.loc[("lava", "3"), "extra"])
+    assert json.loads(m.loc[("lava", "4"), "extra"]) == {}
+    ldsc = json.loads(m[m["method"] == "ldsc"]["extra"].iloc[0])
+    assert ldsc == {"p_bonferroni": 0.2, "q_fdr": 0.2, "n_tests": 1}
+
+    # running the merge again on its own output does not stack the keys
+    run(["python3", BIN / "merge_results.py", "--adjust-p", "--out", tmp_path / "m2.tsv", tmp_path / "m.tsv"])
+    assert read_tsv(tmp_path / "m2.tsv")["extra"].tolist() == read_tsv(tmp_path / "m.tsv")["extra"].tolist()
 
 
 # ------------------------------------------------------------------- compare --

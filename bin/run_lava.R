@@ -133,6 +133,25 @@ cat("LAVA version:", as.character(packageVersion("LAVA")), "\n")
 cat("Traits loaded together (SNPs intersected across all of them):",
     paste(phenos, collapse = ", "), "\n")
 
+# LAVA 0.1.5 uses the sample-overlap matrix without checking it. A block that is
+# not positive definite (e.g. |r| >= 1 from LDSC intercepts) gives meaningless
+# estimates, so stop with a clear message instead.
+check_overlap <- function(path, phenos) {
+    m <- as.matrix(read.table(path, header = TRUE, check.names = FALSE))
+    use <- intersect(phenos, rownames(m))
+    if (length(use) < 2) return(invisible(NULL))
+    block <- m[use, use, drop = FALSE]
+    min_eig <- min(eigen((block + t(block)) / 2, symmetric = TRUE, only.values = TRUE)$values)
+    if (min_eig <= 1e-8) {
+        stop(sprintf(paste0(
+            "sample-overlap matrix for traits %s is not positive definite (smallest eigenvalue %.3g). ",
+            "LAVA would give meaningless estimates. Check the LDSC h2/gcov intercepts of these ",
+            "traits (ldsc/gencorr.sample_overlap.txt), or run without --lava_overlap."),
+            paste(use, collapse = ", "), min_eig), call. = FALSE)
+    }
+}
+if (!is.null(overlap)) check_overlap(overlap, phenos)
+
 input <- process.input(input.info.file = info_file, sample.overlap.file = overlap,
                        ref.prefix = ref_prefix, phenos = phenos)
 loci <- read.loci(loci_file)

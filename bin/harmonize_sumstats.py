@@ -7,8 +7,10 @@ What it does, in order (every step is counted in the QC report):
 
  1. Detect the delimiter (tab, comma or whitespace) and read the header.
  2. Map source columns to standard names using a synonym table
-    (COLUMN_SYNONYMS below); --colmap overrides any automatic choice. Only the
-    mapped columns are then read (IDs and alleles as text, the rest as numbers).
+    (COLUMN_SYNONYMS below); --colmap overrides any automatic choice. SAIGE
+    (effect = Allele2) and PLINK 2 --glm (A1 may be REF) allele columns are
+    recognised by detect_layout(). Only the mapped columns are then read (IDs
+    and alleles as text, the rest as numbers).
  3. Normalise IDs and alleles: upper-case alleles, "rs" IDs lower-cased,
     "chr" prefix stripped from chromosomes.
  3b. Optional rsID mapping (--rsid-map): rows whose SNP ID is not an rsID
@@ -29,14 +31,16 @@ What it does, in order (every step is counted in the QC report):
  6. Resolve the per-variant N: N column > samplesheet --n > cases + controls >
     the study's N from GWAS Catalog metadata (--source-info).
  7. Drop variants that cannot be used: missing SNP/alleles/Z/N, non-SNV or
-    multi-character alleles, A1 == A2, (optionally) strand-ambiguous A/T and C/G
-    pairs, and every copy of a duplicated SNP ID.
+    multi-character alleles, A1 == A2, and (optionally) strand-ambiguous A/T
+    and C/G pairs.
  8. Optional QC thresholds (--min-info, --min-maf; off by default). Same rule
     as LDSC munge: a variant is removed when its value is <= the threshold.
     Variants with a missing INFO/MAF value are kept (genotyped SNPs often have
     no INFO). MAF comes from a MAF column if present, else min(EAF, 1 - EAF).
     If the file has neither column, the threshold cannot be applied and the
     QC report says so (no variant is removed for it).
+ 8b. Drop every copy of an SNP ID that is still duplicated after 7 and 8 (so a
+    bad copy removed there does not take the good one with it).
  9. Recompute P from Z where P is missing or 0, and write the harmonized table
     plus a JSON QC report with counts and the median-chi2 lambda (lambda_GC).
 
@@ -68,23 +72,34 @@ from gencorr_common import HARMONIZED_COLUMNS, NA_VALUES, die, open_text  # noqa
 # you know it is a Z.
 COLUMN_SYNONYMS: dict[str, list[str]] = {
     "SNP": ["snp", "rsid", "rs_id", "hm_rsid", "variant_id", "markername",
-            "snpid", "snpid_ukb", "rsid_ukb", "id", "marker"],
+            "snpid", "snpid_ukb", "rsid_ukb", "id", "marker", "markerid"],
     "CHR": ["chr", "chrom", "chromosome", "hm_chrom", "#chrom", "#chr"],
-    "BP": ["bp", "pos", "position", "base_pair_location", "hm_pos", "bp_hg19"],
+    # genpos last: in REGENIE it is the base-pair position, in BOLT-LMM (which
+    # also has BP) a genetic position in cM
+    "BP": ["bp", "pos", "position", "base_pair_location", "hm_pos", "bp_hg19", "genpos"],
+    # allele1/allele2 follow METAL (Allele1 = effect). SAIGE (effect = Allele2)
+    # and PLINK 2 (A1 may equal REF) are recognised by detect_layout().
     "A1": ["a1", "effect_allele", "hm_effect_allele", "ea", "alt", "allele1",
            "tested_allele"],
     "A2": ["a2", "other_allele", "hm_other_allele", "nea", "ref", "allele2",
-           "non_effect_allele"],
+           "allele0", "non_effect_allele"],
+    # ALT: never auto-mapped; with A2=REF it gives the other allele on rows
+    # where the effect allele A1 is the REF allele (PLINK 2 --glm)
+    "ALT": [],
     "Z": ["z", "zscore", "z_score", "z-score", "z_stat"],
     "BETA": ["beta", "hm_beta", "b", "effect", "logor", "log_or", "log_odds"],
     "OR": ["or", "odds_ratio", "hm_odds_ratio"],
     "SE": ["se", "standard_error", "stderr", "stderrlogor", "se_beta", "log_or_se"],
-    "P": ["p", "pval", "p_value", "pvalue", "p-value", "p_val", "p.value"],
+    "P": ["p", "pval", "p_value", "pvalue", "p-value", "p_val", "p.value",
+          "p_bolt_lmm", "p_bolt_lmm_inf"],
+    # -log10(P) (REGENIE LOG10P, PLINK 2 LOG10_P): used only when there is no P
+    "LOG10P": ["log10p", "log10_p", "neg_log10_p", "mlog10p"],
     "N": ["n", "n_total", "nmiss", "n_analyzed", "obs_ct", "n_samples",
           "sample_size", "neff", "n_eff"],
     "EAF": ["eaf", "effect_allele_frequency", "hm_effect_allele_frequency",
             "a1freq", "a1_freq", "freq", "frq", "freq1", "af"],
-    "INFO": ["info", "info_ukb", "imputation_info", "impinfo", "r2"],
+    # no "r2": in some formats it is the model R2 or an LD r2, not imputation INFO
+    "INFO": ["info", "info_ukb", "imputation_info", "impinfo", "imputationinfo"],
     # MAF is read only for --min-maf; it is not written to the harmonized file
     # (it has no allele orientation, unlike EAF)
     "MAF": ["maf", "minor_allele_frequency"],
@@ -200,14 +215,45 @@ def read_header(path: Path) -> list[str]:
                             compression="infer").columns)
 
 
-STRING_COLUMNS = {"SNP", "CHR", "A1", "A2"}   # every other mapped column goes through to_num
+STRING_COLUMNS = {"SNP", "CHR", "A1", "A2", "ALT"}   # every other mapped column goes through to_num
+
+
+def _lower_to_source(header: list[str]) -> dict[str, str]:
+    out: dict[str, str] = {}
+    for col in header:
+        out.setdefault(col.strip().lower(), col)
+    return out
+
+
+def detect_layout(header: list[str]) -> tuple[str | None, dict[str, str]]:
+    """Recognise GWAS software whose allele columns the synonym table would get
+    wrong, and return (layout name, allele column mapping):
+
+    - SAIGE: Allele1 is the reference allele and BETA refers to Allele2
+      (recognised by AF_Allele2 / AC_Allele2), so A1 = Allele2, A2 = Allele1.
+    - PLINK 2 --glm: A1 is the tested allele and may be REF or ALT. A2 is the
+      OMITTED column when present, otherwise REF, replaced by ALT on rows where
+      A1 is the REF allele (see ALT in harmonize()).
+    """
+    present = _lower_to_source(header)
+    if {"allele1", "allele2"} <= set(present) and {"af_allele2", "ac_allele2"} & set(present):
+        out = {"A1": present["allele2"], "A2": present["allele1"]}
+        if "af_allele2" in present:
+            out["EAF"] = present["af_allele2"]
+        return "saige", out
+    if {"a1", "ref", "alt"} <= set(present):
+        if "omitted" in present:
+            return "plink2", {"A1": present["a1"], "A2": present["omitted"]}
+        return "plink2", {"A1": present["a1"], "A2": present["ref"], "ALT": present["alt"]}
+    return None, {}
 
 
 def map_columns(header: list[str], overrides: dict[str, str]) -> dict[str, str]:
-    """Return {standard_name: source_column}."""
-    lower_to_source = {}
-    for col in header:
-        lower_to_source.setdefault(col.strip().lower(), col)
+    """Return {standard_name: source_column}. A layout from detect_layout() is
+    used unless --colmap (or the GWAS Catalog hm_ set) names A1 or A2."""
+    lower_to_source = _lower_to_source(header)
+    if not {"A1", "A2"} & set(overrides):
+        overrides = {**detect_layout(header)[1], **overrides}
     mapping: dict[str, str] = {}
     for standard, synonyms in COLUMN_SYNONYMS.items():
         if standard in overrides:
@@ -366,6 +412,24 @@ def harmonize(raw: pd.DataFrame, mapping: dict[str, str], *, n=None, n_cases=Non
 
     out["A1"] = by_value(col("A1"), lambda v: v.strip().upper())
     out["A2"] = by_value(col("A2"), lambda v: v.strip().upper())
+    if "ALT" in mapping:
+        # A2 is REF; where the effect allele is the REF allele, the other one is ALT
+        alt = by_value(col("ALT"), lambda v: v.strip().upper())
+        a1_is_ref = (out["A1"] == out["A2"]).fillna(False)
+        out.loc[a1_is_ref, "A2"] = alt[a1_is_ref]
+        qc["a2_from_alt"] = int(a1_is_ref.sum())
+        del alt, a1_is_ref
+
+    header = raw.attrs.get("header", list(raw.columns))
+    layout, layout_cols = detect_layout(header)
+    if layout and all(mapping.get(k) == v for k, v in layout_cols.items()):
+        qc["layout"] = layout
+    elif (mapping["A1"].strip().lower() == "allele1" and mapping["A2"].strip().lower() == "allele2"
+          and "markername" not in _lower_to_source(header)):
+        qc["warning_allele_orientation"] = (
+            f"effect allele taken from '{mapping['A1']}' (METAL convention: Allele1 = effect). "
+            "Some software (e.g. SAIGE, effect = Allele2) uses the opposite: check which "
+            "allele BETA/Z refers to, and set colmap (A1=..., A2=...) if needed.")
 
     # ---- rsIDs: every method matches variants by rsID ---------------------- #
     share_rs = float(is_rs.mean()) if len(out) else 1.0
@@ -386,6 +450,9 @@ def harmonize(raw: pd.DataFrame, mapping: dict[str, str], *, n=None, n_cases=Non
         qc["beta_from_or"] = True
     se = to_num(col("SE"))
     pval = to_num(col("P"))
+    if pval is None and "LOG10P" in mapping:
+        pval = 10.0 ** -to_num(col("LOG10P"))   # underflow -> 0 -> next Z source, P from Z
+        qc["p_from_log10p"] = True
     zcol = to_num(col("Z"))
 
     # ---- choose Z per variant according to priority ---------------------- #
@@ -532,7 +599,7 @@ def load_input(path: Path, overrides: dict[str, str], gwas_catalog=False,
     usecols = list(dict.fromkeys(mapping.values()))
     numeric = [c for c in usecols
                if not any(std in STRING_COLUMNS for std, src in mapping.items() if src == c)]
-    shared = [mapping[s] for s in ("CHR", "A1", "A2") if s in mapping and mapping[s] not in numeric]
+    shared = [mapping[s] for s in ("CHR", "A1", "A2", "ALT") if s in mapping and mapping[s] not in numeric]
     raw = read_table(path, usecols=usecols, numeric=numeric, shared=shared, chunksize=chunksize)
     raw.attrs["header"] = header
     return raw, mapping
@@ -559,7 +626,8 @@ def main(argv=None):
             "file_type", "date_metadata_last_modified", "trait", "samples", "n", "warnings")}
         for w in source.get("warnings") or []:
             print(f"WARNING ({args.id}, {source.get('accession')}): {w}", file=sys.stderr)
-    for key in ("warning_min_info", "warning_min_maf", "warning_effective_n", "warning_non_rsid"):
+    for key in ("warning_min_info", "warning_min_maf", "warning_effective_n", "warning_non_rsid",
+                "warning_allele_orientation"):
         if key in qc:
             print(f"WARNING ({args.id}): {qc[key]}", file=sys.stderr)
     if "rsid_mapping" in qc:

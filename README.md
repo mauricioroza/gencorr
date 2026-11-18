@@ -37,7 +37,8 @@ and Popcorn on any set of traits and returns one tidy results table.
   lookup or liftover), LAVA loci run in parallel chunks and empty loci are
   skipped.
 - **Reproducible.** Every tool version is pinned, LAVA's Monte Carlo steps are
-  seeded per (locus, pair), and outputs are byte-identical on re-runs.
+  seeded per (locus, pair), and result files are byte-identical on re-runs
+  (only tool logs differ, by their timestamps).
 - **Nothing disappears.** Pairs and loci that could not be estimated stay in
   the table with a `status` explaining why.
 - **Extensible.** Every method reads the same harmonized input and writes the
@@ -87,7 +88,19 @@ The LDSC, SumHer and Popcorn images (`ghcr.io/mauricioroza/gencorr-ldsc:3.0.1-12
 `ghcr.io/mauricioroza/gencorr-ldak:6.1`,
 `ghcr.io/mauricioroza/gencorr-popcorn:1.0.0-20a29e8`, all GPL-3.0) are
 published on ghcr.io and pulled automatically; their recipes are in
-[containers/](containers/).
+[containers/](containers/). If a pull fails (`denied` / `unauthorized`), build
+all four locally under the same names:
+
+```bash
+for d in ldsc:3.0.1-128f996 ldak:6.1 popcorn:1.0.0-20a29e8 tools:0.1.0; do
+  docker build -t ghcr.io/mauricioroza/gencorr-$d containers/gencorr-${d%%:*}
+done
+```
+
+**ARM64 (Apple Silicon, Graviton, Ampere):** LDSC, LAVA and Popcorn build and
+run natively. LDAK (SumHer) is only distributed for x86_64, so either leave
+`sumher` out of `--methods` or build and run that image with
+`--platform linux/amd64` (emulated, slower).
 
 **3. Check your setup** on the bundled test data (4 traits, 6 pairs, a few minutes):
 

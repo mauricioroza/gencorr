@@ -2,7 +2,8 @@
 
 Nextflow (nf-core template) pipeline for global and local genetic correlation (LDSC + LAVA)
 for the Genis group. Owner: GitHub `mauricioroza`,
-repo `mauricioroza/gencorr` (private), working branch `dev` (also `master`, `TEMPLATE`).
+repo `mauricioroza/gencorr` (public; this file is published with it), working branch `dev`
+(also `master`, `TEMPLATE`).
 
 Goals: reproducible, testable, well documented; results checkable against the original tools;
 new methods easy to add. A Rust rewrite was considered and rejected (stats run inside LDSC/LAVA;
@@ -138,6 +139,15 @@ mention it only as a comparison reference.
   the four images from containers/ into the Actions cache (`.github/actions/build-images`, never pushed:
   LAVA licence) and runs docker only. pre-commit excludes `tests/python/fixtures/` (raw tool outputs).
   No real genome-wide run yet.
+- External audit (2026-11-17, ARM VM): reproduced the test snapshot exactly. Fixed on dev
+  2026-11-18 (uncommitted at time of writing): SAIGE/PLINK 2/REGENIE/BOLT allele layouts
+  (`detect_layout`, tests/python/test_input_layouts.py; `r2` no longer INFO); samplesheet id
+  forbids `__`/trailing `_`, colmap forbids `'`; LAVA `extra` gets p_bonferroni/q_fdr/n_tests
+  (merge_results.py --adjust-p, only in METHOD_LAVA's merge); overlap matrix PD check
+  (parse_ldsc warns, run_lava.R stops); Popcorn Dockerfile compiles on arm64; README ARM note.
+  test_cli_options.py: save_* checks run with ldsc,lava only; the SumHer check skips without
+  the LDAK image. Open: images ldak/popcorn are private on ghcr.io and ldsc:3.0.1-128f996 is
+  not pushed (user).
 - BigaGWAS's own LAVA scripts (specific_lava.R, 2traits.R, lava_pgc.R) are not public, so its settings are
   partly unknown.
 

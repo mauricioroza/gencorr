@@ -6,7 +6,7 @@ CSV, one row per trait. Only `id` and `sumstats` are required.
 
 | column                  | meaning                                                                                                                                                                                                |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `id`                    | short trait ID: starts with a letter; letters, digits, `_ . -`. Becomes file names and the LAVA phenotype ID.                                                                                          |
+| `id`                    | short trait ID: starts with a letter; letters, digits, `_ . -`; no `__` (it joins IDs in pair names) and no trailing `_`. Becomes file names and the LAVA phenotype ID.                                                                                  |
 | `sumstats`              | path or URL to the summary statistics (plain or `.gz`; tab, comma or whitespace separated), **or a GWAS Catalog accession** such as `GCST90000016` (see [GWAS Catalog studies](#gwas-catalog-studies)) |
 | `n`                     | total sample size, used **only** if the file has no N column                                                                                                                                           |
 | `n_cases`, `n_controls` | binary traits. Used for N when missing, for LAVA's case/control model and for LDSC liability h2                                                                                                        |
@@ -127,18 +127,31 @@ The harmonizer recognises the usual names case-insensitively (full list in
 | ------------------- | ----------------------------------------------------------------------- |
 | SNP                 | snp, rsid, rs_id, hm_rsid, variant_id, markername, snpid, snpid_ukb, …  |
 | A1 (effect)         | a1, effect_allele, hm_effect_allele, ea, alt, allele1, tested_allele    |
-| A2                  | a2, other_allele, hm_other_allele, nea, ref, allele2, non_effect_allele |
+| A2                  | a2, other_allele, hm_other_allele, nea, ref, allele2, allele0, non_effect_allele |
 | Z                   | z, zscore, z_score, z-score, z_stat                                     |
 | BETA                | beta, hm_beta, b, effect, logor, log_or, log_odds                       |
 | OR                  | or, odds_ratio, hm_odds_ratio (converted to BETA = ln OR)               |
-| SE, P, N, EAF, INFO | the usual spellings                                                     |
+| P                   | p, pval, p_value, p.value, …, p_bolt_lmm; else -log10 P from log10p / log10_p |
+| SE, N, EAF, INFO    | the usual spellings (`r2` is not taken as INFO: it is often a model or LD r²) |
 
 `STAT` is **never** mapped automatically. Depending on the software it is a Z,
 t or chi-square statistic, so map it with `colmap` if you know it is a Z.
 
-**A1 must be the effect allele.** GWAS Catalog harmonised files
-(`hm_effect_allele`) are handled. Check files where "A1" means something else
-(e.g. PLINK 1.9 `.assoc` A1 = minor allele, which _is_ the tested allele).
+**A1 must be the effect allele.** These layouts are recognised from their headers:
+
+| software                     | effect allele | other allele                                         |
+| ---------------------------- | ------------- | ---------------------------------------------------- |
+| GWAS Catalog harmonised      | `hm_effect_allele` | `hm_other_allele`                               |
+| METAL                        | `Allele1`     | `Allele2`                                            |
+| SAIGE (has `AF_Allele2`/`AC_Allele2`) | `Allele2` | `Allele1` (EAF from `AF_Allele2`)                 |
+| PLINK 2 `--glm` (`A1`, `REF`, `ALT`)  | `A1`  | `OMITTED` if present, else whichever of REF/ALT is not A1 |
+| REGENIE, BOLT-LMM            | `ALLELE1`     | `ALLELE0`                                            |
+
+Any other file with only `Allele1`/`Allele2` columns is read the METAL way and
+the QC report (and task log) carries `warning_allele_orientation`: check which
+allele the effect refers to. Naming A1 or A2 in `colmap` turns the layout
+detection off. Also check files where "A1" means something else (e.g. PLINK 1.9
+`.assoc` A1 = minor allele, which _is_ the tested allele).
 
 ### Signed Z-score
 
@@ -272,7 +285,7 @@ they have rsIDs (see [Genome build and rsIDs](#genome-build-and-rsids)).
 | parameter                                            | default          |                                                                                                                                                                      |
 | ---------------------------------------------------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `--methods`                                          | `ldsc,lava`      | comma-separated: `ldsc`, `lava`, `sumher`, `popcorn`                                                                                                                 |
-| `--lava_overlap`                                     | `ldsc`           | sample-overlap correction from LDSC intercepts (LAVA vignette recipe); `none`; or a matrix file                                                                      |
+| `--lava_overlap`                                     | `ldsc`           | sample-overlap correction from LDSC intercepts (LAVA vignette recipe); `none`; or a matrix file. The LAVA task stops if the part of the matrix it uses is not positive definite (e.g. \|r\| ≥ 1); LDSC's summary step warns about it first |
 | `--lava_snp_set`                                     | `pairwise`       | `pairwise`: a pair uses SNPs shared by its two traits. `joint`: all traits loaded together, SNPs shared by **all** traits (LAVA's multi-trait behaviour)             |
 | `--lava_univ_thresh`                                 | `0.05`           | bivariate test only if both local h2 p-values are below this. For genome-wide screens the LAVA authors suggest a stricter (e.g. Bonferroni) filter                   |
 | `--lava_loci_per_chunk`                              | `250`            | parallelism only; results do not depend on it                                                                                                                        |

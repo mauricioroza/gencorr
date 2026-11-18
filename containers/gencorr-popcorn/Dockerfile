@@ -26,9 +26,16 @@ RUN apt-get update \
  && apt-get install -y --no-install-recommends procps git \
  && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir \
+# build-essential only while installing: some pinned packages (bottleneck) have
+# no wheel for linux/arm64 and are compiled there; on x86_64 the wheels are used
+# and nothing is compiled. Removed again in the same layer.
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends build-essential \
+ && pip install --no-cache-dir \
         numpy==1.23.5 scipy==1.11.4 pandas==2.2.3 pysnptools==0.5.13 \
         bottleneck==1.4.2 statsmodels==0.14.4 six==1.16.0 \
  && pip install --no-cache-dir --no-deps "git+https://github.com/brielin/popcorn.git@${POPCORN_COMMIT}" \
+ && apt-get purge -y --auto-remove build-essential \
+ && rm -rf /var/lib/apt/lists/* \
  && echo "${POPCORN_COMMIT}" > /opt/popcorn.commit \
  && popcorn -h > /dev/null

@@ -62,6 +62,16 @@ def runner(d, ref, loci, out, info="info.txt"):
     return pd.read_csv(d / f"{out}.lava.tsv", sep="\t", dtype={"locus": str})
 
 
+def test_runner_stops_on_overlap_matrix_that_is_not_positive_definite(lava_inputs, vignette):
+    d = lava_inputs
+    t1, t2 = PAIR
+    (d / "bad_overlap.txt").write_text(f"{t1} {t2}\n{t1} 1 1.2\n{t2} 1.2 1\n")
+    with pytest.raises(AssertionError, match="not positive definite"):
+        run(["Rscript", BIN / "run_lava.R", "--info", d / "info.txt", "--ref", vignette / "g1000_test",
+             "--loci", d / "chunk1.txt", "--pairs", d / "pairs.tsv", "--out", d / "bad",
+             "--overlap", d / "bad_overlap.txt"])
+
+
 def test_runner_matches_native_lava_exactly(lava_inputs, vignette):
     d = lava_inputs
     ours = runner(d, vignette / "g1000_test", "loci.txt", "ours")

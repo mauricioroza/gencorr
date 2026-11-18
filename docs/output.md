@@ -47,11 +47,20 @@ Defined once in `bin/gencorr_common.py` (`RESULT_COLUMNS`) and enforced by
 | `h2_1`, `h2_2`                  | observed-scale SNP-h2 of each trait from its own `--h2` run                                      | local observed h2 (`run.univ`)                                                                                                                | `Her1_All`, `Her2_All`                                                                                                                                                                              |
 | `h2_1_se`, `h2_2_se`            | LDSC SE                                                                                          | NA                                                                                                                                            | LDAK SE                                                                                                                                                                                             |
 | `status`                        | see below                                                                                        | see below                                                                                                                                     | see below                                                                                                                                                                                           |
-| `extra`                         | JSON: `gcov_int`, `gcov_int_se`, pair-specific h2/intercept of trait2, LDSC error text, log name | JSON: `univ_p_1/2`, `h2_latent_1/2`, `r2` and its CI, `K` (#PCs), `univ_thresh`, `seed`, `snp_set` (`all` or the `--lava_snp_list` file name) | JSON: `coher`/`coher_se` (coheritability), `overlap`/`overlap_se`, `scaling_1/2` (+SE, with genomic control), `n_snps_1/2` (tagging predictors found per trait), `p_method`, LDAK `error`, log name |
+| `extra`                         | JSON: `gcov_int`, `gcov_int_se`, pair-specific h2/intercept of trait2, LDSC error text, log name | JSON: `univ_p_1/2`, `h2_latent_1/2`, `r2` and its CI, `K` (#PCs), `univ_thresh`, `seed`, `snp_set` (`all` or the `--lava_snp_list` file name); on `ok` rows `p_bonferroni`, `q_fdr`, `n_tests` (see below) | JSON: `coher`/`coher_se` (coheritability), `overlap`/`overlap_se`, `scaling_1/2` (+SE, with genomic control), `n_snps_1/2` (tagging predictors found per trait), `p_method`, LDAK `error`, log name |
 
 Read it in R with `read.delim("gencorr_results.tsv", quote = "")` or in Python
 with `pandas.read_csv(..., sep="\t", quoting=3)`. Parse `extra` with
 `jsonlite::fromJSON` / `json.loads`.
+
+**LAVA multiple testing.** `p` is the raw bivariate p-value. A genome-wide
+run tests many (pair, locus) combinations, so judge significance on the
+corrected values in `extra` instead: `p_bonferroni` = min(1, p × `n_tests`)
+(the correction used in the LAVA paper) and `q_fdr` (Benjamini–Hochberg, as
+R's `p.adjust(p, "BH")`). `n_tests` counts the `ok` rows of the run, i.e. every
+bivariate test actually performed across all pairs and loci; rows not tested
+(`univ_filtered`, `no_snps_in_locus`, ...) are not counted. The family is the
+whole run: for a per-pair correction, recompute from `p` within each pair.
 
 ### `status` values
 

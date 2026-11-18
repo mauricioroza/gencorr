@@ -9,8 +9,8 @@
         "properties": {
             "id": {
                 "type": "string",
-                "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$",
-                "errorMessage": "id must start with a letter and contain only letters, digits, '_', '.', '-' (it becomes a file name and a LAVA phenotype ID)",
+                "pattern": "^[A-Za-z](_?[A-Za-z0-9.-])*$",
+                "errorMessage": "id must start with a letter and contain only letters, digits, '_', '.', '-', with no '__' and no trailing '_' ('__' joins trait IDs in pair and batch names; the id becomes a file name and a LAVA phenotype ID)",
                 "meta": ["id"]
             },
             "sumstats": {
@@ -46,8 +46,8 @@
             },
             "colmap": {
                 "type": "string",
-                "pattern": "^([A-Z0-9]+=[^,=\\s]+)(,[A-Z0-9]+=[^,=\\s]+)*$",
-                "errorMessage": "colmap must look like 'Z=STAT,N=NMISS' (standard=source, comma-separated)",
+                "pattern": "^([A-Z0-9]+=[^,=\\s']+)(,[A-Z0-9]+=[^,=\\s']+)*$",
+                "errorMessage": "colmap must look like 'Z=STAT,N=NMISS' (standard=source, comma-separated; no spaces or single quotes)",
                 "meta": ["colmap"]
             },
             "ancestry": {

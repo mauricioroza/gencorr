@@ -10,6 +10,10 @@ It needs nextflow and docker, takes a few minutes (it stages the test data),
 and only runs when GENCORR_NEXTFLOW_TESTS=1:
 
     GENCORR_NEXTFLOW_TESTS=1 pytest tests/python/test_cli_options.py
+
+The save_* checks run LDSC + LAVA only. The SumHer check (LDAK's
+--genomic-control) is separate and skipped when the LDAK image is not
+available locally (e.g. on ARM64, where LDAK cannot be built).
 """
 
 from __future__ import annotations
@@ -46,15 +50,34 @@ def genomic_control(outdir) -> set[str]:
     return {m for f in logs for m in re.findall(r"--genomic-control (\w+)", f.read_text())}
 
 
-def test_false_on_the_command_line_means_false(tmp_path):
-    out = run_stub(tmp_path, "false", "--sumher_genomic_control", "false",
+LDAK_IMAGE = "ghcr.io/mauricioroza/gencorr-ldak:6.1"   # as in modules/local/sumher/*/main.nf
+
+
+def have_image(image: str) -> bool:
+    if shutil.which("docker") is None:
+        return False
+    return subprocess.run(["docker", "image", "inspect", image],
+                          capture_output=True).returncode == 0
+
+
+requires_ldak = pytest.mark.skipif(not have_image(LDAK_IMAGE),
+                                   reason=f"{LDAK_IMAGE} not available locally (x86_64 only)")
+
+
+def test_save_options_false_on_the_command_line(tmp_path):
+    out = run_stub(tmp_path, "false", "--methods", "ldsc,lava",
                    "--save_intermediates", "false", "--save_harmonized", "false")
-    assert genomic_control(out) == {"NO"}
     assert not (out / "lava" / "chunks").exists()
     assert all(f.name.endswith(".qc.json") for f in (out / "harmonized").iterdir())
 
 
-def test_true_on_the_command_line_means_true(tmp_path):
-    out = run_stub(tmp_path, "true", "--sumher_genomic_control", "true", "--save_intermediates", "true")
-    assert genomic_control(out) == {"YES"}
+def test_save_options_true_on_the_command_line(tmp_path):
+    out = run_stub(tmp_path, "true", "--methods", "ldsc,lava", "--save_intermediates", "true")
     assert (out / "lava" / "chunks").exists()
+
+
+@requires_ldak
+@pytest.mark.parametrize("value,expected", [("false", "NO"), ("true", "YES")])
+def test_sumher_genomic_control_on_the_command_line(tmp_path, value, expected):
+    out = run_stub(tmp_path, value, "--methods", "sumher", "--sumher_genomic_control", value)
+    assert genomic_control(out) == {expected}
