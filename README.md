@@ -41,6 +41,10 @@ and Popcorn on any set of traits and returns one tidy results table.
   (only tool logs differ, by their timestamps).
 - **Nothing disappears.** Pairs and loci that could not be estimated stay in
   the table with a `status` explaining why.
+- **Combined traits.** Groups of correlated traits can be combined into new
+  traits with N-weighted multivariate GWAMA, corrected for sample overlap
+  with LDSC intercepts, and analysed like any other trait
+  ([docs/gwama.md](docs/gwama.md)).
 - **Extensible.** Every method reads the same harmonized input and writes the
   same table, so adding another method (e.g. HDL or HDL-L) is one subworkflow
   ([docs/extending.md](docs/extending.md)).

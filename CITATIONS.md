@@ -60,6 +60,12 @@ Cite the method papers for the methods in `--methods`.
 
   > Brown BC; Asian Genetic Epidemiology Network Type 2 Diabetes Consortium, Ye CJ, Price AL, Zaitlen N. Transethnic genetic-correlation estimates from summary statistics. Am J Hum Genet. 2016;99(1):76-88. doi: 10.1016/j.ajhg.2016.05.001.
 
+### N-weighted multivariate GWAMA (`--gwama_groups`)
+
+- [Multivariate GWAMA of genetically correlated traits](https://doi.org/10.1038/s41588-018-0320-8). gencorr reimplements the N-weighted GWAMA of the authors' R function ([baselmans/multivariate_GWAMA](https://github.com/baselmans/multivariate_GWAMA)) and tests against it.
+
+  > Baselmans BML, Jansen R, Ip HF, van Dongen J, Abdellaoui A, van de Weijer MP, et al. Multivariate genome-wide analyses of the well-being spectrum. Nat Genet. 2019;51(3):445-451. doi: 10.1038/s41588-018-0320-8.
+
 ## Reference data
 
 Cite the data behind the references you pass to the pipeline.

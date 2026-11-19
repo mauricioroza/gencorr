@@ -1,0 +1,122 @@
+{
+    "stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "combo",
+                        "gwama_traits": [
+                            "t1",
+                            "t2"
+                        ],
+                        "gwama_signs": [
+                            1,
+                            1
+                        ]
+                    },
+                    "combo.harmonized.tsv.gz:md5,9e4e5d95fd0f89ecf86a2b1c650b7d01"
+                ]
+            ]
+        ],
+        "timestamp": "2026-11-18T14:23:21.466371781",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.5"
+        }
+    },
+    "t1 + t2 - combined trait": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "combo",
+                        "gwama_traits": [
+                            "t1",
+                            "t2"
+                        ],
+                        "gwama_signs": [
+                            1,
+                            1
+                        ]
+                    },
+                    "combo.harmonized.tsv.gz:md5,433c33409c0646b37b7613e7198307b6"
+                ]
+            ],
+            {
+                "id": "combo",
+                "method": "N-weighted GWAMA (Baselmans et al. 2019)",
+                "traits": [
+                    {
+                        "trait": "t1",
+                        "sign": 1,
+                        "h2": 0.12,
+                        "rows_in": 192,
+                        "duplicated_or_missing": 0,
+                        "aligned": 192,
+                        "flipped": 0,
+                        "allele_mismatch": 0
+                    },
+                    {
+                        "trait": "t2",
+                        "sign": 1,
+                        "h2": 0.08,
+                        "rows_in": 192,
+                        "duplicated_or_missing": 0,
+                        "aligned": 147,
+                        "flipped": 45,
+                        "allele_mismatch": 0
+                    }
+                ],
+                "cti": {
+                    "traits": [
+                        "t1",
+                        "t2"
+                    ],
+                    "matrix": [
+                        [
+                            1.02,
+                            0.15
+                        ],
+                        [
+                            0.15,
+                            0.99
+                        ]
+                    ],
+                    "source": "ldsc"
+                },
+                "rg": {
+                    "traits": [
+                        "t1",
+                        "t2"
+                    ],
+                    "matrix": [
+                        [
+                            1.0,
+                            0.81
+                        ],
+                        [
+                            0.81,
+                            1.0
+                        ]
+                    ]
+                },
+                "n_out": "effective",
+                "rows_out": 200,
+                "snps_in_all_traits": 184,
+                "snps_by_n_traits": {
+                    "1": 16,
+                    "2": 184
+                },
+                "genome_wide_significant": 1,
+                "warnings": [
+                    
+                ]
+            }
+        ],
+        "timestamp": "2026-11-18T14:23:09.908845182",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.5"
+        }
+    }
+}

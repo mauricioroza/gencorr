@@ -148,6 +148,13 @@ mention it only as a comparison reference.
   test_cli_options.py: save_* checks run with ldsc,lava only; the SumHer check skips without
   the LDAK image. Open: images ldak/popcorn are private on ghcr.io and ldsc:3.0.1-128f996 is
   not pushed (user).
+- Branch `gwama` (2026-11-18): N-weighted multivariate GWAMA (Baselmans 2019), `--gwama_groups`
+  (CSV group,trait[,sign]) -> new combined traits added to ch_harmonized before the methods, so they
+  pair and run like samplesheet traits (subworkflow GWAMA = METHOD_LDSC alias on within-group pairs ->
+  GWAMA_COMBINE / bin/gwama.py). CTI = LDSC h2 intercepts (diag) + gcov_int (NOT sample_overlap.txt,
+  which is cov2cor'd). Oracle vs authors' R function (repo has no licence: fetched at test time,
+  commit d55b617, needs Rscript+data.table -> run in gencorr-tools image) within 1e-6; R drops rows with
+  missing EAF, gwama.py keeps them. Docs: docs/gwama.md. MA-GWAMA deliberately not implemented.
 - BigaGWAS's own LAVA scripts (specific_lava.R, 2traits.R, lava_pgc.R) are not public, so its settings are
   partly unknown.
 

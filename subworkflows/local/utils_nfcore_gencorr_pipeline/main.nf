@@ -126,14 +126,26 @@ workflow PIPELINE_INITIALISATION {
     validateSamples(samples)
 
     //
+    // Multivariate GWAMA: each group of --gwama_groups becomes a new trait, made
+    // from its traits' harmonized files and analysed like a samplesheet trait.
+    // [ [ group_meta, [ member metas ] ], ... ]
+    //
+    def sample_meta = samples.collectEntries { row -> [ (row[0].id): row[0] ] }
+    def gwama_list = params.gwama_groups
+        ? makeGwamaGroups(readGwamaGroups(params.gwama_groups as String), sample_meta)
+        : []
+    validateGwamaReferences(params, workflow.profile, gwama_list.collect { g -> traitAncestry(g[0]) }.unique().sort())
+
+    //
     // Trait pairs, decided once here so every method analyses the same pairs.
     //
-    def ids   = samples.collect { row -> row[0].id }
+    def ids   = samples.collect { row -> row[0].id } + gwama_list.collect { g -> g[0].id }
     def pair_list = makePairs(ids, params.pair_mode, params.targets,
                               params.pairs ? readPairsFile(params.pairs) : null)
-    log.info "gencorr: ${samples.size()} traits, ${pair_list.size()} pairs (pair_mode = ${params.pair_mode}), methods: ${methods.join(', ')}"
+    def n_gwama = gwama_list ? " + ${gwama_list.size()} combined (GWAMA)" : ''
+    log.info "gencorr: ${samples.size()} traits${n_gwama}, ${pair_list.size()} pairs (pair_mode = ${params.pair_mode}), methods: ${methods.join(', ')}"
 
-    def meta_by_id = samples.collectEntries { row -> [ (row[0].id): row[0] ] }
+    def meta_by_id = sample_meta + gwama_list.collectEntries { g -> [ (g[0].id): g[0] ] }
 
     //
     // Ancestry: LDSC, LAVA and SumHer analyse same-ancestry pairs with that
@@ -156,6 +168,7 @@ workflow PIPELINE_INITIALISATION {
     emit:
     samplesheet = channel.fromList(samples)                                        // [ meta, sumstats ]
     pairs       = channel.fromList(pair_list.collect { p -> [ meta_by_id[p[0]], meta_by_id[p[1]] ] }) // [ meta1, meta2 ]
+    gwama       = channel.fromList(gwama_list)                                        // [ group_meta, [ member metas ] ]
     versions    = ch_versions
 }
 
@@ -304,6 +317,92 @@ def readPairsFile(String path) {
         error("--pairs: header must start with trait1,trait2 (got ${header})")
     }
     return lines.drop(1).collect { line -> line.split(/[,\t]/).collect { x -> x.trim() }.take(2) }
+}
+
+//
+// --gwama_groups: CSV (or TSV) with header group,trait and an optional sign
+// column. Returns the rows as [ group, trait, sign ] (sign '' when empty).
+//
+def readGwamaGroups(String path) {
+    def lines  = file(path, checkIfExists: true).readLines().findAll { line -> line.trim() }
+    def header = lines[0].split(/[,\t]/).collect { x -> x.trim() }
+    if (header.take(2) != ['group', 'trait'] || (header.size() > 2 && header[2] != 'sign')) {
+        error("--gwama_groups: header must be group,trait or group,trait,sign (got ${header})")
+    }
+    return lines.drop(1).collect { line ->
+        def cells = line.split(/[,\t]/, -1).collect { x -> x.trim() }
+        [ cells[0], cells.size() > 1 ? cells[1] : '', cells.size() > 2 ? cells[2] : '' ]
+    }
+}
+
+//
+// GWAMA groups from the rows of --gwama_groups ([ group, trait, sign ]) and the
+// samplesheet metas by ID. Returns [ [ group_meta, [ member metas ] ], ... ] in
+// file order; group_meta = [ id, ancestry, gwama_traits, gwama_signs ].
+// A group needs >= 2 different samplesheet traits of one ancestry; its name
+// follows the samplesheet ID rules and must not be a trait ID.
+//
+def makeGwamaGroups(List rows, Map meta_by_id) {
+    def by_group = [:]
+    rows.each { row ->
+        def group = row[0]
+        def trait = row[1]
+        def sign  = row[2] ?: '1'
+        if (!(group ==~ /^[A-Za-z](_?[A-Za-z0-9.-])*$/)) {
+            error("--gwama_groups: group name '${group}' must start with a letter and contain only letters, digits, '.', '-' and single '_' (not at the end).")
+        }
+        if (meta_by_id.containsKey(group)) {
+            error("--gwama_groups: group name '${group}' is also a trait ID in the samplesheet; the combined trait needs its own name.")
+        }
+        if (!meta_by_id.containsKey(trait)) {
+            error("--gwama_groups: group '${group}': unknown trait '${trait}'. Known: ${meta_by_id.keySet() as List}")
+        }
+        if (!(sign in ['1', '+1', '-1'])) {
+            error("--gwama_groups: group '${group}', trait '${trait}': sign must be 1 or -1 (got '${sign}').")
+        }
+        if (!by_group.containsKey(group)) {
+            by_group[group] = []
+        }
+        if (by_group[group].any { m -> m[0] == trait }) {
+            error("--gwama_groups: group '${group}' lists trait '${trait}' twice.")
+        }
+        by_group[group] << [ trait, sign == '-1' ? -1 : 1 ]
+    }
+    if (!by_group) {
+        error("--gwama_groups: the file lists no groups.")
+    }
+    return by_group.collect { group, members ->
+        if (members.size() < 2) {
+            error("--gwama_groups: group '${group}' has ${members.size()} trait; N-GWAMA combines at least 2.")
+        }
+        def metas      = members.collect { m -> meta_by_id[m[0]] }
+        def ancestries = metas.collect { m -> traitAncestry(m) }.unique()
+        if (ancestries.size() > 1) {
+            error("--gwama_groups: group '${group}' mixes ancestries ${ancestries}; N-GWAMA assumes one population (LDSC intercepts, LD).")
+        }
+        def gmeta = [ id: group, ancestry: ancestries[0],
+                      gwama_traits: members.collect { m -> m[0] }, gwama_signs: members.collect { m -> m[1] } ]
+        [ gmeta, metas ]
+    }
+}
+
+//
+// GWAMA takes h2 and intercepts from LDSC: every group's ancestry needs LD
+// scores, and LDSC has no conda package.
+//
+def validateGwamaReferences(Map p, String profile, List ancestries) {
+    if (!ancestries) {
+        return
+    }
+    ancestries.each { a ->
+        def name = ancestryParam('ldsc_ld', a)
+        if (!p[name]) {
+            error("--gwama_groups: combining ${a} traits needs LDSC LD scores (--${name}) for their h2 and intercepts.")
+        }
+    }
+    if ((profile ?: '').tokenize(',').intersect(['conda', 'mamba'])) {
+        error("--gwama_groups runs LDSC, which has no conda package. Use -profile docker, singularity or apptainer.")
+    }
 }
 
 //

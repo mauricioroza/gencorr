@@ -22,6 +22,10 @@ results/
 ├── popcorn/
 │   ├── gencorr.popcorn.tsv        Popcorn rows (cross-ancestry pairs)
 │   └── logs/                      Popcorn output per pair: <eur>__<eas>.popcorn, .popcorn.o.log, .popcorn.e.log
+├── gwama/                         only with --gwama_groups (docs/gwama.md)
+│   ├── <group>.harmonized.tsv.gz  combined trait, harmonized format
+│   ├── <group>.gwama.json         signs, h2, cross-trait intercept matrix, rg, QC counts, warnings
+│   └── ldsc/                      LDSC run on the pairs inside each group (same layout as ldsc/)
 └── pipeline_info/
     ├── gencorr_software_versions.yml   exact tool versions used by every process
     └── execution_{report,timeline,trace}_*.html/txt, pipeline_dag_*.html, params_*.json

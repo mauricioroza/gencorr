@@ -1,0 +1,159 @@
+name: "gwama_combine"
+description: Combine the harmonized summary statistics of genetically correlated
+  traits into one new trait with N-weighted multivariate GWAMA (Baselmans et al.
+  2019), correcting for sample overlap with LDSC intercepts
+keywords:
+  - gwas
+  - summary statistics
+  - multivariate
+  - meta-analysis
+  - gwama
+tools:
+  - gencorr:
+      description: gencorr helper scripts (bin/gwama.py; Python with pandas,
+        numpy and scipy). Reimplements the N-weighted GWAMA of
+        github.com/baselmans/multivariate_GWAMA
+      homepage: "https://github.com/mauricioroza/gencorr"
+      documentation: "https://github.com/mauricioroza/gencorr/blob/dev/docs/gwama.md"
+      doi: "10.1038/s41588-018-0320-8"
+      licence: ["MIT"]
+      identifier: ""
+      args_id: "$args"
+input:
+  - - meta:
+        type: map
+        description: |
+          Combined-trait meta map: id (name of the new trait), gwama_traits
+          (trait IDs in the order of the sumstats files) and gwama_signs
+          (1 or -1 per trait).
+          e.g. [ id:'wellbeing', gwama_traits:['ls','neu'], gwama_signs:[1,-1] ]
+    - sumstats:
+        type: file
+        description: Harmonized summary statistics of the group's traits, in
+          the order of meta.gwama_traits
+        pattern: "*.harmonized.tsv.gz"
+        ontologies:
+          - edam: "http://edamontology.org/format_3475" # TSV
+          - edam: "http://edamontology.org/format_3989" # GZIP format
+  - ldsc_h2:
+      type: file
+      description: Per-trait LDSC table from LDSC_SUMMARISE (observed-scale h2
+        and univariate intercept of each trait of the group)
+      pattern: "*.ldsc_h2.tsv"
+      ontologies:
+        - edam: "http://edamontology.org/format_3475" # TSV
+  - ldsc_results:
+      type: file
+      description: LDSC results table from LDSC_SUMMARISE, with every pair of the
+        group's traits (rg and cross-trait intercept gcov_int)
+      pattern: "*.ldsc.tsv"
+      ontologies:
+        - edam: "http://edamontology.org/format_3475" # TSV
+output:
+  sumstats:
+    - - meta:
+          type: map
+          description: Combined-trait meta map, as given
+      - ${prefix}.harmonized.tsv.gz:
+          type: file
+          description: Summary statistics of the combined trait in the gencorr
+            harmonized format (INFO is NA; N is the effective N unless
+            --n-out observed)
+          pattern: "*.harmonized.tsv.gz"
+          ontologies:
+            - edam: "http://edamontology.org/format_3475" # TSV
+            - edam: "http://edamontology.org/format_3989" # GZIP format
+  qc:
+    - - meta:
+          type: map
+          description: Combined-trait meta map, as given
+      - ${prefix}.gwama.json:
+          type: file
+          description: Inputs used (signs, h2, cross-trait intercept matrix,
+            rg) and QC counts (alignment per trait, SNPs per number of traits,
+            genome-wide significant SNPs, warnings)
+          pattern: "*.gwama.json"
+          ontologies:
+            - edam: "http://edamontology.org/format_3464" # JSON
+  versions_python:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - python:
+          type: string
+          description: The name of the tool
+      - "python3 -c 'import platform; print(platform.python_version())'":
+          type: eval
+          description: The expression to obtain the version of the tool
+  versions_pandas:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - pandas:
+          type: string
+          description: The name of the tool
+      - "python3 -c 'import pandas; print(pandas.__version__)'":
+          type: eval
+          description: The expression to obtain the version of the tool
+  versions_numpy:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - numpy:
+          type: string
+          description: The name of the tool
+      - "python3 -c 'import numpy; print(numpy.__version__)'":
+          type: eval
+          description: The expression to obtain the version of the tool
+  versions_scipy:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - scipy:
+          type: string
+          description: The name of the tool
+      - "python3 -c 'import scipy; print(scipy.__version__)'":
+          type: eval
+          description: The expression to obtain the version of the tool
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - python:
+          type: string
+          description: The name of the tool
+      - "python3 -c 'import platform; print(platform.python_version())'":
+          type: eval
+          description: The expression to obtain the version of the tool
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - pandas:
+          type: string
+          description: The name of the tool
+      - "python3 -c 'import pandas; print(pandas.__version__)'":
+          type: eval
+          description: The expression to obtain the version of the tool
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - numpy:
+          type: string
+          description: The name of the tool
+      - "python3 -c 'import numpy; print(numpy.__version__)'":
+          type: eval
+          description: The expression to obtain the version of the tool
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - scipy:
+          type: string
+          description: The name of the tool
+      - "python3 -c 'import scipy; print(scipy.__version__)'":
+          type: eval
+          description: The expression to obtain the version of the tool
+authors:
+  - "@mauricioroza"
+maintainers:
+  - "@mauricioroza"

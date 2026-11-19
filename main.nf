@@ -5,7 +5,8 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     Global (LDSC, SumHer), local (LAVA) and cross-ancestry (Popcorn) genetic
     correlation from GWAS summary statistics, with one harmonization step and
-    one results format shared by all methods.
+    one results format shared by all methods. Optionally, groups of correlated
+    traits are first combined into new traits (N-weighted multivariate GWAMA).
 ----------------------------------------------------------------------------------------
 */
 
@@ -30,11 +31,13 @@ workflow MAURICIOROZA_GENCORR {
     take:
     samplesheet // channel: [ meta, sumstats ]
     pairs       // channel: [ meta1, meta2 ]
+    gwama       // channel: [ group_meta, [ member metas ] ] (combined traits, --gwama_groups)
 
     main:
     GENCORR (
         samplesheet,
         pairs,
+        gwama,
         params.outdir
     )
 }
@@ -68,7 +71,8 @@ workflow {
     //
     MAURICIOROZA_GENCORR (
         PIPELINE_INITIALISATION.out.samplesheet,
-        PIPELINE_INITIALISATION.out.pairs
+        PIPELINE_INITIALISATION.out.pairs,
+        PIPELINE_INITIALISATION.out.gwama
     )
 
     //

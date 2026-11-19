@@ -160,6 +160,44 @@ nextflow_pipeline {
         }
     }
 
+    test("-profile test, N-GWAMA combined trait (neuro + depression)") {
+        // tests/data/gwama_groups.csv: neurodep = neuro + depression (LDSC rg 0.73
+        // in the default test). The combined trait is paired with all 4 traits.
+
+        when {
+            params {
+                outdir       = "$outputDir"
+                gwama_groups = "${projectDir}/tests/data/gwama_groups.csv"
+                methods      = 'ldsc,lava'
+            }
+        }
+
+        then {
+            def lines  = new File("$outputDir/gencorr_results.tsv").readLines()
+            def header = lines[0].split('\t', -1) as List
+            def rows   = lines.drop(1).collect { line -> [header, line.split('\t', -1) as List].transpose().collectEntries() }
+            def combo  = { r -> 'neurodep' in [r.trait1, r.trait2] }
+            def qc     = new groovy.json.JsonSlurper().parse(new File("$outputDir/gwama/neurodep.gwama.json"))
+            assert workflow.success
+            assertAll(
+                // 5 traits -> 10 pairs, 4 of them with the combined trait
+                { assert rows.count { r -> r.method == 'ldsc' } == 10 },
+                { assert rows.findAll { r -> r.method == 'ldsc' && combo(r) }.size() == 4 },
+                { assert rows.findAll { r -> r.method == 'ldsc' }.every { r -> r.status == 'ok' } },
+                { assert rows.count { r -> r.method == 'lava' && combo(r) } == 40 },
+                // the combined trait correlates strongly with the traits it is made of
+                { assert rows.findAll { r -> r.method == 'ldsc' && combo(r) && ('neuro' in [r.trait1, r.trait2] || 'depression' in [r.trait1, r.trait2]) }
+                        .every { r -> (r.rg as double) > 0.8 } },
+                // GWAMA's own LDSC run: one pair, inputs recorded
+                { assert new File("$outputDir/gwama/ldsc/gencorr.ldsc.tsv").readLines().size() == 2 },
+                { assert qc.traits.collect { t -> t.trait } == ['neuro', 'depression'] },
+                { assert qc.cti.source == 'ldsc' },
+                { assert qc.rows_out > 100000 },
+                { assert path("$outputDir/gwama/neurodep.harmonized.tsv.gz").linesGzip[0] == 'SNP\tCHR\tBP\tA1\tA2\tZ\tBETA\tSE\tP\tN\tEAF\tINFO' }
+            )
+        }
+    }
+
     test("-profile test, pair_mode target, joint LAVA SNP set") {
 
         // true/false options given on the command line must mean false. nf-test needs

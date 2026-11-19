@@ -3,6 +3,8 @@
     GENCORR - main workflow
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     1. HARMONIZE_SUMSTATS  every trait -> one harmonized format (+ QC report)
+       GWAMA               optional (--gwama_groups): groups of traits -> new
+                           combined traits in the same format
     2. METHOD_<X>          each selected method, all on the same harmonized
                            files and the same trait pairs
     3. MERGE_RESULTS       all methods -> results/gencorr_results.tsv
@@ -19,6 +21,7 @@ include { METHOD_LDSC                 } from '../subworkflows/local/method_ldsc'
 include { METHOD_LAVA                 } from '../subworkflows/local/method_lava'
 include { METHOD_SUMHER               } from '../subworkflows/local/method_sumher'
 include { METHOD_POPCORN              } from '../subworkflows/local/method_popcorn'
+include { GWAMA                       } from '../subworkflows/local/gwama'
 include { softwareVersionsToYAML      } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { traitAncestry; ancestryParam; methodRegistry } from '../subworkflows/local/utils_nfcore_gencorr_pipeline'
 
@@ -27,6 +30,7 @@ workflow GENCORR {
     take:
     ch_samplesheet   // channel: [ meta, sumstats ]
     ch_pairs         // channel: [ meta1, meta2 ]
+    ch_gwama         // channel: [ group_meta, [ member metas ] ] (--gwama_groups; empty without)
     outdir
 
     main:
@@ -61,6 +65,29 @@ workflow GENCORR {
     HARMONIZE_SUMSTATS ( ch_harmonize_in )
     def ch_harmonized = HARMONIZE_SUMSTATS.out.sumstats
 
+    // LDSC references (LDSC itself, and the h2/intercepts that GWAMA needs):
+    // one entry per ancestry with LD scores: [ ancestry, ld_meta, ref_ld_dir, w_ld_dir ]
+    def ch_ld = channel.fromList( ['EUR', 'EAS'].findAll { a -> params[ancestryParam('ldsc_ld', a)] }.collect { a ->
+        [ a,
+          [ prefix: params.ldsc_ld_prefix ?: '', split_by_chr: params.ldsc_ld_split_by_chr.toString() == 'true' ],
+          file(params[ancestryParam('ldsc_ld', a)], checkIfExists: true),
+          file(params[ancestryParam('ldsc_w_ld', a)] ?: params[ancestryParam('ldsc_ld', a)], checkIfExists: true) ]
+    } )
+    def ch_merge_alleles = params.ldsc_merge_alleles
+        ? channel.value(file(params.ldsc_merge_alleles, checkIfExists: true))
+        : channel.value([])
+
+    //
+    // 1b. Multivariate GWAMA (optional): each group of correlated traits becomes
+    //     a new trait (id = group name), added to the harmonized traits so every
+    //     method analyses it like a samplesheet trait. Its pairs were made at
+    //     start-up (PIPELINE_INITIALISATION).
+    //
+    if (params.gwama_groups) {
+        GWAMA ( ch_harmonized, ch_gwama, ch_ld, ch_merge_alleles, params.ldsc_rg_batch_size )
+        ch_harmonized = ch_harmonized.mix( GWAMA.out.sumstats )
+    }
+
     //
     // Ancestry (samplesheet column, default EUR): LDSC, LAVA and SumHer assume both
     // traits come from one population, so they get same-ancestry pairs, each with
@@ -91,17 +118,6 @@ workflow GENCORR {
     // 2a. LDSC (global)
     //
     if ('ldsc' in methods) {
-        // one entry per ancestry with LD scores: [ ancestry, ld_meta, ref_ld_dir, w_ld_dir ]
-        def ch_ld = channel.fromList( ['EUR', 'EAS'].findAll { a -> params[ancestryParam('ldsc_ld', a)] }.collect { a ->
-            [ a,
-              [ prefix: params.ldsc_ld_prefix ?: '', split_by_chr: params.ldsc_ld_split_by_chr.toString() == 'true' ],
-              file(params[ancestryParam('ldsc_ld', a)], checkIfExists: true),
-              file(params[ancestryParam('ldsc_w_ld', a)] ?: params[ancestryParam('ldsc_ld', a)], checkIfExists: true) ]
-        } )
-        def ch_merge_alleles = params.ldsc_merge_alleles
-            ? channel.value(file(params.ldsc_merge_alleles, checkIfExists: true))
-            : channel.value([])
-
         METHOD_LDSC ( traitsInPairs(ch_harmonized, ch_same_pairs), ch_same_pairs, ch_ld, ch_merge_alleles, params.ldsc_rg_batch_size )
         ch_results = ch_results.mix( METHOD_LDSC.out.results )
 

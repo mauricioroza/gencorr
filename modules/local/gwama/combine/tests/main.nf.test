@@ -1,0 +1,100 @@
+// Module test: GWAMA_COMBINE
+// Inputs: synthetic data in tests/data/gwama (two traits, 200 SNPs, ~5% of SNPs
+// missing per trait, every 4th SNP with swapped alleles in t2) and small LDSC
+// tables (h2, intercepts, gcov_int). The output is written with fixed
+// formatting and gzip mtime 0, so its md5 is stable across machines.
+nextflow_process {
+
+    name "Test Process GWAMA_COMBINE"
+    script "../main.nf"
+    process "GWAMA_COMBINE"
+
+    tag "modules"
+    tag "modules_local"
+    tag "gwama_combine"
+
+    test("t1 + t2 - combined trait") {
+
+        when {
+            params { outdir = "$outputDir" }
+            process {
+                """
+                def d = "\${projectDir}/tests/data/gwama"
+                input[0] = Channel.of([ [ id:'combo', gwama_traits:['t1', 't2'], gwama_signs:[1, 1] ],
+                                        [ file("\${d}/t1.harmonized.tsv.gz", checkIfExists: true),
+                                          file("\${d}/t2.harmonized.tsv.gz", checkIfExists: true) ] ])
+                input[1] = file("\${d}/gencorr.ldsc_h2.tsv", checkIfExists: true)
+                input[2] = file("\${d}/gencorr.ldsc.tsv", checkIfExists: true)
+                """
+            }
+        }
+
+        then {
+            def qc = path(process.out.qc[0][1]).json
+            assertAll(
+                { assert process.success },
+                // same column contract as HARMONIZE_SUMSTATS
+                { assert path(process.out.sumstats[0][1]).linesGzip[0] == 'SNP\tCHR\tBP\tA1\tA2\tZ\tBETA\tSE\tP\tN\tEAF\tINFO' },
+                // union of SNPs: all 200 are in at least one trait
+                { assert qc.rows_out == 200 },
+                { assert qc.traits[1].flipped > 0 },
+                { assert qc.cti.matrix == [[1.02, 0.15], [0.15, 0.99]] },
+                { assert snapshot(process.out.sumstats, qc).match() }
+            )
+        }
+    }
+
+    test("t1 + t2, t2 reversed, observed N") {
+
+        config "./nextflow.config"
+
+        when {
+            params { outdir = "$outputDir" }
+            process {
+                """
+                def d = "\${projectDir}/tests/data/gwama"
+                input[0] = Channel.of([ [ id:'combo', gwama_traits:['t1', 't2'], gwama_signs:[1, -1] ],
+                                        [ file("\${d}/t1.harmonized.tsv.gz", checkIfExists: true),
+                                          file("\${d}/t2.harmonized.tsv.gz", checkIfExists: true) ] ])
+                input[1] = file("\${d}/gencorr.ldsc_h2.tsv", checkIfExists: true)
+                input[2] = file("\${d}/gencorr.ldsc.tsv", checkIfExists: true)
+                """
+            }
+        }
+
+        then {
+            def qc = path(process.out.qc[0][1]).json
+            assertAll(
+                { assert process.success },
+                { assert qc.n_out == 'observed' },
+                // reversing t2 reverses its covariance and rg with t1, so rg
+                // is now negative and reported
+                { assert qc.cti.matrix[0][1] == -0.15 },
+                { assert qc.warnings.any { w -> w.contains('negative after signs') } }
+            )
+        }
+    }
+
+    test("stub") {
+
+        options "-stub"
+
+        when {
+            params { outdir = "$outputDir" }
+            process {
+                """
+                def d = "\${projectDir}/tests/data/gwama"
+                input[0] = Channel.of([ [ id:'combo', gwama_traits:['t1', 't2'], gwama_signs:[1, 1] ],
+                                        [ file("\${d}/t1.harmonized.tsv.gz"), file("\${d}/t2.harmonized.tsv.gz") ] ])
+                input[1] = file("\${d}/gencorr.ldsc_h2.tsv")
+                input[2] = file("\${d}/gencorr.ldsc.tsv")
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert snapshot(process.out.sumstats).match()
+        }
+    }
+}

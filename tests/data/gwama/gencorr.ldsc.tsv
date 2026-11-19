@@ -1,0 +1,2 @@
+method	scope	trait1	trait2	locus	chr	start	stop	n_snps	rg	rg_se	rg_ci_low	rg_ci_high	z	p	h2_1	h2_1_se	h2_2	h2_2_se	status	extra
+ldsc	global	t1	t2	NA	NA	NA	NA	NA	0.81	NA	NA	NA	NA	NA	NA	NA	NA	NA	ok	{"gcov_int": 0.15}

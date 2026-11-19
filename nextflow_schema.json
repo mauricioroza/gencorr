@@ -340,6 +340,36 @@
                 }
             }
         },
+        "gwama_options": {
+            "title": "Multivariate GWAMA options",
+            "type": "object",
+            "fa_icon": "fas fa-layer-group",
+            "description": "Combine groups of genetically correlated traits into new traits with N-weighted multivariate GWAMA (Baselmans et al. 2019). Each combined trait is then analysed like any other trait.",
+            "properties": {
+                "gwama_groups": {
+                    "type": "string",
+                    "description": "CSV with columns group,trait and optionally sign (1 or -1). Each group becomes a new trait named after the group. Needs --ldsc_ld (h2 and intercepts come from LDSC).",
+                    "help_text": "Group names follow the samplesheet ID rules and must differ from the trait IDs. Traits of a group must be in the samplesheet and have the same ancestry. sign -1 reverses a trait's effects before combining (e.g. neuroticism with well-being). See docs/gwama.md.",
+                    "format": "file-path",
+                    "exists": true,
+                    "mimetype": "text/csv",
+                    "pattern": "^\\S+\\.(csv|tsv)$"
+                },
+                "gwama_n": {
+                    "type": "string",
+                    "description": "Sample size column of a combined trait: 'effective' (sqrt(N)' C^-1 sqrt(N), the N-GWAMA default) or 'observed' (sum of the traits' N).",
+                    "enum": ["effective", "observed"],
+                    "default": "effective"
+                },
+                "gwama_min_rg": {
+                    "type": "number",
+                    "description": "Warn when two traits of a group have an LDSC rg (after signs) below this. Baselmans et al. found no gain over single-trait analysis at rg <= 0.4.",
+                    "default": 0.5,
+                    "minimum": -1,
+                    "maximum": 1
+                }
+            }
+        },
         "institutional_config_options": {
             "title": "Institutional config options",
             "type": "object",
@@ -469,6 +499,9 @@
         },
         {
             "$ref": "#/$defs/popcorn_options"
+        },
+        {
+            "$ref": "#/$defs/gwama_options"
         },
         {
             "$ref": "#/$defs/institutional_config_options"

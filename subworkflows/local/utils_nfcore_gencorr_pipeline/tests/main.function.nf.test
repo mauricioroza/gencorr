@@ -154,4 +154,85 @@ nextflow_function {
             assert function.result == [id: 'x', pop_prev: 0.1]
         }
     }
+
+    test("makeGwamaGroups: groups in file order, signs, ancestry, member metas") {
+        function "makeGwamaGroups"
+        when {
+            function {
+                """
+                input[0] = [['wb', 'ls', ''], ['wb', 'neu', '-1'], ['wb', 'dep', '-1'], ['ad', 'ls', '1'], ['ad', 'pa', '+1']]
+                input[1] = [ls: [id: 'ls'], neu: [id: 'neu'], dep: [id: 'dep', n_cases: 10], pa: [id: 'pa']]
+                """
+            }
+        }
+        then {
+            assert function.success
+            assert function.result == [
+                [ [id: 'wb', ancestry: 'EUR', gwama_traits: ['ls', 'neu', 'dep'], gwama_signs: [1, -1, -1]],
+                  [[id: 'ls'], [id: 'neu'], [id: 'dep', n_cases: 10]] ],
+                [ [id: 'ad', ancestry: 'EUR', gwama_traits: ['ls', 'pa'], gwama_signs: [1, 1]],
+                  [[id: 'ls'], [id: 'pa']] ]
+            ]
+        }
+    }
+
+    test("makeGwamaGroups: group with one trait fails") {
+        function "makeGwamaGroups"
+        when {
+            function {
+                """
+                input[0] = [['wb', 'ls', '']]
+                input[1] = [ls: [id: 'ls'], neu: [id: 'neu']]
+                """
+            }
+        }
+        then {
+            assert function.failed
+        }
+    }
+
+    test("makeGwamaGroups: group named like a trait fails") {
+        function "makeGwamaGroups"
+        when {
+            function {
+                """
+                input[0] = [['ls', 'ls', ''], ['ls', 'neu', '']]
+                input[1] = [ls: [id: 'ls'], neu: [id: 'neu']]
+                """
+            }
+        }
+        then {
+            assert function.failed
+        }
+    }
+
+    test("makeGwamaGroups: sign other than 1 / -1 fails") {
+        function "makeGwamaGroups"
+        when {
+            function {
+                """
+                input[0] = [['wb', 'ls', ''], ['wb', 'neu', '2']]
+                input[1] = [ls: [id: 'ls'], neu: [id: 'neu']]
+                """
+            }
+        }
+        then {
+            assert function.failed
+        }
+    }
+
+    test("makeGwamaGroups: traits of different ancestry fail") {
+        function "makeGwamaGroups"
+        when {
+            function {
+                """
+                input[0] = [['wb', 'ls', ''], ['wb', 'neu', '']]
+                input[1] = [ls: [id: 'ls'], neu: [id: 'neu', ancestry: 'EAS']]
+                """
+            }
+        }
+        then {
+            assert function.failed
+        }
+    }
 }

@@ -120,6 +120,7 @@ profile (LDSC only), and nf-test in CI with the private image.
 | LDSC global rg vs BigaGWAS                                     | identical on job 972; 4th-decimal difference on job 966                                                           | same LDSC version and options; BigaGWAS' own harmonization can drop a few SNPs (966: 4)                                                                                                |
 | LDSC 1.0.1 vs CBIIT/ldsc Python 3 port (used since 2026-11-16) | munged files, rg, se, z, h2, intercepts identical; p printed with 4 instead of 5 significant digits when p ≥ 5e-5 | the port's summary table rounds p to 4 decimals with current pandas; the parser reads the pair's `P:` line instead. See [ldsc.md](ldsc.md)                                             |
 | LAVA vs BigaGWAS                                               | rho within 1e-7 to 1e-5 with `--lava_snp_list w_hm3.snplist`; p/CIs differ by Monte Carlo noise                   | see [bigagwas_comparison.md](bigagwas_comparison.md#6-results-on-the-test-jobs)                                                                                                        |
+| N-GWAMA (`bin/gwama.py`) vs the authors' R function            | Z, P, effective N, BETA, SE, EAF within 1e-6 relative on their 4-trait, 100,000-SNP example                       | SNPs without EAF in a trait: the R function drops the row, gwama.py keeps it (the oracle test removes such rows from both inputs). See [gwama.md](gwama.md#validation)                 |
 
 ## Comparing with BigaGWAS
 
