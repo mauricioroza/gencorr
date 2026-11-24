@@ -126,11 +126,11 @@ Where to download the LD scores, SNP list and LAVA reference:
 One row per trait; only `id` and `sumstats` are required:
 
 ```csv
-id,sumstats,n,n_cases,n_controls,pop_prev,colmap,label
-bmi,/data/bmi.txt.gz,,,,,,Body mass index
-mdd,/data/mdd.tsv.gz,,170756,329443,0.15,,Major depression
-scz,/data/scz.txt,,53386,77258,0.01,"Z=STAT",Schizophrenia
-t2d,GCST000028,,,,,,Type 2 diabetes (GWAS Catalog)
+id,sumstats,n,n_cases,n_controls,pop_prev,colmap,build,ancestry,label
+bmi,/data/bmi.txt.gz,,,,,,,,Body mass index
+mdd,/data/mdd.tsv.gz,,170756,329443,0.15,,GRCh37,EUR,Major depression
+scz,/data/scz.txt,,53386,77258,0.01,"Z=STAT",GRCh38,EUR,Schizophrenia
+t2d,GCST000028,,,,,,,,Type 2 diabetes (GWAS Catalog)
 ```
 
 - `sumstats` is a path, a URL, or a **GWAS Catalog accession** (`GCST…`): the
@@ -142,6 +142,11 @@ t2d,GCST000028,,,,,,Type 2 diabetes (GWAS Catalog)
   with `pop_prev` you also get liability-scale h2.
 - `colmap` overrides column detection, e.g. `Z=STAT`. `STAT` is never mapped
   automatically, because it is not always a Z-score.
+- `build` (`GRCh37` default, or `GRCh38`) and `ancestry` (`EUR` default, or `EAS`)
+  are optional per-trait columns, so one samplesheet can mix builds and
+  ancestries (see [Good to know](#good-to-know)). `build` matters only for files
+  without rsIDs: here `scz` would use `--rsid_map_grch38` and the others
+  `--rsid_map_grch37`.
 
 ### Common options
 
@@ -185,8 +190,11 @@ JSON `extra` column with `jsonlite::fromJSON`.
 
 - **Genome build:** variants are matched by rsID, so summary statistics on
   GRCh37 or GRCh38 work without liftover if they have rsIDs. Files without
-  rsIDs (`1:12345:A:G`-style IDs) get them from an rsID map for their build:
-  set `build` in the samplesheet and `--rsid_map_grch37` / `--rsid_map_grch38`
+  rsIDs (`1:12345:A:G`-style IDs) get them from an rsID map for their build.
+  The build is set per trait in the samplesheet `build` column (empty means
+  GRCh37). `--rsid_map_grch37` and `--rsid_map_grch38` give one map per build,
+  and each trait uses the map for its own build, so GRCh37 and GRCh38 files can
+  be mixed in one run. Give only the maps your files need
   ([details](docs/usage.md#genome-build-and-rsids)).
 - **Ancestry:** set `ancestry` (`EUR` default, `EAS`) per trait in the
   samplesheet. Each same-ancestry pair runs with that ancestry's references
