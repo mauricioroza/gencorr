@@ -122,6 +122,17 @@ def test_rsids_with_appended_alleles_are_cut_to_the_rsid():
     assert "warning_non_rsid" not in qc
 
 
+def test_gzip_file_without_extension_is_read(tmp_path):
+    # downloads often have no extension: the figshare URL .../files/52419704 (PGC
+    # MDD2025) is a gzip file named "52419704"; pandas' "infer" would read it as text
+    text = "SNP\tA1\tA2\tZ\tN\nrs1\tA\tG\t1.5\t100\nrs2\tC\tT\t-2\t100\n"
+    f = tmp_path / "52419704"
+    f.write_bytes(gzip.compress(text.encode()))
+    run(["python3", BIN / "harmonize_sumstats.py", "--input", f, "--id", "x", "--out", tmp_path / "x"])
+    with gzip.open(tmp_path / "x.harmonized.tsv.gz", "rt") as fh:
+        assert [line.split("\t")[0] for line in fh.read().splitlines()] == ["SNP", "rs1", "rs2"]
+
+
 def test_n_fallbacks():
     df = raw(SNP=["rs1"], A1=["A"], A2=["G"], Z=["1"])
     out, qc = harmonize(df, n_cases=100, n_controls=300)

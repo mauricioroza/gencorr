@@ -169,6 +169,15 @@ def gwas_catalog_overrides(header: list[str]) -> dict[str, str]:
 # --------------------------------------------------------------------------- #
 # Reading and column mapping
 # --------------------------------------------------------------------------- #
+def compression_of(path: Path) -> str:
+    """pandas compression for a file, from its first bytes. pandas' "infer"
+    only looks at the extension, and downloads often have none (e.g. the
+    figshare URL .../files/52419704 is a gzip file)."""
+    with open(path, "rb") as fh:
+        magic = fh.read(2)
+    return "gzip" if magic == b"\x1f\x8b" else "infer"   # same test as open_text()
+
+
 def detect_separator(path: Path) -> str:
     with open_text(path) as fh:
         header = fh.readline()
@@ -187,7 +196,7 @@ def read_table(path: Path, usecols=None, numeric=(), shared=(), chunksize=None) 
     holds every value as its own Python string. Values are unchanged."""
     sep = detect_separator(path)
     opts = dict(sep=sep, dtype=str, na_values=NA_VALUES, keep_default_na=False,
-                engine="python" if sep == r"\s+" else "c", compression="infer")
+                engine="python" if sep == r"\s+" else "c", compression=compression_of(path))
     if usecols is None and not chunksize:
         return pd.read_csv(path, **opts)
     # numeric columns: let the parser read floats directly (no string per value;
@@ -216,7 +225,7 @@ def read_header(path: Path) -> list[str]:
     """Column names exactly as read_table would name them."""
     sep = detect_separator(path)
     return list(pd.read_csv(path, sep=sep, nrows=0, engine="python" if sep == r"\s+" else "c",
-                            compression="infer").columns)
+                            compression=compression_of(path)).columns)
 
 
 STRING_COLUMNS = {"SNP", "CHR", "A1", "A2", "ALT"}   # every other mapped column goes through to_num
@@ -300,7 +309,7 @@ def read_rsid_map(path: Path) -> pd.DataFrame:
     '#CHROM POS ID REF ALT' works) and optionally A1/A2. Only rsID rows are kept."""
     name = path.name.lower()
     if name.endswith((".bim", ".bim.gz")):
-        df = pd.read_csv(path, sep=r"\s+", header=None, dtype=str, compression="infer",
+        df = pd.read_csv(path, sep=r"\s+", header=None, dtype=str, compression=compression_of(path),
                          names=["CHR", "SNP", "CM", "BP", "A1", "A2"]).drop(columns="CM")
     else:
         raw = read_table(path)
