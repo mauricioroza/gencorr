@@ -46,12 +46,34 @@ Defined once in `bin/gencorr_common.py` (`RESULT_COLUMNS`) and enforced by
 | `p`                             | LDSC p                                                                                           | LAVA simulation p (bivariate)                                                                                                                                                                              | two-sided normal p from z (computed here; LDAK gives none)                                                                                                                                          |
 | `h2_1`, `h2_2`                  | observed-scale SNP-h2 of each trait from its own `--h2` run                                      | local observed h2 (`run.univ`)                                                                                                                                                                             | `Her1_All`, `Her2_All`                                                                                                                                                                              |
 | `h2_1_se`, `h2_2_se`            | LDSC SE                                                                                          | NA                                                                                                                                                                                                         | LDAK SE                                                                                                                                                                                             |
+| `confidence`                    | trust tier, see below                                                                            | NA (local rows are not tiered)                                                                                                                                                                             | trust tier, see below                                                                                                                                                                               |
 | `status`                        | see below                                                                                        | see below                                                                                                                                                                                                  | see below                                                                                                                                                                                           |
-| `extra`                         | JSON: `gcov_int`, `gcov_int_se`, pair-specific h2/intercept of trait2, LDSC error text, log name | JSON: `univ_p_1/2`, `h2_latent_1/2`, `r2` and its CI, `K` (#PCs), `univ_thresh`, `seed`, `snp_set` (`all` or the `--lava_snp_list` file name); on `ok` rows `p_bonferroni`, `q_fdr`, `n_tests` (see below) | JSON: `coher`/`coher_se` (coheritability), `overlap`/`overlap_se`, `scaling_1/2` (+SE, with genomic control), `n_snps_1/2` (tagging predictors found per trait), `p_method`, LDAK `error`, log name |
+| `extra`                         | JSON: `gcov_int`, `gcov_int_se`, `overlap_suspected` (\|gcov_int\| > 0.025), `mean_chi2_1/2` and `intercept_1/2` of each trait's h2 run, pair-specific h2/intercept of trait2, LDSC error text, log name | JSON: `univ_p_1/2`, `h2_latent_1/2`, `r2` and its CI, `K` (#PCs), `univ_thresh`, `seed`, `snp_set` (`all` or the `--lava_snp_list` file name); on `ok` rows `p_bonferroni`, `q_fdr`, `n_tests` (see below) | JSON: `coher`/`coher_se` (coheritability), `overlap`/`overlap_se`, `scaling_1/2` (+SE, with genomic control), `n_snps_1/2` (tagging predictors found per trait), `p_method`, LDAK `error`, log name |
 
 Read it in R with `read.delim("gencorr_results.tsv", quote = "")` or in Python
 with `pandas.read_csv(..., sep="\t", quoting=3)`. Parse `extra` with
 `jsonlite::fromJSON` / `json.loads`.
+
+**`confidence` (global rows with status `ok`).** `ok` only means the tool
+returned a number. `confidence` says whether that number can be read, from
+published rules of thumb (constants in `bin/gencorr_common.py`):
+
+| tier                | rule                                                                                                      |
+| ------------------- | --------------------------------------------------------------------------------------------------------- |
+| `not_interpretable` | h2 z (h2 / SE) ≤ 2 for either trait, or \|rg\| > 1, or rg SE ≥ 0.3                                         |
+| `low`               | h2 z ≤ 4 for either trait, or mean χ² ≤ 1.02 for either trait (LDSC, from `extra.mean_chi2_1/2`)          |
+| `trusted`           | otherwise                                                                                                 |
+
+Sources: h2 z > 4 is the Neale lab's threshold for following up rg; mean χ²
+> 1.02 is from the LDSC FAQ (less signal than that is too little for rg); PGC
+MDD (Meng et al. 2024) did not report Popcorn estimates with SE ≥ 0.3. The tier
+is NA for local rows, for rows that are not `ok`, and when h2, an SE, rg or its
+SE is missing. Non-European GWAS of a few thousand cases often land in `low` or
+`not_interpretable`: report their estimates with SEs, not as null results.
+**Overlap.** LDSC's rg is unbiased under sample overlap (the cross-trait
+intercept absorbs it), so overlap does not change the tier;
+`extra.overlap_suspected` marks pairs with \|gcov_int\| > 0.025 (the rule of
+PGC MDD2025) for sensitivity analyses.
 
 **LAVA multiple testing.** `p` is the raw bivariate p-value. A genome-wide
 run tests many (pair, locus) combinations, so judge significance on the

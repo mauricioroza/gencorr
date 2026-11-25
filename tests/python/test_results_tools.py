@@ -133,6 +133,46 @@ def test_parse_ldsc_cli(tmp_path):
     assert len(lines[0].split()) + 1 == len(lines[1].split())
 
 
+def test_ldsc_extra_has_diagnostics_and_overlap_flag():
+    h2 = parse_ldsc.collect_h2([LOGS / f"{t}.h2.log" for t in ["bmi", "neuro", "depression", "rheuma"]])
+    rg = parse_ldsc.parse_rg_log(LOGS / "bmi__b1.rg.log")
+    res = parse_ldsc.build_results(rg, h2).set_index("trait2")
+    hi = h2.set_index("trait")
+    x = json.loads(res.loc["neuro", "extra"])
+    assert x["mean_chi2_1"] == hi.loc["bmi", "mean_chi2"] and x["mean_chi2_2"] == hi.loc["neuro", "mean_chi2"]
+    assert x["intercept_1"] == hi.loc["bmi", "intercept"]
+    assert x["overlap_suspected"] is (abs(x["gcov_int"]) > parse_ldsc.OVERLAP_GCOV_INT)
+    assert set(res["confidence"].dropna()) <= {"trusted", "low", "not_interpretable"}
+
+
+# ---------------------------------------------------------------- confidence --
+@pytest.mark.parametrize("over, expected", [
+    ({}, "trusted"),                                                    # h2 z = 10
+    ({"h2_2": 0.03}, "low"),                                            # h2 z = 3
+    ({"h2_1": 0.02}, "not_interpretable"),                              # h2 z = 2
+    ({"rg": 1.05}, "not_interpretable"),                                # out of bounds
+    ({"rg_se": 0.3}, "not_interpretable"),                              # PGC Popcorn SE rule
+    ({"extra": '{"mean_chi2_1": 1.01, "mean_chi2_2": 1.3}'}, "low"),    # LDSC FAQ mean chi2
+    ({"extra": '{"mean_chi2_1": null}'}, "trusted"),                    # missing chi2 ignored
+    ({"h2_1_se": np.nan}, None),                                        # cannot be assessed
+    ({"status": "rg_not_estimable"}, None),
+    ({"scope": "local", "locus": "1"}, None),
+])
+def test_confidence_tiers(over, expected):
+    from gencorr_common import row_confidence
+    row = {"scope": "global", "status": "ok", "rg": 0.4, "rg_se": 0.1,
+           "h2_1": 0.1, "h2_1_se": 0.01, "h2_2": 0.1, "h2_2_se": 0.01, "extra": "{}"}
+    row.update(over)
+    assert row_confidence(row) == expected
+
+
+def test_validate_results_fills_confidence_for_tables_without_it():
+    """Method tables written without the column (e.g. run_lava.R) still validate."""
+    df = _results(rg_se=0.1, h2_1=0.1, h2_1_se=0.01, h2_2=0.1, h2_2_se=0.01).drop(columns="confidence")
+    out = validate_results(df)
+    assert list(out.columns) == RESULT_COLUMNS and out["confidence"].iloc[0] == "trusted"
+
+
 # --------------------------------------------------------------------- merge --
 def _results(**over):
     row = {c: np.nan for c in RESULT_COLUMNS}

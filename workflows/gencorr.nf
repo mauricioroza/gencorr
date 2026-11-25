@@ -232,7 +232,7 @@ def traitsInPairs(ch_harmonized, ch_pairs) {
 def resultHeader() {
     return ['method', 'scope', 'trait1', 'trait2', 'locus', 'chr', 'start', 'stop', 'n_snps',
             'rg', 'rg_se', 'rg_ci_low', 'rg_ci_high', 'z', 'p', 'h2_1', 'h2_1_se', 'h2_2', 'h2_2_se',
-            'status', 'extra'].join('\t')
+            'confidence', 'status', 'extra'].join('\t')
 }
 
 //
@@ -242,7 +242,8 @@ def resultHeader() {
 //
 def notEstimatedRow(String method, Map m1, Map m2, String status) {
     def extra = "{\"ancestry_1\": \"${traitAncestry(m1)}\", \"ancestry_2\": \"${traitAncestry(m2)}\"}"
-    def cells = [ method, methodRegistry()[method].scope, m1.id, m2.id ] + (['NA'] * 15) + [ status, extra ]
+    // 15 estimate columns (locus .. h2_2_se) + confidence, all NA
+    def cells = [ method, methodRegistry()[method].scope, m1.id, m2.id ] + (['NA'] * 16) + [ status, extra ]
     return cells.join('\t')
 }
 

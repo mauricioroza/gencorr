@@ -71,11 +71,70 @@ RESULT_COLUMNS = [
     "h2_1_se",
     "h2_2",
     "h2_2_se",
+    "confidence",  # global status-ok rows: trusted / low / not_interpretable (assign_confidence)
     "status",      # "ok" or a short reason the estimate is missing
     "extra",       # JSON object with method-specific fields
 ]
 
 VALID_SCOPES = {"global", "local"}
+
+# --------------------------------------------------------------------------- #
+# Confidence tiers for global estimates (see docs/output.md)
+# --------------------------------------------------------------------------- #
+# Rules of thumb from the literature, combined into tiers:
+#   h2 z > 4: Neale lab threshold for following up rg (nealelab.is, 2019)
+#   mean chi2 > 1.02: LDSC FAQ (below that, too little signal for rg)
+#   rg_se >= 0.3: PGC MDD (Meng et al. 2024) did not report Popcorn estimates with SE >= 0.3
+CONFIDENCE_H2_Z_TRUSTED = 4.0
+CONFIDENCE_H2_Z_MIN = 2.0
+CONFIDENCE_MEAN_CHI2_MIN = 1.02
+CONFIDENCE_RG_SE_MAX = 0.3
+CONFIDENCE_LEVELS = ("trusted", "low", "not_interpretable")
+
+
+def _num(value) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return float("nan")
+
+
+def row_confidence(row) -> str | None:
+    """Confidence tier of one results row (None = not assessed).
+
+    Only global rows with status 'ok' are assessed. A row is
+      not_interpretable: either trait's h2 z <= 2, |rg| > 1, or rg_se >= 0.3;
+      low:               either trait's h2 z <= 4, or a trait's mean chi2 <= 1.02
+                         (when the method reports it in extra: mean_chi2_1/2);
+      trusted:           otherwise.
+    None when h2, its SE, rg or rg_se is missing.
+    """
+    if row.get("scope") != "global" or row.get("status") != "ok":
+        return None
+    h2 = [_num(row.get("h2_1")), _num(row.get("h2_2"))]
+    se = [_num(row.get("h2_1_se")), _num(row.get("h2_2_se"))]
+    rg, rg_se = _num(row.get("rg")), _num(row.get("rg_se"))
+    values = h2 + se + [rg, rg_se]
+    if any(v != v for v in values) or min(se) <= 0:   # NaN or unusable SE
+        return None
+    h2_z = min(h2[0] / se[0], h2[1] / se[1])
+    if h2_z <= CONFIDENCE_H2_Z_MIN or abs(rg) > 1 or rg_se >= CONFIDENCE_RG_SE_MAX:
+        return "not_interpretable"
+    try:
+        extra = json.loads(row.get("extra") or "{}")
+    except (TypeError, json.JSONDecodeError):
+        extra = {}
+    chi2 = [_num(extra.get(k)) for k in ("mean_chi2_1", "mean_chi2_2")]
+    if h2_z <= CONFIDENCE_H2_Z_TRUSTED or any(c <= CONFIDENCE_MEAN_CHI2_MIN for c in chi2 if c == c):
+        return "low"
+    return "trusted"
+
+
+def assign_confidence(df: pd.DataFrame) -> pd.DataFrame:
+    """Return df with the 'confidence' column (re)computed for every row."""
+    df = df.copy()
+    df["confidence"] = [row_confidence(r) for r in df.to_dict("records")] if len(df) else []
+    return df
 
 NA_VALUES = ["NA", "na", "NaN", "nan", "", ".", "None", "null", "NULL"]
 
@@ -95,7 +154,12 @@ def empty_results() -> pd.DataFrame:
 
 
 def validate_results(df: pd.DataFrame, source: str = "<table>") -> pd.DataFrame:
-    """Check a results table against the contract; return it with ordered columns."""
+    """Check a results table against the contract; return it with ordered columns.
+
+    The 'confidence' column is derived, not reported by a method: it is
+    (re)computed here (assign_confidence), so method parsers may leave it out.
+    """
+    df = assign_confidence(df)
     missing = [c for c in RESULT_COLUMNS if c not in df.columns]
     if missing:
         raise ValueError(f"{source}: missing result columns {missing}")

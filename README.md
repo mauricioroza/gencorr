@@ -175,14 +175,17 @@ results/
 
 `gencorr_results.tsv`, main columns (all columns: [docs/output.md](docs/output.md)):
 
-| method | scope  | trait1 | trait2 | locus | rg   | rg_se | rg_ci_low | rg_ci_high | p      | status        | extra           |
-| ------ | ------ | ------ | ------ | ----- | ---- | ----- | --------- | ---------- | ------ | ------------- | --------------- |
-| ldsc   | global | bmi    | mdd    | NA    | 0.11 | 0.07  | …         | …          | 0.11   | ok            | {"gcov_int": …} |
-| lava   | local  | bmi    | mdd    | 464   | 0.51 | NA    | 0.27      | 0.81       | 1.1e-4 | ok            | {"r2": …}       |
-| lava   | local  | bmi    | mdd    | 100   | NA   | NA    | NA        | NA         | NA     | univ_filtered | …               |
+| method | scope  | trait1 | trait2 | locus | rg   | rg_se | rg_ci_low | rg_ci_high | p      | confidence | status        | extra           |
+| ------ | ------ | ------ | ------ | ----- | ---- | ----- | --------- | ---------- | ------ | ---------- | ------------- | --------------- |
+| ldsc   | global | bmi    | mdd    | NA    | 0.11 | 0.07  | …         | …          | 0.11   | trusted    | ok            | {"gcov_int": …} |
+| lava   | local  | bmi    | mdd    | 464   | 0.51 | NA    | 0.27      | 0.81       | 1.1e-4 | NA         | ok            | {"r2": …}       |
+| lava   | local  | bmi    | mdd    | 100   | NA   | NA    | NA        | NA         | NA     | NA         | univ_filtered | …               |
 
 `status` is `ok` when there is an estimate; otherwise it says why not
 (`univ_filtered`, `no_snps_in_locus`, `ldsc_error`, `estimate_out_of_bounds`, …).
+For global estimates, `confidence` (`trusted`, `low`, `not_interpretable`) says
+whether the estimate can be read: it checks the h2 z-scores, the SE and LDSC's
+mean χ² ([rules](docs/output.md#the-standard-results-table)).
 Read the file in R with `read.delim("gencorr_results.tsv", quote = "")` and the
 JSON `extra` column with `jsonlite::fromJSON`.
 

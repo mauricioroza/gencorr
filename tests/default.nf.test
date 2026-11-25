@@ -33,6 +33,10 @@ nextflow_pipeline {
                 { assert rows.findAll { it.method == 'sumher' }.size() == 6 },
                 { assert rows.findAll { it.method == 'sumher' }.every { it.status == 'ok' } },
                 { assert rows.findAll { it.method == 'ldsc' }.every { it.status == 'ok' } },
+                // trust tier on every global ok row, never on local rows
+                { assert rows.findAll { it.scope == 'global' && it.status == 'ok' }
+                             .every { it.confidence in ['trusted', 'low', 'not_interpretable'] } },
+                { assert rows.findAll { it.scope == 'local' }.every { it.confidence == 'NA' } },
                 { assert snapshot(
                     // tool versions from the "versions" topic (nf-core template);
                     // pinned identically in the container and environment.yml files

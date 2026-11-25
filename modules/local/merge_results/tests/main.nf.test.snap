@@ -6,15 +6,15 @@
                     {
                         "id": "gencorr_results"
                     },
-                    "gencorr_results.tsv:md5,407884a6d0e8e76ddcda3f91b5929ab8"
+                    "gencorr_results.tsv:md5,e71d942a4c1d2f19da26112dbb9769d9"
                 ]
             ]
         ],
+        "timestamp": "2026-11-25T13:50:05.325495737",
         "meta": {
-            "nf-test": "0.9.3",
-            "nextflow": "25.10.6"
-        },
-        "timestamp": "2026-11-06T19:46:15.574097633"
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.5"
+        }
     },
     "stub": {
         "content": [
@@ -27,10 +27,10 @@
                 ]
             ]
         ],
+        "timestamp": "2026-11-06T19:46:29.849127097",
         "meta": {
             "nf-test": "0.9.3",
             "nextflow": "25.10.6"
-        },
-        "timestamp": "2026-11-06T19:46:29.849127097"
+        }
     }
 }

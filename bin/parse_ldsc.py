@@ -197,8 +197,18 @@ def parse_rg_log(path: Path) -> pd.DataFrame:
     return table
 
 
+#: |cross-trait intercept| above which a pair is flagged as having sample overlap
+#: (PGC MDD2025, Adams et al. 2025). LDSC rg stays unbiased under overlap; the
+#: flag is for readers and for choosing pairs for sensitivity analyses.
+OVERLAP_GCOV_INT = 0.025
+
+
 def build_results(rg: pd.DataFrame, h2: pd.DataFrame) -> pd.DataFrame:
     h2i = h2.set_index("trait")
+
+    def h2v(trait, col):
+        return h2i.at[trait, col] if trait in h2i.index else np.nan
+
     rows = []
     for _, r in rg.iterrows():
         status = "ok"
@@ -206,17 +216,21 @@ def build_results(rg: pd.DataFrame, h2: pd.DataFrame) -> pd.DataFrame:
             status = "ldsc_error"
         elif np.isnan(r["rg"]):
             status = "rg_not_estimable"  # e.g. negative or zero h2 for one trait
+        gcov_int = r.get("gcov_int")
         extra = {
-            "gcov_int": r.get("gcov_int"), "gcov_int_se": r.get("gcov_int_se"),
+            "gcov_int": gcov_int, "gcov_int_se": r.get("gcov_int_se"),
+            "overlap_suspected": (bool(abs(gcov_int) > OVERLAP_GCOV_INT)
+                                  if gcov_int is not None and not np.isnan(gcov_int) else None),
             "pair_h2_obs_2": r.get("h2_obs"), "pair_h2_obs_2_se": r.get("h2_obs_se"),
             "pair_h2_int_2": r.get("h2_int"), "pair_h2_int_2_se": r.get("h2_int_se"),
+            # per-trait h2 regression diagnostics (used by the confidence tier)
+            "mean_chi2_1": h2v(r["trait1"], "mean_chi2"), "mean_chi2_2": h2v(r["trait2"], "mean_chi2"),
+            "intercept_1": h2v(r["trait1"], "intercept"), "intercept_2": h2v(r["trait2"], "intercept"),
             "error": r.get("error") if isinstance(r.get("error"), str) else None,
             "log": r["log"],
         }
-        extra = {k: (None if isinstance(v, float) and np.isnan(v) else v) for k, v in extra.items()}
-
-        def h2v(trait, col):
-            return h2i.at[trait, col] if trait in h2i.index else np.nan
+        extra = {k: (None if isinstance(v, float) and np.isnan(v) else
+                     float(v) if isinstance(v, np.floating) else v) for k, v in extra.items()}
 
         rows.append({
             "method": "ldsc", "scope": "global",
