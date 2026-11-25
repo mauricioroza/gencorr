@@ -55,9 +55,11 @@ process HARMONIZE_SUMSTATS {
     """
 
     stub:
+    // the stub QC report records the options, so stub runs check how they are built
+    def args = task.ext.args ?: ''
     prefix = task.ext.prefix ?: "${meta.id}"
     """
     printf 'SNP\\tCHR\\tBP\\tA1\\tA2\\tZ\\tBETA\\tSE\\tP\\tN\\tEAF\\tINFO\\n' | gzip > ${prefix}.harmonized.tsv.gz
-    echo '{}' > ${prefix}.qc.json
+    echo '{"stub_args": "${args}"}' > ${prefix}.qc.json
     """
 }

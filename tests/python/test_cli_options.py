@@ -18,6 +18,7 @@ available locally (e.g. on ARM64, where LDAK cannot be built).
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import shutil
@@ -74,6 +75,14 @@ def test_save_options_false_on_the_command_line(tmp_path):
 def test_save_options_true_on_the_command_line(tmp_path):
     out = run_stub(tmp_path, "true", "--methods", "ldsc,lava", "--save_intermediates", "true")
     assert (out / "lava" / "chunks").exists()
+
+
+def test_numeric_qc_options_on_the_command_line(tmp_path):
+    # with the default parser "--min_info 0.9" arrives as the text "0.9"; comparing it
+    # with 0 in conf/modules.config stopped every harmonization task (2026-11-25)
+    out = run_stub(tmp_path, "qc", "--methods", "ldsc", "--min_info", "0.9", "--min_maf", "0.01")
+    qc = json.loads((out / "harmonized" / "bmi.qc.json").read_text())
+    assert "--min-info 0.9" in qc["stub_args"] and "--min-maf 0.01" in qc["stub_args"]
 
 
 @requires_ldak

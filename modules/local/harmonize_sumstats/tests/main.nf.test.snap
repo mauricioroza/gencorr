@@ -72,14 +72,14 @@
                     {
                         "id": "bmi"
                     },
-                    "bmi.qc.json:md5,8a80554c91d9fca8acb82f023de02f11"
+                    "bmi.qc.json:md5,76f29eb10a823862c560eeb6d9a8d74c"
                 ]
             ]
         ],
-        "timestamp": "2026-11-06T19:36:54.021375487",
+        "timestamp": "2026-11-25T16:22:04.181477902",
         "meta": {
-            "nf-test": "0.9.3",
-            "nextflow": "25.10.6"
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.5"
         }
     },
     "GRCh38 file without rsIDs - rsID map (.bim)": {

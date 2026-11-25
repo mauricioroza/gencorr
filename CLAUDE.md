@@ -32,6 +32,8 @@ mention it only as a comparison reference.
   (truthy); under NXF_SYNTAX_PARSER=v1 (nf-test) it is a real Boolean. Always test
   `params.x.toString() == 'true'`, never `params.x ? ...`. Guarded by tests/python/test_cli_options.py
   (`GENCORR_NEXTFLOW_TESTS=1`). Template's monochrome_logs still has this (cosmetic).
+  Same for numbers: `--min_info 0.9` arrives as the String "0.9"; cast before comparing
+  (`(params.x as double) > 0`). The first real VM run failed on this (2026-11-25).
 - Keep code Nextflow strict-syntax clean (`nextflow lint` = 0 errors; runs on 25.10 and 26.10.5):
   no implicit `it`, no `switch`/`for` in workflow code, unused closure params prefixed `_`.
 
