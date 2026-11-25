@@ -26,19 +26,8 @@
             "nextflow": "26.10.5"
         }
     },
-    "EUR_ref x EAS_ref - same scores as popcorn compute run directly": {
+    "EUR_ref x EAS_ref - matches popcorn compute run directly (within platform tolerance)": {
         "content": [
-            [
-                [
-                    {
-                        "id": "EUR_EAS",
-                        "ancestry_1": "EUR",
-                        "ancestry_2": "EAS",
-                        "model": "impact"
-                    },
-                    "EUR_EAS.impact.cscore:md5,417cdd5718d85c2a6f398b4d7860b874"
-                ]
-            ],
             [
                 [
                     "POPCORN_COMPUTE",
@@ -47,7 +36,7 @@
                 ]
             ]
         ],
-        "timestamp": "2026-11-25T14:07:25.267727488",
+        "timestamp": "2026-11-25T14:54:09.418581449",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.5"

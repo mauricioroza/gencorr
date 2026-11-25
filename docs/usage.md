@@ -302,6 +302,13 @@ compute`) from one PLINK reference per ancestry: `--popcorn_ref` (EUR),
    across runs with `--popcorn_cache <folder>`. Population 1 is the ancestry
    that comes first in EUR, EAS, AFR, SAS.
 
+   Popcorn's score files are **not bit-reproducible across machines**: the
+   cross-population LD score of a few percent of SNPs moves by small steps
+   with the CPU and the number of BLAS threads (on Popcorn's test panels: up to
+   0.05 for 8% of SNPs; rg unchanged at 4 decimals). Compute each score file
+   once, keep it (`--popcorn_cache`, or pass it with `--popcorn_cfiles`), and
+   use the same file for all analyses you compare.
+
 A pair with none of these stops the run at start-up, naming what is missing.
 The score file's ancestry order is its population order (`--bfile1`,
 `--bfile2`); gencorr puts each trait pair in that order.

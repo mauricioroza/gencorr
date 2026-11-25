@@ -112,8 +112,10 @@ mention it only as a comparison reference.
   cross-ancestry pairs become `cross_ancestry` rows (gencorr.nf notEstimatedRow) and go to Popcorn; MULTI
   (multi-ancestry meta-analysis) is harmonized only, its pairs are `multi_ancestry` for every method.
 - Popcorn score file per ancestry pair (popcornScoreSources): --popcorn_cfiles CSV, --popcorn_cfile, or
-  POPCORN_COMPUTE from --popcorn_ref[_<x>] (oracle: computed file == tests/data/popcorn scores byte for
-  byte). AMR pairs -> `admixed_ancestry`.
+  POPCORN_COMPUTE from --popcorn_ref[_<x>]. AMR pairs -> `admixed_ancestry`. popcorn compute is NOT
+  bit-reproducible across machines: the cross-population score (col 10) moves in small steps for ~8% of
+  SNPs depending on CPU/BLAS threads (laptop = tests/data/popcorn oracle; OCI EPYC VM differs, max 0.052;
+  rg same at 4 decimals). Module test uses tolerances; docs recommend computing once + --popcorn_cache.
 - Results column `confidence` (trusted/low/not_interpretable) for global ok rows, computed in
   gencorr_common.validate_results (h2 z 4/2, |rg|<=1, SE<0.3, LDSC mean chi2 1.02). Design came from the
   research report `reports/MDD cross ancestry genetic correlation.md` (local only, not committed).

@@ -1,8 +1,13 @@
 // Module test: POPCORN_COMPUTE
 // Oracle: tests/data/popcorn/EUR_EAS.test.cscore.gz was computed by running
 // `popcorn compute -v 1 --bfile1 EUR_ref --bfile2 EAS_ref` directly on Popcorn's
-// test reference panels (pinned commit). The module must give the same file,
-// byte for byte (md5 of the decompressed oracle: 417cdd5718d85c2a6f398b4d7860b874).
+// test reference panels (pinned commit), on one machine. Popcorn's output is not
+// bit-reproducible across machines: the cross-population score (column 10) moves
+// by small steps for a few percent of SNPs depending on CPU and BLAS threads
+// (seen 2026-11-25: Intel laptop = oracle; AMD EPYC VM: 3552 of 43898 SNPs, max
+// 0.052, same SNPs, frequencies and within-population scores). So the module
+// must give the same SNPs, frequencies and within-population scores, and
+// cross-population scores within that tolerance.
 nextflow_process {
 
     name "Test Process POPCORN_COMPUTE"
@@ -14,7 +19,7 @@ nextflow_process {
     tag "popcorn"
     tag "popcorn/compute"
 
-    test("EUR_ref x EAS_ref - same scores as popcorn compute run directly") {
+    test("EUR_ref x EAS_ref - matches popcorn compute run directly (within platform tolerance)") {
 
         when {
             params { outdir = "$outputDir" }
@@ -30,11 +35,23 @@ nextflow_process {
         }
 
         then {
-            def oracle = new java.util.zip.GZIPInputStream(new FileInputStream("${baseDir}/tests/data/popcorn/EUR_EAS.test.cscore.gz")).text
+            def oracle = new java.util.zip.GZIPInputStream(new FileInputStream("${baseDir}/tests/data/popcorn/EUR_EAS.test.cscore.gz"))
+                .text.readLines().collect { line -> line.split('\t') as List }
+            def scores = path(process.out.cfile[0][1]).readLines().collect { line -> line.split('\t') as List }
+            def pairs  = [scores, oracle].transpose()
+            def diff   = { r, i -> Math.abs((r[0][i] as double) - (r[1][i] as double)) }
+            def l12    = pairs.collect { r -> diff(r, 9) }
             assertAll(
                 { assert process.success },
-                { assert path(process.out.cfile[0][1]).text == oracle },
-                { assert snapshot(process.out.cfile, process.out.versions_popcorn).match() }
+                { assert scores.size() == oracle.size() },
+                // chr, bp, rsID, alleles and both allele frequencies identical
+                { assert pairs.every { r -> r[0][0..6] == r[1][0..6] } },
+                // within-population LD scores: rounding only
+                { assert pairs.every { r -> diff(r, 7) < 1e-9 && diff(r, 8) < 1e-9 } },
+                // cross-population LD score: platform-dependent steps (see header)
+                { assert l12.max() < 0.1 },
+                { assert l12.sum() / l12.size() < 0.002 },
+                { assert snapshot(process.out.versions_popcorn).match() }
             )
         }
     }
