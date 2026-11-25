@@ -109,6 +109,19 @@ def test_rs_ids_lower_cased_and_alleles_upper_cased():
     assert list(out["A1"]) == ["A", "C"]
 
 
+def test_rsids_with_appended_alleles_are_cut_to_the_rsid():
+    # GIANT/UKB (Pulit 2018) files name variants "rs79565750:T:A"; other files "rs1_A_G"
+    df = raw(SNP=["rs79565750:T:A", "RS2_C_G", "rs3", "1:100:A:G", "rs4:A:G", "rs4:A:C"],
+             A1=["a", "c", "a", "a", "a", "a"], A2=["t", "g", "g", "g", "g", "c"],
+             Z=["1", "2", "3", "4", "5", "6"], N=["5"] * 6)
+    out, qc = harmonize(df)
+    # alleles still come from the allele columns; rs4 occurs twice -> all copies dropped
+    assert list(out["SNP"]) == ["rs79565750", "rs2", "rs3", "1:100:A:G"]
+    assert qc["snp_id_suffix_removed"] == 4
+    assert qc["removed"]["duplicated_snp_all_copies"] == 2
+    assert "warning_non_rsid" not in qc
+
+
 def test_n_fallbacks():
     df = raw(SNP=["rs1"], A1=["A"], A2=["G"], Z=["1"])
     out, qc = harmonize(df, n_cases=100, n_controls=300)

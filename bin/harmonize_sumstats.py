@@ -12,6 +12,8 @@ What it does, in order (every step is counted in the QC report):
     recognised by detect_layout(). Only the mapped columns are then read (IDs
     and alleles as text, the rest as numbers).
  3. Normalise IDs and alleles: upper-case alleles, "rs" IDs lower-cased,
+    rsIDs with appended alleles ("rs123:A:G", "rs123_A_G", e.g. GIANT/UKB
+    files) cut to the rsID (the alleles come from the allele columns),
     "chr" prefix stripped from chromosomes.
  3b. Optional rsID mapping (--rsid-map): rows whose SNP ID is not an rsID
     (e.g. "1:12345:A:G", or no SNP column at all) get the rsID of the variant
@@ -109,6 +111,8 @@ EFFECTIVE_N_NAMES = {"neff", "n_eff"}
 VALID_ALLELES = set("ACGT")
 AMBIGUOUS_PAIRS = {frozenset("AT"), frozenset("CG")}
 RS_PATTERN = re.compile(r"^rs\d+$", re.IGNORECASE)
+# rsID followed by appended fields, e.g. "rs79565750:T:A" (GIANT/UKB) or "rs123_A_G"
+RS_WITH_SUFFIX = re.compile(r"^(rs\d+)[:_]", re.IGNORECASE)
 COMPLEMENT = str.maketrans("ACGT", "TGCA")
 NON_RSID_WARN_FRACTION = 0.5   # warn when fewer than this share of IDs are rsIDs
 CHISQ_MEDIAN_1DF = stats.chi2.ppf(0.5, 1)  # 0.4549...
@@ -396,6 +400,12 @@ def harmonize(raw: pd.DataFrame, mapping: dict[str, str], *, n=None, n_cases=Non
     out = pd.DataFrame(index=raw.index)
     out["SNP"] = (col("SNP").str.strip() if "SNP" in mapping
                   else pd.Series(pd.NA, index=raw.index, dtype="object"))
+    # "rs123:A:G" -> "rs123": the alleles are read from the allele columns
+    suffixed = out["SNP"].str.match(RS_WITH_SUFFIX, na=False)
+    if suffixed.any():
+        out.loc[suffixed, "SNP"] = out.loc[suffixed, "SNP"].str.extract(RS_WITH_SUFFIX, expand=False)
+        qc["snp_id_suffix_removed"] = int(suffixed.sum())
+    del suffixed
     is_rs = out["SNP"].str.match(RS_PATTERN, na=False)
     upper_rs = is_rs & ~out["SNP"].str.startswith("rs", na=False)   # lowercase only where needed (memory)
     out.loc[upper_rs, "SNP"] = out.loc[upper_rs, "SNP"].str.lower()

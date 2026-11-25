@@ -75,7 +75,10 @@ reference (LDSC LD scores, LAVA LD reference). The positions in your file are
 never used for the analysis, so:
 
 - **A file with rsIDs works on any build**, GRCh37 or GRCh38, without liftover.
-  GWAS Catalog harmonised files (`hm_rsid`) are recognised automatically.
+  GWAS Catalog harmonised files (`hm_rsid`) are recognised automatically, and
+  rsIDs with appended alleles (`rs79565750:T:A` as in the GIANT/UKB files,
+  `rs123_A_G`) are cut to the rsID (the alleles come from the allele columns;
+  counted as `snp_id_suffix_removed` in the QC report).
 - **A file without rsIDs** (SNP IDs like `1:12345:A:G`, `chr1_12345_G_A`, or no
   SNP column at all) needs an **rsID map** for its build. The harmonizer then
   gives each such variant the rsID at the same chromosome and position with the
