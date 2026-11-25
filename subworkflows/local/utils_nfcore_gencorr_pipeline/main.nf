@@ -46,9 +46,28 @@ def traitAncestry(Map meta) {
     return (meta.ancestry ?: 'EUR').toString()
 }
 
+// Ancestries with their own references (one parameter set each, see ancestryParam).
+// The samplesheet also accepts MULTI: a multi-ancestry meta-analysis has no
+// matching LD reference, so it is harmonized (QC report) but never analysed.
+def supportedAncestries() {
+    return ['EUR', 'EAS', 'AFR', 'SAS', 'AMR']
+}
+
+// Pairs with a MULTI trait get status 'multi_ancestry' from every method
+def isMultiAncestryPair(Map m1, Map m2) {
+    return traitAncestry(m1) == 'MULTI' || traitAncestry(m2) == 'MULTI'
+}
+
 // Parameter holding a per-ancestry reference: ldsc_ld (EUR), ldsc_ld_eas (EAS), ...
 def ancestryParam(String name, String ancestry) {
     return ancestry == 'EUR' ? name : "${name}_${ancestry.toLowerCase()}".toString()
+}
+
+// Per-ancestry setting that falls back to the EUR one when not set
+// (e.g. ldsc_ld_prefix_afr -> ldsc_ld_prefix)
+def ancestrySetting(Map p, String name, String ancestry) {
+    def value = p[ancestryParam(name, ancestry)]
+    return value != null ? value : p[name]
 }
 
 /*
@@ -140,15 +159,23 @@ workflow PIPELINE_INITIALISATION {
     // ancestry's references and report cross-ancestry pairs with status
     // cross_ancestry; Popcorn estimates the cross-ancestry pairs.
     //
-    def same_ancestry = pair_list.findAll { p -> traitAncestry(meta_by_id[p[0]]) == traitAncestry(meta_by_id[p[1]]) }
-    def n_cross       = pair_list.size() - same_ancestry.size()
+    def multi_pairs   = pair_list.findAll { p -> isMultiAncestryPair(meta_by_id[p[0]], meta_by_id[p[1]]) }
+    if (multi_pairs) {
+        log.warn "${multi_pairs.size()} of ${pair_list.size()} pairs involve a trait with ancestry MULTI (multi-ancestry meta-analysis). No LD reference matches such a sample, so every method reports these pairs with status 'multi_ancestry'. Use the ancestry-specific GWAS instead."
+    }
+    def analysable    = pair_list.findAll { p -> !(p in multi_pairs) }
+    def same_ancestry = analysable.findAll { p -> traitAncestry(meta_by_id[p[0]]) == traitAncestry(meta_by_id[p[1]]) }
+    def n_cross       = analysable.size() - same_ancestry.size()
+    if (same_ancestry.any { p -> traitAncestry(meta_by_id[p[0]]) == 'AMR' }) {
+        log.warn "Some same-ancestry pairs are AMR (admixed). LD scores from an external reference underestimate h2 in admixed samples; prefer covariate-adjusted LD scores (Pan-UKB AMR) and treat AMR results as exploratory (docs/usage.md)."
+    }
     if (n_cross) {
         def by_popcorn = 'popcorn' in methods ? ' They are estimated by Popcorn.' : ' Add --methods popcorn (with --popcorn_cfile) to estimate them across ancestries.'
         log.warn "${n_cross} of ${pair_list.size()} pairs have traits of different ancestry; LDSC, LAVA and SumHer assume one population, so they report these pairs with status 'cross_ancestry'.${by_popcorn}"
     }
     validateReferences(params, methods, same_ancestry.collect { p -> traitAncestry(meta_by_id[p[0]]) }.unique().sort())
     if ('popcorn' in methods) {
-        def cross = pair_list.findAll { p -> !(p in same_ancestry) }
+        def cross = analysable.findAll { p -> !(p in same_ancestry) }
         validatePopcornAncestries(params.popcorn_cfile_ancestries as String,
             cross.collect { p -> [ traitAncestry(meta_by_id[p[0]]), traitAncestry(meta_by_id[p[1]]) ] })
     }
@@ -338,7 +365,7 @@ def validateGencorrParams(Map p, String profile) {
     if (!(p.lava_snp_set in ['pairwise', 'joint'])) {
         error("--lava_snp_set must be 'pairwise' or 'joint' (got '${p.lava_snp_set}').")
     }
-    if ((p.ldsc_ld || p.ldsc_ld_eas) && !p.ldsc_merge_alleles && 'ldsc' in methods) {
+    if (supportedAncestries().any { a -> p[ancestryParam('ldsc_ld', a)] } && !p.ldsc_merge_alleles && 'ldsc' in methods) {
         log.warn "No --ldsc_merge_alleles given. LDSC fails a pair when an rsID has different alleles in the two traits; the usual choice is w_hm3.snplist."
     }
     return methods
@@ -355,7 +382,10 @@ def validateReferences(Map p, List methods, List ancestries) {
             ancestries.each { a ->
                 def name = ancestryParam(rp, a)
                 if (!p[name]) {
-                    error("--methods ${m}: traits with ancestry ${a} are paired with each other, which needs --${name}.")
+                    def hint = (name == 'sumher_tagfile_amr')
+                        ? ' LDAK publishes no AMR tagging file: compute one with ldak --calc-tagging from an AMR reference, or leave sumher out of --methods.'
+                        : ''
+                    error("--methods ${m}: traits with ancestry ${a} are paired with each other, which needs --${name}.${hint}")
                 }
             }
         }

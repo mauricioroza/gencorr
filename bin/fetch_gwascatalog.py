@@ -40,8 +40,16 @@ from pathlib import Path
 
 DEFAULT_BASE = "https://ftp.ebi.ac.uk/pub/databases/gwas/summary_statistics"
 ACCESSION = re.compile(r"^GCST(\d+)$")
-# samplesheet ancestry -> GWAS Catalog ancestry category
-CATEGORY = {"EUR": "European", "EAS": "East Asian"}
+# samplesheet ancestry -> GWAS Catalog ancestry categories (Catalog ancestry
+# framework). MULTI matches none: a multi-ancestry total N never fits one LD reference.
+CATEGORY = {
+    "EUR": {"European"},
+    "EAS": {"East Asian"},
+    "AFR": {"African unspecified", "Sub-Saharan African", "African American or Afro-Caribbean"},
+    "SAS": {"South Asian"},
+    "AMR": {"Hispanic or Latin American"},
+    "MULTI": set(),
+}
 USER_AGENT = "gencorr-pipeline (https://github.com/mauricioroza/gencorr)"
 RETRIES = 3
 
@@ -211,15 +219,15 @@ def parse_meta_yaml(text: str) -> dict:
 def total_n(samples: list[dict], ancestry: str) -> tuple[int | None, str | None, list[str]]:
     """(n, reason when n is None, warnings) for the samplesheet ancestry."""
     warnings = []
-    want = CATEGORY.get(ancestry, ancestry)
+    want = CATEGORY.get(ancestry, {ancestry})
     cats = sorted({c for s in samples for c in s["ancestry"]})
-    if samples and want not in cats:
+    if samples and want and not want & set(cats):
         warnings.append(f"the study's ancestry ({', '.join(cats) or 'not given'}) does not include "
-                        f"{want}, but the samplesheet says {ancestry}")
+                        f"{' or '.join(sorted(want))}, but the samplesheet says {ancestry}")
     if not samples or any(s["size"] is None for s in samples):
         return None, "the GWAS Catalog metadata gives no sample size", warnings
     parts = "; ".join(f"{'/'.join(s['ancestry'])} {s['size']}" for s in samples)
-    if cats != [want]:
+    if not want or not cats or not set(cats) <= want:
         return None, (f"multi-ancestry or other-ancestry study ({parts}): the total N would not "
                       "match the LD references, so set n in the samplesheet"), warnings
     if len(samples) > 1:
@@ -266,7 +274,7 @@ def main(argv=None) -> int:
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--accession", required=True, help="GWAS Catalog accession, e.g. GCST90000016")
     p.add_argument("--id", required=True, help="trait ID (output names)")
-    p.add_argument("--ancestry", default="EUR", help="samplesheet ancestry (EUR, EAS)")
+    p.add_argument("--ancestry", default="EUR", help="samplesheet ancestry (EUR, EAS, AFR, SAS, AMR, MULTI)")
     p.add_argument("--base", default=DEFAULT_BASE, help="GWAS Catalog summary statistics root (URL or folder)")
     args = p.parse_args(argv)
     base = args.base.rstrip("/")

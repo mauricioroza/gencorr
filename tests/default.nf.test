@@ -129,6 +129,44 @@ nextflow_pipeline {
         }
     }
 
+    test("AFR pair with AFR references, MULTI trait not analysed") {
+        // routing only (the AFR references are the EUR test files as stand-ins):
+        // bmi x neuro (AFR) runs with the _afr references; every pair with
+        // depression (MULTI) is reported as multi_ancestry by every method
+
+        when {
+            params {
+                outdir             = "$outputDir"
+                input              = "${projectDir}/tests/data/samplesheet_multi.csv"
+                methods            = 'ldsc,sumher'
+                ldsc_ld            = null
+                sumher_tagfile     = null
+                ldsc_ld_afr        = "${projectDir}/tests/data/ldsc"
+                sumher_tagfile_afr = "${projectDir}/tests/data/sumher/ldak.thin.test.tagging.gz"
+            }
+        }
+
+        then {
+            def lines  = new File("$outputDir/gencorr_results.tsv").readLines()
+            def header = lines[0].split('\t', -1) as List
+            def rows   = lines.drop(1).collect { line -> [header, line.split('\t', -1) as List].transpose().collectEntries() }
+            def multi  = rows.findAll { r -> r.status == 'multi_ancestry' }
+            def tasks  = workflow.trace.succeeded().collect { t -> t.name }
+            assertAll(
+                { assert workflow.success },
+                { assert 'confidence' in header },
+                // the AFR pair is estimated by both methods
+                { assert rows.findAll { r -> r.status == 'ok' }.collect { r -> r.method }.sort() == ['ldsc', 'sumher'] },
+                // 2 pairs with depression x 2 methods
+                { assert multi.size() == 4 },
+                { assert multi.every { r -> 'depression' in [r.trait1, r.trait2] && r.extra.contains('"MULTI"') } },
+                // the MULTI trait is harmonized (QC report) but never prepared for a method
+                { assert tasks.count { n -> n.contains('HARMONIZE_SUMSTATS') } == 3 },
+                { assert !tasks.any { n -> n.contains('depression') && !n.contains('HARMONIZE_SUMSTATS') } }
+            )
+        }
+    }
+
     test("Popcorn: cross-ancestry pair (Popcorn's own EUR/EAS test data)") {
         // Score file tests/data/popcorn was computed from Popcorn's test reference
         // panels (EUR_ref, EAS_ref) with the gencorr-popcorn image.

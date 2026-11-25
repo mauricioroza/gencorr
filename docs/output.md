@@ -100,6 +100,7 @@ whole run: for a per-pair correction, recompute from `p` within each pair.
 | `sumher_error`           | sumher                | LDAK stopped for this pair (e.g. no shared predictors with the tagging file); its message is in `extra.error`                                                                                                                   |
 | `popcorn_error`          | popcorn               | Popcorn stopped for this pair; the last error line is in `extra.error`                                                                                                                                                          |
 | `same_ancestry`          | popcorn               | both traits have the same ancestry; Popcorn is only run on cross-ancestry pairs (the other methods estimate this pair)                                                                                                          |
+| `multi_ancestry`         | all                   | one trait has `ancestry = MULTI` (multi-ancestry meta-analysis): no LD reference matches it, so no method estimates the pair. `extra` holds `ancestry_1` / `ancestry_2` |
 | `cross_ancestry`         | ldsc, lava, sumher    | the two traits have different `ancestry` in the samplesheet; these methods assume one population, so the pair is not estimated (Popcorn estimates it). One row per method (locus NA); `extra` holds `ancestry_1` / `ancestry_2` |
 
 **Popcorn** (`method = popcorn`, `scope = global`, cross-ancestry pairs; trait1

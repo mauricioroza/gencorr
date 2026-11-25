@@ -142,8 +142,8 @@ t2d,GCST000028,,,,,,,,Type 2 diabetes (GWAS Catalog)
   with `pop_prev` you also get liability-scale h2.
 - `colmap` overrides column detection, e.g. `Z=STAT`. `STAT` is never mapped
   automatically, because it is not always a Z-score.
-- `build` (`GRCh37` default, or `GRCh38`) and `ancestry` (`EUR` default, or `EAS`)
-  are optional per-trait columns, so one samplesheet can mix builds and
+- `build` (`GRCh37` default, or `GRCh38`) and `ancestry` (`EUR` default, `EAS`,
+  `AFR`, `SAS`, `AMR`, or `MULTI` for multi-ancestry meta-analyses) are optional per-trait columns, so one samplesheet can mix builds and
   ancestries (see [Good to know](#good-to-know)). `build` matters only for files
   without rsIDs: here `scz` would use `--rsid_map_grch38` and the others
   `--rsid_map_grch37`.
@@ -199,11 +199,13 @@ JSON `extra` column with `jsonlite::fromJSON`.
   and each trait uses the map for its own build, so GRCh37 and GRCh38 files can
   be mixed in one run. Give only the maps your files need
   ([details](docs/usage.md#genome-build-and-rsids)).
-- **Ancestry:** set `ancestry` (`EUR` default, `EAS`) per trait in the
-  samplesheet. Each same-ancestry pair runs with that ancestry's references
-  (`--ldsc_ld`/`--lava_ref` for EUR, `--ldsc_ld_eas`/`--lava_ref_eas` for EAS);
-  EUR × EAS pairs are estimated by Popcorn (`--methods popcorn`) and reported
-  by the other methods with status `cross_ancestry`
+- **Ancestry:** set `ancestry` (`EUR` default, `EAS`, `AFR`, `SAS`, `AMR`) per
+  trait in the samplesheet. Each same-ancestry pair runs with that ancestry's
+  references (`--ldsc_ld`/`--lava_ref` for EUR, `--ldsc_ld_<x>`/`--lava_ref_<x>`
+  otherwise, e.g. `--ldsc_ld_afr`); cross-ancestry pairs are estimated by
+  Popcorn (`--methods popcorn`) and reported by the other methods with status
+  `cross_ancestry`. A multi-ancestry meta-analysis (`MULTI`) is harmonized but
+  not analysed, because no LD reference matches it
   ([details](docs/usage.md#ancestry)). For European data the LAVA authors
   recommend their UK Biobank reference over 1000 Genomes.
 - **conda:** LAVA and Popcorn have no conda package, so `-profile conda` is

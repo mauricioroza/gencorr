@@ -20,7 +20,7 @@ include { METHOD_LAVA                 } from '../subworkflows/local/method_lava'
 include { METHOD_SUMHER               } from '../subworkflows/local/method_sumher'
 include { METHOD_POPCORN              } from '../subworkflows/local/method_popcorn'
 include { softwareVersionsToYAML      } from '../subworkflows/nf-core/utils_nfcore_pipeline'
-include { traitAncestry; ancestryParam; methodRegistry } from '../subworkflows/local/utils_nfcore_gencorr_pipeline'
+include { traitAncestry; ancestryParam; ancestrySetting; supportedAncestries; isMultiAncestryPair; methodRegistry } from '../subworkflows/local/utils_nfcore_gencorr_pipeline'
 
 workflow GENCORR {
 
@@ -68,6 +68,7 @@ workflow GENCORR {
     // reports the pairs it does not take with a status row (see below).
     //
     def ch_pairs_split = ch_pairs.branch { m1, m2 ->
+        multi: isMultiAncestryPair(m1, m2)          // multi-ancestry meta-analysis: no method
         same:  traitAncestry(m1) == traitAncestry(m2)
         cross: true
     }
@@ -76,6 +77,7 @@ workflow GENCORR {
     // Methods that cannot estimate a pair get one row with a status saying why:
     //   same-ancestry methods (ldsc, lava, sumher) on cross-ancestry pairs -> cross_ancestry
     //   cross-ancestry methods (popcorn) on same-ancestry pairs             -> same_ancestry
+    //   every method on pairs with an ancestry MULTI trait                 -> multi_ancestry
     // Each method gets only the traits of the pairs it takes (traitsInPairs), so
     // no trait is exported or munged for a method that will not use it.
     def same_methods  = methods.findAll { m -> !methodRegistry()[m].cross_ancestry }
@@ -83,6 +85,7 @@ workflow GENCORR {
     ch_results = ch_results.mix(
         ch_cross_pairs.flatMap { m1, m2 -> same_methods.collect  { m -> notEstimatedRow(m, m1, m2, 'cross_ancestry') } }
             .mix( ch_same_pairs.flatMap { m1, m2 -> cross_methods.collect { m -> notEstimatedRow(m, m1, m2, 'same_ancestry') } } )
+            .mix( ch_pairs_split.multi.flatMap { m1, m2 -> methods.collect { m -> notEstimatedRow(m, m1, m2, 'multi_ancestry') } } )
             .collectFile( name: 'gencorr.not_estimated.tsv', seed: resultHeader() + '\n',
                           newLine: true, sort: true )
     )
@@ -92,9 +95,11 @@ workflow GENCORR {
     //
     if ('ldsc' in methods) {
         // one entry per ancestry with LD scores: [ ancestry, ld_meta, ref_ld_dir, w_ld_dir ]
-        def ch_ld = channel.fromList( ['EUR', 'EAS'].findAll { a -> params[ancestryParam('ldsc_ld', a)] }.collect { a ->
+        // (file prefix and per-chromosome layout per ancestry, default: the EUR settings)
+        def ch_ld = channel.fromList( supportedAncestries().findAll { a -> params[ancestryParam('ldsc_ld', a)] }.collect { a ->
             [ a,
-              [ prefix: params.ldsc_ld_prefix ?: '', split_by_chr: params.ldsc_ld_split_by_chr.toString() == 'true' ],
+              [ prefix: ancestrySetting(params, 'ldsc_ld_prefix', a) ?: '',
+                split_by_chr: ancestrySetting(params, 'ldsc_ld_split_by_chr', a).toString() == 'true' ],
               file(params[ancestryParam('ldsc_ld', a)], checkIfExists: true),
               file(params[ancestryParam('ldsc_w_ld', a)] ?: params[ancestryParam('ldsc_ld', a)], checkIfExists: true) ]
         } )
@@ -118,7 +123,7 @@ workflow GENCORR {
     //
     if ('lava' in methods) {
         // one entry per ancestry with a reference: [ ancestry, prefix, [ files ] ]
-        def ch_reference = channel.fromList( ['EUR', 'EAS'].findAll { a -> params[ancestryParam('lava_ref', a)] }.collect { a ->
+        def ch_reference = channel.fromList( supportedAncestries().findAll { a -> params[ancestryParam('lava_ref', a)] }.collect { a ->
             [ a ] + resolveLavaReference(params[ancestryParam('lava_ref', a)])
         } )
         def ch_loci      = channel.value( file(params.lava_loci, checkIfExists: true) )
@@ -138,7 +143,7 @@ workflow GENCORR {
     //
     if ('sumher' in methods) {
         // one entry per ancestry with a tagging file: [ ancestry, tagfile ]
-        def ch_tagfile = channel.fromList( ['EUR', 'EAS'].findAll { a -> params[ancestryParam('sumher_tagfile', a)] }.collect { a ->
+        def ch_tagfile = channel.fromList( supportedAncestries().findAll { a -> params[ancestryParam('sumher_tagfile', a)] }.collect { a ->
             [ a, file(params[ancestryParam('sumher_tagfile', a)], checkIfExists: true) ]
         } )
         def ch_positions = params.sumher_snp_positions

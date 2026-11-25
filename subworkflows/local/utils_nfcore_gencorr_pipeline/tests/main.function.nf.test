@@ -140,6 +140,72 @@ nextflow_function {
         }
     }
 
+    test("ancestrySetting: per-ancestry value, else the EUR one") {
+        function "ancestrySetting"
+        when {
+            function {
+                """
+                input[0] = [ldsc_ld_prefix: '', ldsc_ld_prefix_afr: 'UKBB.AFR', ldsc_ld_prefix_sas: null]
+                input[1] = 'ldsc_ld_prefix'
+                input[2] = 'SAS'
+                """
+            }
+        }
+        then {
+            assert function.success
+            assert function.result == ''
+        }
+    }
+
+    test("isMultiAncestryPair: any MULTI trait") {
+        function "isMultiAncestryPair"
+        when {
+            function {
+                """
+                input[0] = [id: 'mdd_meta', ancestry: 'MULTI']
+                input[1] = [id: 'bmi']
+                """
+            }
+        }
+        then {
+            assert function.success
+            assert function.result == true
+        }
+    }
+
+    test("validateReferences: AFR same-ancestry pairs need --ldsc_ld_afr") {
+        function "validateReferences"
+        when {
+            function {
+                """
+                input[0] = [ldsc_ld: '/refs/eur', ldsc_ld_afr: null]
+                input[1] = ['ldsc']
+                input[2] = ['AFR', 'EUR']
+                """
+            }
+        }
+        then {
+            assert function.failed
+            assert (function.stdout + function.stderr).any { line -> line.contains('--ldsc_ld_afr') }
+        }
+    }
+
+    test("validateReferences: all references present") {
+        function "validateReferences"
+        when {
+            function {
+                """
+                input[0] = [ldsc_ld: '/refs/eur', ldsc_ld_sas: '/refs/sas']
+                input[1] = ['ldsc']
+                input[2] = ['EUR', 'SAS']
+                """
+            }
+        }
+        then {
+            assert function.success
+        }
+    }
+
     test("cleanMeta: empty samplesheet cells are dropped") {
         function "cleanMeta"
         when {

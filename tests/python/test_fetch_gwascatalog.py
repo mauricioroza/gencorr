@@ -97,6 +97,20 @@ def test_ancestry_mismatch_warns_and_gives_no_n():
     assert "does not include East Asian" in warnings[0]
 
 
+def test_african_categories_count_as_afr():
+    # African American and Sub-Saharan African groups are both AFR in the samplesheet
+    samples = [{"ancestry": ["African American or Afro-Caribbean"], "size": 900, "case_control": True}]
+    assert fg.total_n(samples, "AFR") == (900, None, [])
+    n, _, warnings = fg.total_n(samples, "SAS")
+    assert n is None and "does not include South Asian" in warnings[0]
+
+
+def test_multi_ancestry_never_takes_catalog_n():
+    samples = [{"ancestry": ["European"], "size": 1000, "case_control": False}]
+    n, reason, warnings = fg.total_n(samples, "MULTI")
+    assert n is None and "multi-ancestry" in reason and warnings == []
+
+
 # ------------------------------------------------- download (local mirror) --
 def make_study(root, acc, rows, yaml_md5=None, samples="  - sample_ancestry_category:\n"
                "      - European\n    sample_size: 5000\n    case_control_study: false\n"):

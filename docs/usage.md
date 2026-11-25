@@ -12,7 +12,7 @@ CSV, one row per trait. Only `id` and `sumstats` are required.
 | `n_cases`, `n_controls` | binary traits. Used for N when missing, for LAVA's case/control model and for LDSC liability h2                                                                                                        |
 | `pop_prev`              | population prevalence (binary traits). Adds liability-scale h2 (LDSC) and LAVA `h2_latent`                                                                                                             |
 | `colmap`                | manual column mapping, e.g. `Z=STAT,N=NMISS` (standard=source)                                                                                                                                         |
-| `ancestry`              | `EUR` (default) or `EAS`: ancestry of the GWAS. Selects the LD references and decides which pairs LDSC and LAVA analyse (see [Ancestry](#ancestry))                                                    |
+| `ancestry`              | `EUR` (default), `EAS`, `AFR`, `SAS`, `AMR` or `MULTI`: ancestry of the GWAS. Selects the LD references and decides which pairs each method analyses (see [Ancestry](#ancestry))                        |
 | `build`                 | `GRCh37` (default) or `GRCh38`: build of the file's positions. Only used to pick the rsID map for variants without an rsID (see [Genome build and rsIDs](#genome-build-and-rsids))                     |
 | `label`                 | free-text display name (not used in computation)                                                                                                                                                       |
 
@@ -22,21 +22,51 @@ LDSC and LAVA model the LD between nearby variants, and LD differs between
 populations, so each needs an LD reference of the **same ancestry as the GWAS**.
 They also assume **both traits of a pair come from one population**.
 
-| pair      | what happens                                                                                                       |
-| --------- | ------------------------------------------------------------------------------------------------------------------ |
-| EUR × EUR | LDSC with `--ldsc_ld`, LAVA with `--lava_ref`, SumHer with `--sumher_tagfile`                                      |
-| EAS × EAS | LDSC with `--ldsc_ld_eas` (`--ldsc_w_ld_eas`), LAVA with `--lava_ref_eas`, SumHer with `--sumher_tagfile_eas`      |
-| EUR × EAS | **Popcorn** (`--methods popcorn`, see below); LDSC, LAVA and SumHer report the pair with `status = cross_ancestry` |
+| pair                                  | what happens                                                                                                                         |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| EUR × EUR                             | LDSC with `--ldsc_ld`, LAVA with `--lava_ref`, SumHer with `--sumher_tagfile`                                                        |
+| X × X (X = EAS, AFR, SAS, AMR)        | LDSC with `--ldsc_ld_<x>` (`--ldsc_w_ld_<x>`), LAVA with `--lava_ref_<x>`, SumHer with `--sumher_tagfile_<x>` (e.g. `--ldsc_ld_afr`) |
+| different ancestries (e.g. EUR × EAS) | **Popcorn** (`--methods popcorn`, see below); LDSC, LAVA and SumHer report the pair with `status = cross_ancestry`                   |
+| any pair with a `MULTI` trait         | not estimated: every method reports `status = multi_ancestry`                                                                        |
 
 A reference is only required if some pair needs it: a run where every trait is
 EAS needs only the `_eas` references. `--ldsc_merge_alleles` (HapMap3) and
 `--lava_loci` are shared by all ancestries; the default LAVA loci were defined
-from European LD and are commonly reused for other ancestries.
+from European LD (GRCh37) and are commonly reused for other ancestries, which
+keeps local results comparable across ancestries (block boundaries are not
+LD-independent in AFR). With `--lava_snp_set joint`, traits are loaded together
+per ancestry.
 
-References for EAS: the LDSC authors' 1000 Genomes East Asian LD scores
-(`eas_ldscores/`, from the same archive as `eur_w_ld_chr/`), and a 1000 Genomes
-EAS PLINK reference for LAVA (linked from LAVA's `REFERENCE.md`). With
-`--lava_snp_set joint`, traits are loaded together per ancestry.
+**`MULTI`** is for multi-ancestry meta-analyses (e.g. the multi-ancestry PGC
+MDD results). No LD reference matches a mixed sample, so LDSC, LAVA, SumHer and
+Popcorn would give biased estimates; gencorr harmonizes the file (QC report)
+but analyses none of its pairs. Use the ancestry-specific results instead.
+
+**`AMR`** (admixed American, e.g. Hispanic/Latino cohorts): LD scores from an
+external reference underestimate h2 by 10–60% in admixed samples (Luo et al.
+2021). Prefer covariate-adjusted LD scores (Pan-UKB AMR), treat the results as
+exploratory, and note that LDAK publishes no AMR tagging file (SumHer needs one
+computed with `ldak --calc-tagging`). gencorr warns at start-up.
+
+References per ancestry (all GRCh37 positions or rsID-keyed, which is what
+gencorr matches on; check builds after download):
+
+| ancestry | LDSC (`--ldsc_ld_<x>`)                                                                                                                          | LAVA (`--lava_ref_<x>`)                                                          | SumHer (`--sumher_tagfile_<x>`)         |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | --------------------------------------- |
+| EUR      | `eur_w_ld_chr/` (Broad 1000G) or Pan-UKB EUR                                                                                                    | `lava-ukb-v1.1` (recommended by the LAVA authors) or 1000G `g1000_eur`           | `ldak.thin.hapmap.gbr.tagging`          |
+| EAS      | `eas_ldscores/` (Broad 1000G) or Pan-UKB EAS                                                                                                    | 1000G `g1000_eas` (LAVA `REFERENCE.md`)                                          | `ldak.thin.hapmap.eas.tagging`          |
+| AFR      | Pan-UKB AFR (covariate-adjusted) or 1000G AFR (Institut Pasteur, Zenodo 8096589)                                                                | 1000G `g1000_afr`                                                                | `ldak.thin.hapmap.afr.tagging`          |
+| SAS      | Pan-UKB CSA or 1000G SAS (Institut Pasteur)                                                                                                     | 1000G `g1000_sas`                                                                | `ldak.thin.hapmap.sas.tagging`          |
+| AMR      | Pan-UKB AMR (covariate-adjusted; standard 1000G AMR scores are biased for admixed samples)                                                      | 1000G `g1000_amr` (exploratory)                                                  | none published                          |
+
+Pan-UKB LD scores (`UKBB.ALL.ldscore.tar.gz` from pan.ukbb.broadinstitute.org)
+are one whole-genome file set per population, not split by chromosome: set
+e.g. `--ldsc_ld_prefix_afr UKBB.AFR --ldsc_ld_split_by_chr_afr false`. The
+`--ldsc_ld_prefix_<x>` / `--ldsc_ld_split_by_chr_<x>` options default to the
+EUR ones. Use the same file set for `--ldsc_ld_<x>` and `--ldsc_w_ld_<x>`
+(the default). 1000G PLINK references for LAVA (EUR, EAS, AFR, SAS, AMR) are
+linked from LAVA's `REFERENCE.md`; the LAVA authors warn that small references
+can inflate type I error, so treat non-EUR local results with care.
 
 ### Genome build and rsIDs
 
@@ -302,6 +332,7 @@ they have rsIDs (see [Genome build and rsIDs](#genome-build-and-rsids)).
 | `--popcorn_cfile_ancestries`                         | `EUR,EAS`        | populations of the score file, in order                                                                                                                                                                                                    |
 | `--popcorn_gen_effect`, `--popcorn_use_mle`          | `false`, `false` | genetic effect correlation; MLE fit                                                                                                                                                                                                        |
 | `--ldsc_ld_eas`, `--ldsc_w_ld_eas`, `--lava_ref_eas` | none             | references for traits with `ancestry = EAS` (see [Ancestry](#ancestry))                                                                                                                                                                    |
+| `--ldsc_ld_<x>`, `--ldsc_w_ld_<x>`, `--lava_ref_<x>`, `--sumher_tagfile_<x>` (x = afr, sas, amr); `--ldsc_ld_prefix_<x>`, `--ldsc_ld_split_by_chr_<x>` (also eas) | none | references for traits with `ancestry = AFR/SAS/AMR`; prefix/layout default to the EUR settings (see [Ancestry](#ancestry)) |
 | `--rsid_map_grch37`, `--rsid_map_grch38`             | none             | rsID maps for files without rsIDs, per samplesheet `build` (see [Genome build and rsIDs](#genome-build-and-rsids))                                                                                                                         |
 | `--gwascatalog_cache`                                | none             | folder that keeps GWAS Catalog downloads across runs (see [GWAS Catalog studies](#gwas-catalog-studies))                                                                                                                                   |
 | `--gwascatalog_base`                                 | GWAS Catalog FTP | mirror or local copy of the GWAS Catalog summary statistics                                                                                                                                                                                |

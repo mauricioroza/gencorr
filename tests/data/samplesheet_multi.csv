@@ -1,0 +1,4 @@
+id,sumstats,n,n_cases,n_controls,pop_prev,colmap,ancestry,label
+bmi,https://raw.githubusercontent.com/josefin-werme/LAVA/e729a245f7b6923967a96804fbf5246eadf2d6c6/vignettes/data/bmi.sumstats.txt,,,,,,AFR,Body mass index (labelled AFR for the test)
+neuro,https://raw.githubusercontent.com/josefin-werme/LAVA/e729a245f7b6923967a96804fbf5246eadf2d6c6/vignettes/data/neuro.sumstats.txt,,,,,,AFR,Neuroticism (labelled AFR for the test)
+depression,https://raw.githubusercontent.com/josefin-werme/LAVA/e729a245f7b6923967a96804fbf5246eadf2d6c6/vignettes/data/depression.sumstats.txt,,170756,329443,0.15,,MULTI,Major depression (labelled MULTI for the test)
