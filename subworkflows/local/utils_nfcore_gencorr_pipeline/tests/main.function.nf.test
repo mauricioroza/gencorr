@@ -94,13 +94,12 @@ nextflow_function {
         }
     }
 
-    test("validatePopcornAncestries: score-file order is kept, either pair order accepted") {
+    test("validatePopcornAncestries: score-file order is kept") {
         function "validatePopcornAncestries"
         when {
             function {
                 """
                 input[0] = 'EAS, EUR'
-                input[1] = [['EUR', 'EAS'], ['EAS', 'EUR']]
                 """
             }
         }
@@ -116,7 +115,6 @@ nextflow_function {
             function {
                 """
                 input[0] = 'EUR,EUR'
-                input[1] = [['EUR', 'EAS']]
                 """
             }
         }
@@ -125,18 +123,42 @@ nextflow_function {
         }
     }
 
-    test("validatePopcornAncestries: pair outside the score file's populations fails") {
-        function "validatePopcornAncestries"
+    test("popcornScoreSources: table row, then --popcorn_cfile, then compute; AMR skipped") {
+        function "popcornScoreSources"
         when {
             function {
                 """
-                input[0] = 'EUR,AFR'
-                input[1] = [['EUR', 'EAS']]
+                input[0] = [ popcorn_cfile: '/s/eas_eur.cscore', popcorn_cfile_ancestries: 'EAS,EUR',
+                             popcorn_ref: '/r/g1000_eur', popcorn_ref_afr: '/r/g1000_afr' ]
+                input[1] = [ ['SAS', 'EUR', '/s/sas_eur.cscore'] ]
+                input[2] = [ ['EUR', 'EAS'], ['EAS', 'EUR'], ['EUR', 'SAS'], ['AFR', 'EUR'], ['EUR', 'AMR'] ]
+                """
+            }
+        }
+        then {
+            assert function.success
+            assert function.result == [
+                [ ancestries: ['EAS', 'EUR'], cfile: '/s/eas_eur.cscore' ],   // file order kept
+                [ ancestries: ['SAS', 'EUR'], cfile: '/s/sas_eur.cscore' ],
+                [ ancestries: ['EUR', 'AFR'], cfile: null ]                   // computed, EUR first
+            ]
+        }
+    }
+
+    test("popcornScoreSources: ancestry pair without score file or references fails") {
+        function "popcornScoreSources"
+        when {
+            function {
+                """
+                input[0] = [ popcorn_cfile: '/s/eur_eas.cscore', popcorn_cfile_ancestries: 'EUR,EAS', popcorn_ref: '/r/g1000_eur' ]
+                input[1] = []
+                input[2] = [ ['EUR', 'AFR'] ]
                 """
             }
         }
         then {
             assert function.failed
+            assert (function.stdout + function.stderr).any { line -> line.contains('--popcorn_ref_afr') }
         }
     }
 

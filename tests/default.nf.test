@@ -202,6 +202,39 @@ nextflow_pipeline {
         }
     }
 
+    test("Popcorn: score file computed from PLINK references; AMR pairs not run") {
+        // No score file given: POPCORN_COMPUTE builds it from Popcorn's test
+        // reference panels, which is how tests/data/popcorn was made, so the
+        // estimate must equal the one with the shipped file (pgi 0.5195).
+        // amr_t (AMR, admixed) pairs get status admixed_ancestry.
+
+        when {
+            params {
+                outdir          = "$outputDir"
+                input           = "${projectDir}/tests/data/samplesheet_popcorn_amr.csv"
+                methods         = 'popcorn'
+                ldsc_merge_alleles = null    // all SNPs, as when the shipped file was computed
+                popcorn_ref     = 'https://raw.githubusercontent.com/brielin/popcorn/20a29e8cb9c43fe88de8e903537eb874d52f38b3/test/EUR_ref'
+                popcorn_ref_eas = 'https://raw.githubusercontent.com/brielin/popcorn/20a29e8cb9c43fe88de8e903537eb874d52f38b3/test/EAS_ref'
+            }
+        }
+
+        then {
+            def lines  = new File("$outputDir/gencorr_results.tsv").readLines()
+            def header = lines[0].split('\t', -1) as List
+            def rows   = lines.drop(1).collect { line -> [header, line.split('\t', -1) as List].transpose().collectEntries() }
+            def ok     = rows.findAll { r -> r.status == 'ok' }
+            assert workflow.success
+            assertAll(
+                { assert ok.size() == 1 && [ok[0].trait1, ok[0].trait2] == ['eur_t', 'eas_t'] },
+                { assert String.format('%.4f', ok[0].rg as double) == '0.5195' },
+                // amr_t x eur_t and amr_t x eas_t
+                { assert rows.findAll { r -> r.status == 'admixed_ancestry' }.size() == 2 },
+                { assert new File("$outputDir/popcorn/scores/EUR_EAS.impact.cscore").exists() }
+            )
+        }
+    }
+
     test("-profile test, pair_mode target, joint LAVA SNP set") {
 
         // true/false options given on the command line must mean false. nf-test needs

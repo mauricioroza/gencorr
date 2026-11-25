@@ -14,7 +14,8 @@
  *
  * meta    : [ id: '<trait1>__<trait2>', trait1, trait2, ancestry_1, ancestry_2,
  *             k1, p1, k2, p2 (liability; optional) ]
- * cfile   : Popcorn score file (plain or .gz) for the two populations
+ * cfile   : Popcorn score file (plain or .gz) for the pair's two populations
+ *           (per pair: a run can have several ancestry pairs)
  */
 process POPCORN_FIT {
     tag "${meta.id}"
@@ -24,8 +25,7 @@ process POPCORN_FIT {
     container "ghcr.io/mauricioroza/gencorr-popcorn:1.0.0-20a29e8"
 
     input:
-    tuple val(meta), path(sumstats1), path(sumstats2)
-    path cfile
+    tuple val(meta), path(sumstats1), path(sumstats2), path(cfile, stageAs: 'cfile/*')
 
     output:
     tuple val(meta), path("${meta.id}.popcorn")                , emit: results
@@ -37,8 +37,8 @@ process POPCORN_FIT {
 
     script:
     def args  = task.ext.args ?: ''
-    def gz    = cfile.name.endsWith('.gz')
-    def cname = gz ? cfile.name[0..-4] : cfile.name
+    def gz    = cfile.toString().endsWith('.gz')
+    def cname = gz ? 'scores.cscore' : cfile.toString()     // staged as cfile/<name>
     def liab  = [ meta.k1 ? "--K1 ${meta.k1} --P1 ${meta.p1}" : '',
                   meta.k2 ? "--K2 ${meta.k2} --P2 ${meta.p2}" : '' ].join(' ')
     """

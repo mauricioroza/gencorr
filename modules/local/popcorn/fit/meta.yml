@@ -37,12 +37,12 @@ input:
         pattern: "*.popcorn.tsv"
         ontologies:
           - edam: "http://edamontology.org/format_3475" # TSV
-  - cfile:
-      type: file
-      description: Popcorn score file for the two populations (popcorn compute),
-        plain or gzipped
-      pattern: "*"
-      ontologies: []
+    - cfile:
+        type: file
+        description: Popcorn score file for the pair's two populations (popcorn
+          compute), plain or gzipped
+        pattern: "*"
+        ontologies: []
 output:
   results:
     - - meta:

@@ -337,6 +337,47 @@
                     "type": "boolean",
                     "description": "Fit by maximum likelihood (--use_mle) instead of Popcorn's default regression, which its authors recommend.",
                     "default": false
+                },
+                "popcorn_cfiles": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "CSV with header ancestry_1,ancestry_2,cfile: one pre-computed Popcorn score file per ancestry pair, populations in the file's order.",
+                    "help_text": "For runs with several cross-ancestry pairs (e.g. EUR x EAS and EUR x AFR). Takes precedence over --popcorn_cfile and over computing scores."
+                },
+                "popcorn_ref": {
+                    "type": "string",
+                    "description": "PLINK prefix of a EUR reference (e.g. 1000G g1000_eur) used to compute Popcorn score files for ancestry pairs without a given score file.",
+                    "help_text": "Other ancestries: --popcorn_ref_eas, --popcorn_ref_afr, --popcorn_ref_sas. Computing takes minutes to hours per ancestry pair (keep results with --popcorn_cache). AMR is not supported by Popcorn (admixed)."
+                },
+                "popcorn_ref_eas": {
+                    "type": "string",
+                    "description": "PLINK prefix of an EAS reference for computed Popcorn score files."
+                },
+                "popcorn_ref_afr": {
+                    "type": "string",
+                    "description": "PLINK prefix of an AFR reference for computed Popcorn score files."
+                },
+                "popcorn_ref_sas": {
+                    "type": "string",
+                    "description": "PLINK prefix of a SAS reference for computed Popcorn score files."
+                },
+                "popcorn_extract": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "SNP list for computed score files (first column; default: --ldsc_merge_alleles, i.e. HapMap3)."
+                },
+                "popcorn_maf": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 0.5,
+                    "description": "MAF cut-off for computed score files (popcorn compute --maf; Popcorn suggests at least 0.01). Default: Popcorn's."
+                },
+                "popcorn_cache": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "description": "Folder to keep computed Popcorn score files across runs (storeDir)."
                 }
             }
         },

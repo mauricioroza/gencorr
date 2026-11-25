@@ -1,0 +1,56 @@
+{
+    "stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "EUR_AFR",
+                        "ancestry_1": "EUR",
+                        "ancestry_2": "AFR",
+                        "model": "effect"
+                    },
+                    "EUR_AFR.effect.cscore:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    "POPCORN_COMPUTE",
+                    "popcorn",
+                    "1.1"
+                ]
+            ]
+        ],
+        "timestamp": "2026-11-25T14:07:29.955479766",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.5"
+        }
+    },
+    "EUR_ref x EAS_ref - same scores as popcorn compute run directly": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "EUR_EAS",
+                        "ancestry_1": "EUR",
+                        "ancestry_2": "EAS",
+                        "model": "impact"
+                    },
+                    "EUR_EAS.impact.cscore:md5,417cdd5718d85c2a6f398b4d7860b874"
+                ]
+            ],
+            [
+                [
+                    "POPCORN_COMPUTE",
+                    "popcorn",
+                    "1.1"
+                ]
+            ]
+        ],
+        "timestamp": "2026-11-25T14:07:25.267727488",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.5"
+        }
+    }
+}

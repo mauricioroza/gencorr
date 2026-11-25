@@ -50,8 +50,8 @@ nextflow_process {
                 input[0] = EXPORT_SUMSTATS.out.sumstats
                     .toSortedList { a, b -> b[0].id <=> a[0].id }      // eur_t first
                     .map { items -> [ [ id:'eur_t__eas_t', trait1:'eur_t', trait2:'eas_t', ancestry_1:'EUR', ancestry_2:'EAS' ],
-                                      items[0][1], items[1][1] ] }
-                input[1] = file("${baseDir}/tests/data/popcorn/EUR_EAS.test.cscore.gz", checkIfExists: true)
+                                      items[0][1], items[1][1],
+                                      file("${baseDir}/tests/data/popcorn/EUR_EAS.test.cscore.gz", checkIfExists: true) ] }
                 """
             }
         }
@@ -79,8 +79,8 @@ nextflow_process {
                 input[0] = EXPORT_SUMSTATS.out.sumstats
                     .toSortedList { a, b -> b[0].id <=> a[0].id }
                     .map { items -> [ [ id:'eur_t__eas_t', trait1:'eur_t', trait2:'eas_t', ancestry_1:'EUR', ancestry_2:'EAS' ],
-                                      items[0][1], items[1][1] ] }
-                input[1] = file("${baseDir}/tests/data/popcorn/EUR_EAS.test.cscore.gz", checkIfExists: true)
+                                      items[0][1], items[1][1],
+                                      file("${baseDir}/tests/data/popcorn/EUR_EAS.test.cscore.gz", checkIfExists: true) ] }
                 """
             }
         }

@@ -27,7 +27,7 @@ and Popcorn on any set of traits and returns one tidy results table.
 | ------------------ | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
 | **global**         | genome-wide rg                          | [LDSC](https://github.com/bulik/ldsc) (Python 3 port [CBIIT/ldsc](https://github.com/CBIIT/ldsc), [docs/ldsc.md](docs/ldsc.md)) | rg, SE, p per trait pair; observed- and liability-scale h2 per trait |
 | **global**         | genome-wide rg, LDAK heritability model | [SumHer](https://dougspeed.com/genetic-correlations/) (LDAK 6.1)                                                                | rg, SE, p per trait pair; h2 and coheritability                      |
-| **cross-ancestry** | rg between a EUR and an EAS GWAS        | [Popcorn](https://github.com/brielin/popcorn) (commit `20a29e8`)                                                                | rg (genetic impact or effect), SE, p; h2 in each population          |
+| **cross-ancestry** | rg between GWAS of two ancestries       | [Popcorn](https://github.com/brielin/popcorn) (commit `20a29e8`)                                                                | rg (genetic impact or effect), SE, p; h2 in each population          |
 | **local**          | rg per genomic locus                    | [LAVA](https://github.com/josefin-werme/LAVA) 0.1.5 (commit `e729a24`)                                                          | local rho, 95% CI, p per pair and locus; local h2 per trait          |
 
 - **Checked against the original tools.** Oracle tests run LDSC and LAVA
@@ -47,7 +47,7 @@ and Popcorn on any set of traits and returns one tidy results table.
 
 ## How it works
 
-![gencorr metro map: GWAS summary statistics (with an optional rsID map) are harmonized, then same-ancestry pairs run through LDSC and SumHer (global rg) and LAVA (local rg, corrected with LDSC's sample-overlap matrix), EUR × EAS pairs through Popcorn (cross-ancestry rg), and everything is merged into gencorr_results.tsv](docs/images/gencorr_metro_map.svg)
+![gencorr metro map: GWAS summary statistics (with an optional rsID map) are harmonized, then same-ancestry pairs run through LDSC and SumHer (global rg) and LAVA (local rg, corrected with LDSC's sample-overlap matrix), cross-ancestry pairs through Popcorn (cross-ancestry rg), and everything is merged into gencorr_results.tsv](docs/images/gencorr_metro_map.svg)
 
 1. **Harmonize** each GWAS once: column names are detected automatically
    (SNP/rsid/MarkerName, A1/effect_allele, BETA/OR/LogOR, SE, P, Z, N, …),
@@ -56,7 +56,8 @@ and Popcorn on any set of traits and returns one tidy results table.
 2. **LDSC** munges, estimates h2 per trait and rg for every pair, and builds
    the sample-overlap matrix from its intercepts.
 3. **SumHer** (optional) estimates global rg with LDAK's heritability model,
-   and **Popcorn** (optional) estimates rg for EUR × EAS pairs.
+   and **Popcorn** (optional) estimates rg for cross-ancestry pairs (e.g.
+   EUR × EAS), from given score files or ones it computes from PLINK references.
 4. **LAVA** tests every pair in each of LAVA's 2,495 GRCh37 loci, corrected for
    sample overlap by default.
 

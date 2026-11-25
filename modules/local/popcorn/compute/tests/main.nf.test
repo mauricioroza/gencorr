@@ -1,0 +1,64 @@
+// Module test: POPCORN_COMPUTE
+// Oracle: tests/data/popcorn/EUR_EAS.test.cscore.gz was computed by running
+// `popcorn compute -v 1 --bfile1 EUR_ref --bfile2 EAS_ref` directly on Popcorn's
+// test reference panels (pinned commit). The module must give the same file,
+// byte for byte (md5 of the decompressed oracle: 417cdd5718d85c2a6f398b4d7860b874).
+nextflow_process {
+
+    name "Test Process POPCORN_COMPUTE"
+    script "../main.nf"
+    process "POPCORN_COMPUTE"
+
+    tag "modules"
+    tag "modules_local"
+    tag "popcorn"
+    tag "popcorn/compute"
+
+    test("EUR_ref x EAS_ref - same scores as popcorn compute run directly") {
+
+        when {
+            params { outdir = "$outputDir" }
+            process {
+                """
+                def base = 'https://raw.githubusercontent.com/brielin/popcorn/20a29e8cb9c43fe88de8e903537eb874d52f38b3/test'
+                input[0] = [ [ id:'EUR_EAS', ancestry_1:'EUR', ancestry_2:'EAS', model:'impact' ],
+                             'EUR_ref', ['bed', 'bim', 'fam'].collect { e -> file("\${base}/EUR_ref.\${e}", checkIfExists: true) },
+                             'EAS_ref', ['bed', 'bim', 'fam'].collect { e -> file("\${base}/EAS_ref.\${e}", checkIfExists: true) } ]
+                input[1] = []
+                """
+            }
+        }
+
+        then {
+            def oracle = new java.util.zip.GZIPInputStream(new FileInputStream("${baseDir}/tests/data/popcorn/EUR_EAS.test.cscore.gz")).text
+            assertAll(
+                { assert process.success },
+                { assert path(process.out.cfile[0][1]).text == oracle },
+                { assert snapshot(process.out.cfile, process.out.versions_popcorn).match() }
+            )
+        }
+    }
+
+    test("stub") {
+
+        options "-stub"
+
+        when {
+            params { outdir = "$outputDir" }
+            process {
+                """
+                input[0] = [ [ id:'EUR_AFR', ancestry_1:'EUR', ancestry_2:'AFR', model:'effect' ],
+                             'g1000_eur', [], 'g1000_afr', [] ]
+                input[1] = []
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out.cfile, process.out.versions_popcorn).match() }
+            )
+        }
+    }
+}

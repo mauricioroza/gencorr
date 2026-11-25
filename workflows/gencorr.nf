@@ -20,7 +20,8 @@ include { METHOD_LAVA                 } from '../subworkflows/local/method_lava'
 include { METHOD_SUMHER               } from '../subworkflows/local/method_sumher'
 include { METHOD_POPCORN              } from '../subworkflows/local/method_popcorn'
 include { softwareVersionsToYAML      } from '../subworkflows/nf-core/utils_nfcore_pipeline'
-include { traitAncestry; ancestryParam; ancestrySetting; supportedAncestries; isMultiAncestryPair; methodRegistry } from '../subworkflows/local/utils_nfcore_gencorr_pipeline'
+include { traitAncestry; ancestryParam; ancestrySetting; supportedAncestries; isMultiAncestryPair; methodRegistry;
+          popcornScoreSources; readPopcornCfiles } from '../subworkflows/local/utils_nfcore_gencorr_pipeline'
 
 workflow GENCORR {
 
@@ -158,10 +159,42 @@ workflow GENCORR {
     // 2d. Popcorn (cross-ancestry pairs)
     //
     if ('popcorn' in methods) {
-        def ch_cfile = channel.value( file(params.popcorn_cfile, checkIfExists: true) )
-        def cfile_ancestries = params.popcorn_cfile_ancestries.tokenize(',').collect { a -> a.trim() }
+        // Popcorn assumes non-admixed samples: pairs with an AMR trait get a status row
+        def ch_popcorn_split = ch_cross_pairs.branch { m1, m2 ->
+            admixed: 'AMR' in [ traitAncestry(m1), traitAncestry(m2) ]
+            run:     true
+        }
+        ch_results = ch_results.mix(
+            ch_popcorn_split.admixed.map { m1, m2 -> notEstimatedRow('popcorn', m1, m2, 'admixed_ancestry') }
+                .collectFile( name: 'gencorr.popcorn_admixed.tsv', seed: resultHeader() + '\n', newLine: true, sort: true )
+        )
+        def ch_popcorn_pairs = ch_popcorn_split.run
 
-        METHOD_POPCORN ( traitsInPairs(ch_harmonized, ch_cross_pairs), ch_cross_pairs, ch_cfile, cfile_ancestries )
+        // one score file per ancestry pair: given (--popcorn_cfiles / --popcorn_cfile)
+        // or computed from --popcorn_ref[_<x>] (checked at start-up, popcornScoreSources)
+        def cfile_rows = params.popcorn_cfiles ? readPopcornCfiles(params.popcorn_cfiles as String) : []
+        def model      = params.popcorn_gen_effect.toString() == 'true' ? 'effect' : 'impact'
+        def ch_cfile_sources = ch_popcorn_pairs
+            .map    { m1, m2 -> [ traitAncestry(m1), traitAncestry(m2) ] }
+            .unique { pair -> pair.toSet() }
+            .map    { pair -> popcornScoreSources(params, cfile_rows, [ pair ])[0] }
+            .branch { src ->
+                given:   src.cfile
+                compute: true
+            }
+        def ch_cfiles_given = ch_cfile_sources.given.map { src -> [ src.ancestries, file(src.cfile, checkIfExists: true) ] }
+        def ch_compute = ch_cfile_sources.compute.map { src ->
+            def a1 = src.ancestries[0]
+            def a2 = src.ancestries[1]
+            def r1 = resolvePlinkReference(params[ancestryParam('popcorn_ref', a1)] as String, ancestryParam('popcorn_ref', a1))
+            def r2 = resolvePlinkReference(params[ancestryParam('popcorn_ref', a2)] as String, ancestryParam('popcorn_ref', a2))
+            [ [ id: "${a1}_${a2}".toString(), ancestry_1: a1, ancestry_2: a2, model: model ], r1[0], r1[1], r2[0], r2[1] ]
+        }
+        // SNPs for computed scores: --popcorn_extract, else the LDSC HapMap3 list, else all
+        def extract    = params.popcorn_extract ?: params.ldsc_merge_alleles
+        def ch_extract = extract ? channel.value( file(extract, checkIfExists: true) ) : channel.value([])
+
+        METHOD_POPCORN ( traitsInPairs(ch_harmonized, ch_popcorn_pairs), ch_popcorn_pairs, ch_cfiles_given, ch_compute, ch_extract )
         ch_results = ch_results.mix( METHOD_POPCORN.out.results )
     }
 
@@ -267,6 +300,19 @@ def resolveLavaReference(String prefix) {
     }
     if (!ref_files) {
         error("--lava_ref: no reference files found with prefix '${prefix}' (expected <prefix>.bed/.bim/.fam or LAVA LD-format files).")
+    }
+    return [ file(prefix).name, ref_files ]
+}
+
+//
+// PLINK reference = <prefix>.bed/.bim/.fam (local or http(s)), e.g. for
+// --popcorn_ref_afr. Returns [ prefix_basename, [ bed, bim, fam ] ].
+//
+def resolvePlinkReference(String prefix, String option) {
+    def ref_files = ['bed', 'bim', 'fam'].collect { ext -> file("${prefix}.${ext}") }
+    def local     = !(prefix ==~ /^(https?|ftp):\/\/.*/)
+    if (local && ref_files.any { f -> !f.exists() }) {
+        error("--${option}: expected PLINK files ${prefix}.bed/.bim/.fam.")
     }
     return [ file(prefix).name, ref_files ]
 }

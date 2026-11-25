@@ -1,0 +1,95 @@
+name: "popcorn_compute"
+description: Popcorn score file (LD scores within and across two populations)
+  from one PLINK reference panel per population (popcorn compute)
+keywords:
+  - popcorn
+  - ld scores
+  - genetic correlation
+  - cross-ancestry
+  - trans-ethnic
+tools:
+  - popcorn:
+      description: Popcorn estimates the genetic correlation of a trait pair
+        measured in two populations from summary statistics
+      homepage: "https://github.com/brielin/popcorn"
+      documentation: "https://github.com/brielin/popcorn#readme"
+      tool_dev_url: "https://github.com/brielin/popcorn"
+      doi: "10.1016/j.ajhg.2016.05.001"
+      licence: ["GPL-3.0"]
+      identifier: ""
+      args_id: "$args"
+input:
+  - - meta:
+        type: map
+        description: Score-file meta map, e.g. [ id:'EUR_AFR', ancestry_1:'EUR',
+          ancestry_2:'AFR', model:'impact' ]
+    - prefix1:
+        type: string
+        description: PLINK prefix (basename) of the population-1 reference
+    - ref1:
+        type: file
+        description: PLINK .bed/.bim/.fam of the population-1 reference
+        pattern: "*.{bed,bim,fam}"
+        ontologies:
+          - edam: "http://edamontology.org/format_3003" # BED
+    - prefix2:
+        type: string
+        description: PLINK prefix (basename) of the population-2 reference
+    - ref2:
+        type: file
+        description: PLINK .bed/.bim/.fam of the population-2 reference
+        pattern: "*.{bed,bim,fam}"
+        ontologies:
+          - edam: "http://edamontology.org/format_3003" # BED
+  - extract:
+      type: file
+      description: Optional SNP list; the first column is used (e.g. HapMap3
+        w_hm3.snplist). [] for all SNPs
+      pattern: "*"
+      ontologies: []
+output:
+  cfile:
+    - - meta:
+          type: map
+          description: Score-file meta map, as given
+      - ${meta.id}.${meta.model}.cscore:
+          type: file
+          description: Popcorn score file, input of popcorn fit --cfile
+          pattern: "*.cscore"
+          ontologies:
+            - edam: "http://edamontology.org/format_3475" # TSV
+  log:
+    - - meta:
+          type: map
+          description: Score-file meta map, as given
+      - ${meta.id}.${meta.model}.cscore.log:
+          type: file
+          description: Popcorn's log (command, SNP counts, version)
+          pattern: "*.cscore.log"
+          ontologies:
+            - edam: "http://edamontology.org/format_2330" # Textual format
+  versions_popcorn:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - popcorn:
+          type: string
+          description: The name of the tool
+      - "grep -m1 -oE 'Popcorn version [0-9.]+' ${meta.id}.${meta.model}.cscore.log | cut -d' ' -f3":
+          type: eval
+          description: The expression to obtain the version of the tool
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - popcorn:
+          type: string
+          description: The name of the tool
+      - "grep -m1 -oE 'Popcorn version [0-9.]+' ${meta.id}.${meta.model}.cscore.log | cut -d' ' -f3":
+          type: eval
+          description: The expression to obtain the version of the tool
+authors:
+  - "@mauricioroza"
+maintainers:
+  - "@mauricioroza"

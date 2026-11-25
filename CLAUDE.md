@@ -106,9 +106,17 @@ mention it only as a comparison reference.
   can't read gzipped tagging files (module gunzips), defaults to multiplicative-inflation model (we pass
   `--genomic-control NO` like BigaGWAS). LDAK's current pre-computed tagging files (downloaded 2026-11-09)
   use rsIDs; older ones (BigaGWAS) use GRCh37 CHR:BP -> `--sumher_snp_positions` only for those. `--calc-tagging` needs ~9 GB RAM by default: use `--bit-size 400` in WSL.
-- Ancestry: samplesheet `ancestry` (EUR default, EAS); refs `--ldsc_ld[_eas]`, `--ldsc_w_ld[_eas]`,
-  `--lava_ref[_eas]` (see ancestryParam/traitAncestry in utils subworkflow). Same-ancestry pairs only go
-  to methods; cross-ancestry pairs become `cross_ancestry` rows (gencorr.nf notEstimatedRow).
+- Ancestry: samplesheet `ancestry` EUR (default), EAS, AFR, SAS, AMR, MULTI (supportedAncestries in utils);
+  refs `--<ref>` for EUR, `--<ref>_<x>` otherwise (ancestryParam; ldsc_ld_prefix/split_by_chr per ancestry
+  via ancestrySetting, for whole-genome Pan-UKB files). Same-ancestry pairs go to LDSC/LAVA/SumHer;
+  cross-ancestry pairs become `cross_ancestry` rows (gencorr.nf notEstimatedRow) and go to Popcorn; MULTI
+  (multi-ancestry meta-analysis) is harmonized only, its pairs are `multi_ancestry` for every method.
+- Popcorn score file per ancestry pair (popcornScoreSources): --popcorn_cfiles CSV, --popcorn_cfile, or
+  POPCORN_COMPUTE from --popcorn_ref[_<x>] (oracle: computed file == tests/data/popcorn scores byte for
+  byte). AMR pairs -> `admixed_ancestry`.
+- Results column `confidence` (trusted/low/not_interpretable) for global ok rows, computed in
+  gencorr_common.validate_results (h2 z 4/2, |rg|<=1, SE<0.3, LDSC mean chi2 1.02). Design came from the
+  research report `reports/MDD cross ancestry genetic correlation.md` (local only, not committed).
 - Genome builds: all methods match variants by rsID and take positions from their references, so
   sumstats need rsIDs, not a particular build. Files without rsIDs get them from an rsID map
   (samplesheet `build`, `--rsid_map_grch37/38`; `.bim` or CHR/BP/SNP/A1/A2 table). No liftover.
