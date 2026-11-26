@@ -148,7 +148,12 @@ mdd,/data/mdd.txt.gz,500199,EUR
   file yourself and give its path or URL.
 - Downloads need network access from the compute nodes. They are kept in the
   work directory (reused with `-resume`), or across runs with
-  `--gwascatalog_cache <folder>` (one subfolder per accession).
+  `--gwascatalog_cache <folder>` (one subfolder per accession). The EBI FTP can
+  serve one connection at only a few hundred KB/s, so large files (2 GB or more)
+  are fetched over 8 parallel byte-range connections, dropped connections
+  continue where they stopped, and the task has the long time limit
+  (`process_long`). Progress is printed to the task's `.command.err` every
+  minute. For big studies, prefer downloading once into `--gwascatalog_cache`.
 - `--gwascatalog_base` points at a mirror or a local copy with the same layout.
 
 ### Column detection

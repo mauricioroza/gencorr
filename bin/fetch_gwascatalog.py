@@ -33,9 +33,11 @@ import hashlib
 import json
 import re
 import sys
+import threading
 import time
 import urllib.error
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 DEFAULT_BASE = "https://ftp.ebi.ac.uk/pub/databases/gwas/summary_statistics"
@@ -52,6 +54,8 @@ CATEGORY = {
 }
 USER_AGENT = "gencorr-pipeline (https://github.com/mauricioroza/gencorr)"
 RETRIES = 3
+# files at least this large are downloaded over several connections (--connections)
+MIN_SPLIT = 64 * 1024 * 1024
 
 
 def die(msg: str) -> None:
@@ -242,31 +246,133 @@ def total_n(samples: list[dict], ancestry: str) -> tuple[int | None, str | None,
 # --------------------------------------------------------------------------
 # download
 # --------------------------------------------------------------------------
-def download(base: str, rel: str, dest: Path) -> str:
-    """Copy <base>/<rel> to dest; return its md5."""
-    for attempt in range(RETRIES):
-        h = hashlib.md5()
+def md5_file(path: Path) -> str:
+    h = hashlib.md5()
+    with open(path, "rb") as f:
+        for block in iter(lambda: f.read(1 << 20), b""):
+            h.update(block)
+    return h.hexdigest()
+
+
+class Progress:
+    """Bytes received by all connections; a line on stderr every `every` seconds."""
+
+    def __init__(self, total: int | None, every: float = 60.0):
+        self.total, self.every = total, every
+        self.done = 0
+        self.start = self.last = time.monotonic()
+        self.lock = threading.Lock()
+
+    def add(self, n: int) -> None:
+        with self.lock:
+            self.done += n
+            now = time.monotonic()
+            if now - self.last >= self.every:
+                self.last = now
+                rate = self.done / max(now - self.start, 1e-9)
+                of = f" of {self.total / 1e6:.0f} MB" if self.total else ""
+                print(f"downloaded {self.done / 1e6:.0f} MB{of} ({rate / 1e6:.2f} MB/s)",
+                      file=sys.stderr, flush=True)
+
+
+def remote_size(url: str) -> tuple[int | None, bool]:
+    """(Content-Length, whether byte ranges are served) of url; (None, False) if unknown."""
+    try:
+        req = urllib.request.Request(url, method="HEAD", headers={"User-Agent": USER_AGENT})
+        with urllib.request.urlopen(req, timeout=60) as r:
+            size = r.headers.get("Content-Length")
+            ranges = r.headers.get("Accept-Ranges", "").lower() == "bytes"
+            return (int(size) if size and size.isdigit() else None), ranges
+    except (urllib.error.URLError, OSError, ValueError):
+        return None, False
+
+
+def fetch_segment(url: str, dest: Path, start: int, end: int | None, ranges: bool,
+                  progress: Progress) -> None:
+    """Write bytes start..end (inclusive; end None = to the end of the file) of url
+    into dest at the same offsets. After a dropped connection it continues from the
+    last byte received when the server serves byte ranges (otherwise it starts
+    again); it gives up after RETRIES failures in a row that brought no data."""
+    pos, failures = start, 0
+    while True:
+        headers = {"User-Agent": USER_AGENT}
+        if ranges and (pos > 0 or end is not None):
+            headers["Range"] = f"bytes={pos}-{'' if end is None else end}"
+        elif pos > 0:
+            pos = 0  # no byte ranges: the whole file again
+        got = 0
         try:
-            if is_local(base):
-                src = local_path(base, rel)
-                if not src.is_file():
-                    die(f"{src} not found")
-                with open(src, "rb") as fi, open(dest, "wb") as fo:
-                    for block in iter(lambda: fi.read(1 << 20), b""):
-                        h.update(block)
-                        fo.write(block)
-            else:
-                with open_url(f"{base}/{rel}", timeout=300) as r, open(dest, "wb") as fo:
-                    for block in iter(lambda: r.read(1 << 20), b""):
-                        h.update(block)
-                        fo.write(block)
-            return h.hexdigest()
+            req = urllib.request.Request(url, headers=headers)
+            with urllib.request.urlopen(req, timeout=300) as r, open(dest, "r+b") as fo:
+                if "Range" in headers and r.status != 206:
+                    raise OSError(f"server ignored the byte range (HTTP {r.status})")
+                fo.seek(pos)
+                for block in iter(lambda: r.read(1 << 20), b""):
+                    if end is not None:
+                        block = block[: end + 1 - pos]
+                    fo.write(block)
+                    pos += len(block)
+                    got += len(block)
+                    progress.add(len(block))
+                    if end is not None and pos > end:
+                        break
+                if end is None:
+                    fo.truncate(pos)  # whole file received
+                    return
+            if pos > end:
+                return
+            raise OSError(f"connection closed at byte {pos} (expected up to {end})")
         except (urllib.error.URLError, OSError, TimeoutError) as e:
-            if attempt == RETRIES - 1:
-                die(f"download of {base}/{rel} failed: {e}")
-            print(f"download failed ({e}); retrying", file=sys.stderr)
-            time.sleep(10 * (attempt + 1))
-    return ""
+            failures = 0 if got else failures + 1
+            if failures >= RETRIES:
+                raise
+            print(f"download interrupted at byte {pos} ({e}); continuing",
+                  file=sys.stderr, flush=True)
+            time.sleep(10 * max(failures, 1))
+
+
+def download(base: str, rel: str, dest: Path, connections: int = 8) -> str:
+    """Copy <base>/<rel> to dest; return its md5.
+
+    Over HTTP(S) a large file is fetched as `connections` byte ranges at once: the
+    EBI FTP can serve one connection at a few hundred KB/s, so a 2 GB file would
+    take hours (one took more than 4 h; 8 connections: 15 min). Dropped connections continue where they
+    stopped. A progress line goes to stderr every minute."""
+    if is_local(base):
+        src = local_path(base, rel)
+        if not src.is_file():
+            die(f"{src} not found")
+        h = hashlib.md5()
+        with open(src, "rb") as fi, open(dest, "wb") as fo:
+            for block in iter(lambda: fi.read(1 << 20), b""):
+                h.update(block)
+                fo.write(block)
+        return h.hexdigest()
+
+    url = f"{base}/{rel}"
+    size, ranges = remote_size(url)
+    progress = Progress(size)
+    with open(dest, "wb") as fo:
+        if size:
+            fo.truncate(size)
+    try:
+        if size and ranges and connections > 1 and size >= MIN_SPLIT:
+            step = -(-size // connections)
+            bounds = [(s, min(s + step, size) - 1) for s in range(0, size, step)]
+            with ThreadPoolExecutor(max_workers=len(bounds)) as pool:
+                jobs = [pool.submit(fetch_segment, url, dest, s, e, True, progress) for s, e in bounds]
+                for job in jobs:
+                    job.result()
+        else:
+            fetch_segment(url, dest, 0, size - 1 if size and ranges else None, ranges, progress)
+    except (urllib.error.URLError, OSError, TimeoutError) as e:
+        die(f"download of {url} failed: {e}")
+    got = dest.stat().st_size
+    if size and got != size:
+        die(f"download of {url}: got {got} bytes, expected {size}")
+    print(f"downloaded {got / 1e6:.0f} MB in {(time.monotonic() - progress.start) / 60:.1f} min",
+          file=sys.stderr, flush=True)
+    return md5_file(dest)
 
 
 def main(argv=None) -> int:
@@ -276,6 +382,8 @@ def main(argv=None) -> int:
     p.add_argument("--id", required=True, help="trait ID (output names)")
     p.add_argument("--ancestry", default="EUR", help="samplesheet ancestry (EUR, EAS, AFR, SAS, AMR, MULTI)")
     p.add_argument("--base", default=DEFAULT_BASE, help="GWAS Catalog summary statistics root (URL or folder)")
+    p.add_argument("--connections", type=int, default=8,
+                   help="parallel connections for large downloads (default 8; 1 = one stream)")
     args = p.parse_args(argv)
     base = args.base.rstrip("/")
 
@@ -284,7 +392,7 @@ def main(argv=None) -> int:
     meta_text = read_text(base, rel + "-meta.yaml")
     meta = parse_meta_yaml(meta_text) if meta_text else {"samples": []}
 
-    md5 = download(base, rel, Path(name))
+    md5 = download(base, rel, Path(name), max(1, args.connections))
     expected = meta.get("data_file_md5sum")
     if expected and md5 != expected:
         die(f"{name}: md5 {md5} differs from the GWAS Catalog's {expected} (incomplete download?)")

@@ -240,3 +240,106 @@ def test_colmap_overrides_the_harmonised_columns(tmp_path):
     _, qc = harmonize(tmp_path, OLD_FORMAT, INFO, "--colmap",
                       "A1=effect_allele,A2=other_allele,BETA=beta,EAF=effect_allele_frequency")
     assert qc["column_mapping"]["A1"] == "effect_allele"
+
+
+# ------------------------------------------------------------ HTTP download --
+class _RangeServer:
+    """Local HTTP server for one file: serves byte ranges (or not) and can drop
+    every connection after `drop_after` bytes, like a slow, flaky FTP mirror."""
+
+    def __init__(self, data: bytes, ranges: bool = True, drop_after: int | None = None):
+        import http.server
+        import threading
+
+        outer = self
+        self.data, self.ranges, self.drop_after = data, ranges, drop_after
+        self.range_requests = 0
+
+        class Handler(http.server.BaseHTTPRequestHandler):
+            def log_message(self, *a):
+                pass
+
+            def _span(self):
+                rng = self.headers.get("Range") if outer.ranges else None
+                if not rng:
+                    return 0, len(outer.data) - 1, False
+                outer.range_requests += 1
+                a, b = rng.split("=")[1].split("-")
+                return int(a), (int(b) if b else len(outer.data) - 1), True
+
+            def do_HEAD(self):
+                self.send_response(200)
+                self.send_header("Content-Length", str(len(outer.data)))
+                if outer.ranges:
+                    self.send_header("Accept-Ranges", "bytes")
+                self.end_headers()
+
+            def do_GET(self):
+                a, b, partial = self._span()
+                body = outer.data[a:b + 1]
+                self.send_response(206 if partial else 200)
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                if outer.drop_after is not None:
+                    body = body[:outer.drop_after]  # connection closes early
+                self.wfile.write(body)
+                self.close_connection = True
+
+        self.httpd = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        self.url = f"http://127.0.0.1:{self.httpd.server_address[1]}"
+        threading.Thread(target=self.httpd.serve_forever, daemon=True).start()
+
+    def close(self):
+        self.httpd.shutdown()
+
+
+@pytest.fixture
+def payload():
+    import random
+    return random.Random(1).randbytes(300_000)
+
+
+@pytest.mark.parametrize("connections", [1, 4])
+def test_http_download_in_ranges_matches_the_file(tmp_path, monkeypatch, payload, connections):
+    monkeypatch.setattr(fg, "MIN_SPLIT", 1000)
+    srv = _RangeServer(payload)
+    try:
+        md5 = fg.download(srv.url, "f.gz", tmp_path / "f.gz", connections)
+    finally:
+        srv.close()
+    assert (tmp_path / "f.gz").read_bytes() == payload
+    assert md5 == hashlib.md5(payload).hexdigest()
+    if connections == 4:
+        assert srv.range_requests == 4
+
+
+def test_http_download_continues_after_dropped_connections(tmp_path, monkeypatch, payload):
+    monkeypatch.setattr(fg, "MIN_SPLIT", 1000)
+    monkeypatch.setattr(fg.time, "sleep", lambda _s: None)
+    srv = _RangeServer(payload, drop_after=20_000)  # every connection stops after 20 kB
+    try:
+        md5 = fg.download(srv.url, "f.gz", tmp_path / "f.gz", 2)
+    finally:
+        srv.close()
+    assert md5 == hashlib.md5(payload).hexdigest()
+    assert srv.range_requests >= len(payload) // 20_000  # resumed, never restarted
+
+
+def test_http_download_without_range_support(tmp_path, monkeypatch, payload):
+    monkeypatch.setattr(fg, "MIN_SPLIT", 1000)
+    srv = _RangeServer(payload, ranges=False)
+    try:
+        md5 = fg.download(srv.url, "f.gz", tmp_path / "f.gz", 4)
+    finally:
+        srv.close()
+    assert md5 == hashlib.md5(payload).hexdigest() and srv.range_requests == 0
+
+
+def test_http_download_gives_up_when_no_data_arrives(tmp_path, monkeypatch, payload):
+    monkeypatch.setattr(fg.time, "sleep", lambda _s: None)
+    srv = _RangeServer(payload, drop_after=0)
+    try:
+        with pytest.raises(SystemExit):
+            fg.download(srv.url, "f.gz", tmp_path / "f.gz", 1)
+    finally:
+        srv.close()

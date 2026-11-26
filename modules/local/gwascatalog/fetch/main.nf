@@ -8,13 +8,15 @@
  * records in the QC report (and uses as N when the samplesheet gives none).
  *
  * meta fields used: id, gwas_catalog (accession), ancestry (default EUR)
- * ext.args: e.g. '--base <url or folder>' (default: the GWAS Catalog FTP)
+ * ext.args: e.g. '--base <url or folder>' (default: the GWAS Catalog FTP),
+ *           '--connections <n>' (parallel byte ranges for large files, default 8)
  * Needs network access. With --gwascatalog_cache, files are kept in
  * <cache>/<accession>/ and reused by later runs (storeDir).
  */
 process GWASCATALOG_FETCH {
     tag "${meta.id}:${meta.gwas_catalog}"
     label 'process_single'
+    label 'process_long'   // large files can take hours from the EBI FTP
 
     conda "${moduleDir}/environment.yml"
     container "ghcr.io/mauricioroza/gencorr-tools:0.1.0"
