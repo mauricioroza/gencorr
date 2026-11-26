@@ -117,6 +117,10 @@ rules to `conf/modules.config`.
       container), `versions_<tool>` topic output per tool, `task.ext.args`, `stub:`,
       nf-core-format `meta.yml`
 - [ ] Parser writes `RESULT_COLUMNS` only (`validate_results` passes)
+- [ ] Global method: `extra` reports what the `confidence` tier reads when the
+      tool gives it, i.e. `snp_fraction_1/2` (share of the tool's reference SNPs
+      each trait covers) and `mean_chi2_1/2`; missing keys only skip that rule
+- [ ] Every new `status` value described in `output.md`
 - [ ] Module test next to each new module (`modules/local/<name>/tests/main.nf.test`,
       real-data test + `-stub` test, tags `modules`, `modules_local`, `<name>`, plus
       the tag of every module it runs in `setup`);

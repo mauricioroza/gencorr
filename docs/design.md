@@ -52,11 +52,18 @@ caused by input handling.
 | Popcorn p-value        | `p` tests rg ≠ 0 (z = rg/SE), like the other methods; Popcorn's own rg < 1 test kept in `extra`                                      | Popcorn reports the p for rg < 1; mixing the two in one column would make cross-ancestry results look significant for the opposite reason                                                                                    |
 | Popcorn input          | harmonized Z only (no beta/SE), so every method uses the same Z                                                                      | Popcorn recomputes Z from beta/SE when both are given; on Popcorn's test data the two routes agree to 9 digits                                                                                                               |
 | ancestry               | per trait (`ancestry` column); each same-ancestry pair uses its ancestry's references; cross-ancestry pairs kept as `cross_ancestry` | mixed-ancestry sets run in one job; LAVA runs for EAS too when an EAS reference is given                                                                                                                                     |
+| LAVA univariate filter | `--lava_univ_thresh 0.05` (LAVA's default) kept as the default; docs recommend 0.05 / number of loci for genome-wide screens         | the default matches LAVA and earlier comparisons; with 0.05, loci with weak local h2 are tested and their rg often sits at the ±1 bound (over half of the FDR hits in a 19-trait run, a fifth with 2e-5)                     |
+| LAVA multiple testing  | `extra.p_bonferroni` and `extra.q_fdr` over every bivariate test of the run (`n_tests`)                                              | the raw `p` of 2,495 loci × many pairs is not a significance call; per-pair correction can be recomputed from `p`                                                                                                            |
+| LAVA MHC               | flagged on every row (`extra.in_mhc`, `--lava_mhc_region`), analysed unless `--lava_exclude_mhc`                                     | long-range LD there inflates local estimates (17.5 % of MHC tests FDR-significant vs 3.2 % elsewhere in a 19-trait run); flagging keeps the choice visible, excluding is one switch                                          |
+| liability scale        | sample prevalence from `samp_prev`, else `n_cases / (n_cases + n_controls)`                                                          | GWAS with an effective N (PGC) need P = 0.5, not the case fraction of the counts                                                                                                                                             |
+| confidence tier        | gencorr's own tiers from h2 z, \|rg\|, SE, mean χ² and coverage of each method's reference (`snp_fraction`, LDSC `block_coverage`)   | `ok` only means the tool returned a number; targeted-array and exome-imputed GWAS give confident-looking but meaningless h2/rg. Coverage is relative to the reference, so the rule does not depend on its size               |
 
 ## Reproducibility
 
-- Every tool version is pinned: LDSC by bioconda build, LAVA by Git commit,
-  R packages by a dated CRAN snapshot (rocker), Python packages by `==`.
+- Every tool version is pinned: LDSC (CBIIT Python 3 port), LAVA and Popcorn
+  by Git commit, LDAK by release, R packages by a dated CRAN snapshot (rocker),
+  Python packages by `==`; each tool runs from its own image built from
+  `containers/`.
   Python itself is the image's Ubuntu 24.04 `python3` (3.12.3), and the
   modules' `environment.yml` files pin the same versions, so conda and
   container runs report identical software versions.

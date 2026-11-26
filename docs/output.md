@@ -8,12 +8,13 @@ results/
 │   └── <id>.harmonized.tsv.gz     only with --save_harmonized
 ├── ldsc/
 │   ├── gencorr.ldsc.tsv           LDSC rows of the standard table
-│   ├── gencorr.ldsc_h2.tsv        per-trait h2 (observed + liability), intercept, ratio, lambda GC, status
+│   ├── gencorr.ldsc_h2.tsv        per-trait h2 (observed + liability), intercept, ratio, lambda GC, coverage, status
 │   ├── gencorr.sample_overlap.txt sampling-correlation matrix given to LAVA
-│   ├── logs/                      raw LDSC logs: <id>.h2.log, <id>.h2_liab.log, <trait1>__bN.rg.log
+│   ├── logs/                      raw LDSC logs: <id>.h2.log, <id>.h2_liab.log, <trait1>__bN.rg.log;
+│   │                              <id>.coverage.log (share of the LD score reference covered)
 │   └── munged/                    munge logs (+ .sumstats.gz with --save_intermediates)
 ├── lava/
-│   ├── gencorr.lava.tsv           LAVA rows of the standard table
+│   ├── gencorr.lava.tsv           LAVA rows of the standard table (adjusted p, MHC flag in extra)
 │   ├── gencorr.lava_univ.tsv      local univariate h2 and p per locus and trait
 │   └── chunks/                    per-chunk tables, only with --save_intermediates
 ├── sumher/
@@ -21,7 +22,8 @@ results/
 │   └── logs/                      LDAK output per pair: <trait1>__<trait2>.cors and .log
 ├── popcorn/
 │   ├── gencorr.popcorn.tsv        Popcorn rows (cross-ancestry pairs)
-│   └── logs/                      Popcorn output per pair: <eur>__<eas>.popcorn, .popcorn.o.log, .popcorn.e.log
+│   ├── scores/                    score files computed by POPCORN_COMPUTE (when not given)
+│   └── logs/                      Popcorn output per pair: <pair>.popcorn, .popcorn.o.log, .popcorn.e.log
 └── pipeline_info/
     ├── gencorr_software_versions.yml   exact tool versions used by every process
     └── execution_{report,timeline,trace}_*.html/txt, pipeline_dag_*.html, params_*.json

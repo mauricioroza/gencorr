@@ -41,25 +41,34 @@ and Popcorn on any set of traits and returns one tidy results table.
   (only tool logs differ, by their timestamps).
 - **Nothing disappears.** Pairs and loci that could not be estimated stay in
   the table with a `status` explaining why.
+- **Says how far to trust an estimate.** Every global rg gets a `confidence`
+  tier from its h2 z-scores, SE and how much of the genome the GWAS covers, so
+  a targeted-array or exome-only file does not pass as a genome-wide result.
 - **Extensible.** Every method reads the same harmonized input and writes the
   same table, so adding another method (e.g. HDL or HDL-L) is one subworkflow
   ([docs/extending.md](docs/extending.md)).
 
 ## How it works
 
-![gencorr metro map: GWAS summary statistics (with an optional rsID map) are harmonized, then same-ancestry pairs run through LDSC and SumHer (global rg) and LAVA (local rg, corrected with LDSC's sample-overlap matrix), cross-ancestry pairs through Popcorn (cross-ancestry rg), and everything is merged into gencorr_results.tsv](docs/images/gencorr_metro_map.svg)
+![gencorr metro map: GWAS summary statistics (files, URLs or GWAS Catalog accessions, with an optional rsID map) are harmonized, then same-ancestry pairs run through LDSC and SumHer (global rg) and LAVA (local rg, corrected with LDSC's sample-overlap matrix), cross-ancestry pairs through Popcorn (cross-ancestry rg), and everything is merged into gencorr_results.tsv with a confidence tier per global estimate](docs/images/gencorr_metro_map.svg)
 
-1. **Harmonize** each GWAS once: column names are detected automatically
+1. **Harmonize** each GWAS once (downloading it first when given as a GWAS
+   Catalog accession): column names are detected automatically
    (SNP/rsid/MarkerName, A1/effect_allele, BETA/OR/LogOR, SE, P, Z, N, …),
    OR becomes ln OR, a signed Z is derived, and duplicates, non-SNVs and
-   unusable rows are removed. A QC report per trait records every decision.
-2. **LDSC** munges, estimates h2 per trait and rg for every pair, and builds
-   the sample-overlap matrix from its intercepts.
+   unusable rows are removed, plus optional INFO/MAF filters. A QC report per
+   trait records every decision, including filters that could not be applied.
+2. **LDSC** munges, estimates h2 per trait (and how much of its LD score
+   reference the trait covers) and rg for every pair, and builds the
+   sample-overlap matrix from its intercepts.
 3. **SumHer** (optional) estimates global rg with LDAK's heritability model,
-   and **Popcorn** (optional) estimates rg for cross-ancestry pairs (e.g.
-   EUR × EAS), from given score files or ones it computes from PLINK references.
+   and **Popcorn** (optional) estimates rg for cross-ancestry pairs (any two of
+   EUR, EAS, AFR, SAS), from given score files or ones it computes from PLINK
+   references.
 4. **LAVA** tests every pair in each of LAVA's 2,495 GRCh37 loci, corrected for
-   sample overlap by default.
+   sample overlap by default. Bonferroni and FDR-adjusted p-values cover every
+   test of the run, and loci in the extended MHC are flagged (or skipped with
+   `--lava_exclude_mhc`).
 
    _Sample overlap_ means the original GWAS shared participants (e.g. UK Biobank
    in both). Their estimation errors are then correlated, which inflates rg.
@@ -68,8 +77,8 @@ and Popcorn on any set of traits and returns one tidy results table.
    the intercepts to LAVA as its overlap matrix (`--lava_overlap ldsc`; `none`
    to switch off).
 
-5. **Merge** checks every table against one schema and writes
-   `gencorr_results.tsv`.
+5. **Merge** checks every table against one schema, rates every global
+   estimate (`confidence`) and writes `gencorr_results.tsv`.
 
 ## Quick start
 
@@ -127,11 +136,11 @@ Where to download the LD scores, SNP list and LAVA reference:
 One row per trait; only `id` and `sumstats` are required:
 
 ```csv
-id,sumstats,n,n_cases,n_controls,pop_prev,colmap,build,ancestry,label
-bmi,/data/bmi.txt.gz,,,,,,,,Body mass index
-mdd,/data/mdd.tsv.gz,,170756,329443,0.15,,GRCh37,EUR,Major depression
-scz,/data/scz.txt,,53386,77258,0.01,"Z=STAT",GRCh38,EUR,Schizophrenia
-t2d,GCST000028,,,,,,,,Type 2 diabetes (GWAS Catalog)
+id,sumstats,n,n_cases,n_controls,pop_prev,samp_prev,colmap,build,ancestry,label
+bmi,/data/bmi.txt.gz,,,,,,,,,Body mass index
+mdd,/data/mdd.tsv.gz,,,,0.15,0.5,,GRCh37,EUR,Major depression (effective N)
+scz,/data/scz.txt,,53386,77258,0.01,,"Z=STAT",GRCh38,EUR,Schizophrenia
+t2d,GCST000028,,,,,,,,,Type 2 diabetes (GWAS Catalog)
 ```
 
 - `sumstats` is a path, a URL, or a **GWAS Catalog accession** (`GCST…`): the
@@ -140,8 +149,9 @@ t2d,GCST000028,,,,,,,,Type 2 diabetes (GWAS Catalog)
   ([details](docs/usage.md#gwas-catalog-studies)).
 - `n` is used only when the file has no N column.
 - `n_cases`/`n_controls` mark a binary trait (LAVA case/control model, N fallback);
-  with `pop_prev` you also get liability-scale h2. `samp_prev` sets the sample's case
-  proportion directly (`0.5` when the file's N is an effective N, as in PGC files).
+  with `pop_prev` you also get liability-scale h2. When the file's N is an
+  _effective_ N (as in PGC files), give `samp_prev` `0.5` instead of the counts,
+  as for `mdd` above.
 - `colmap` overrides column detection, e.g. `Z=STAT`. `STAT` is never mapped
   automatically, because it is not always a Z-score.
 - `build` (`GRCh37` default, or `GRCh38`) and `ancestry` (`EUR` default, `EAS`,
@@ -170,8 +180,8 @@ All parameters: [docs/usage.md](docs/usage.md) or
 results/
 ├── gencorr_results.tsv     all methods, one row per (method, trait pair, locus)
 ├── harmonized/             QC report per trait
-├── ldsc/                   per-trait h2, sample-overlap matrix, LDSC logs
-├── lava/                   LAVA rows, local h2 per locus and trait
+├── ldsc/                   per-trait h2 and coverage, sample-overlap matrix, LDSC logs
+├── lava/                   LAVA rows (with adjusted p), local h2 per locus and trait
 ├── sumher/, popcorn/       SumHer and Popcorn rows and logs (when run)
 └── pipeline_info/          exact software versions, parameters, run reports
 ```
@@ -187,8 +197,11 @@ results/
 `status` is `ok` when there is an estimate; otherwise it says why not
 (`univ_filtered`, `no_snps_in_locus`, `ldsc_error`, `estimate_out_of_bounds`, …).
 For global estimates, `confidence` (`trusted`, `low`, `not_interpretable`) says
-whether the estimate can be read: it checks the h2 z-scores, the SE and LDSC's
-mean χ² ([rules](docs/output.md#the-standard-results-table)).
+whether the estimate can be read: it checks the h2 z-scores, the SE, LDSC's
+mean χ² and the share of the method's reference SNPs (and, for LDSC, of the
+genome) each GWAS covers ([rules](docs/output.md#the-standard-results-table)).
+For LAVA, judge significance on `extra.q_fdr` or `extra.p_bonferroni`, not the
+raw `p`.
 Read the file in R with `read.delim("gencorr_results.tsv", quote = "")` and the
 JSON `extra` column with `jsonlite::fromJSON`.
 
@@ -219,12 +232,13 @@ JSON `extra` column with `jsonlite::fromJSON`.
 - **Cloud VM:** [docs/cloud_oci.md](docs/cloud_oci.md) sets up one Oracle Cloud
   VM (scripts in `cloud/oci/`).
 - **Status:** v0.1.0dev, not yet released. Validated on the LAVA vignette and
-  other example data. A first genome-wide LDSC run (two GWAS Catalog studies,
-  about 8 minutes on a laptop) has completed; no genome-wide LAVA run yet.
+  other example data. A first full genome-wide run (20 traits, 19 pairs; LDSC,
+  SumHer and LAVA on all 2,495 loci) completed in about 6 hours on a 10-vCPU
+  cloud VM (59 CPU-hours, almost all LAVA).
 
 ## Testing
 
-99 Python tests, 34 nf-test module tests, 9 function tests and 6 pipeline
+174 Python tests, 36 nf-test module tests, 16 function tests and 8 pipeline
 tests, including _oracle_ tests that run LDSC and LAVA directly and check that
 the pipeline gives the same numbers. `nf-core pipelines lint` and
 `nf-core modules lint` report no failures. How to run them:
