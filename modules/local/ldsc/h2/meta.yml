@@ -53,6 +53,17 @@ output:
           pattern: "*.h2*.log"
           ontologies:
             - edam: "http://edamontology.org/format_2330" # Textual format
+  coverage:
+    - - meta:
+          type: map
+          description: Trait meta map, as given
+      - ${meta.id}.coverage.log:
+          type: file
+          description: Share of the LD score reference the trait covers
+            (snp_fraction, block_coverage; bin/ldsc_coverage.py)
+          pattern: "*.coverage.log"
+          ontologies:
+            - edam: "http://edamontology.org/format_2330" # Textual format
   versions_ldsc:
     - - ${task.process}:
           type: string

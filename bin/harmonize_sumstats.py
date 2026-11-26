@@ -566,15 +566,23 @@ def harmonize(raw: pd.DataFrame, mapping: dict[str, str], *, n=None, n_cases=Non
         del kept
     # ---- optional QC thresholds (LDSC munge convention: remove value <= t) - #
     qc["thresholds"] = {"min_info": min_info, "min_maf": min_maf}
+    # A column whose values are all missing filters nothing (missing values are
+    # kept), so it gets the same "not applied" warning as an absent column.
     if min_info is not None:
         if "INFO" in mapping:
             qc["info_missing_kept"] = int((out["INFO"].isna() & keep).sum())
+            if qc["info_missing_kept"] and qc["info_missing_kept"] == int(keep.sum()):
+                qc["warning_min_info"] = (f"--min-info requested but every value of the INFO column "
+                                          f"({mapping['INFO']}) is missing; not applied")
             drop(out["INFO"] <= min_info, f"info_le_{min_info:g}")
         else:
             qc["warning_min_info"] = "--min-info requested but the file has no INFO column; not applied"
     if min_maf is not None:
         if qc["maf_source"] is not None:
             qc["maf_missing_kept"] = int((out["_MAF"].isna() & keep).sum())
+            if qc["maf_missing_kept"] and qc["maf_missing_kept"] == int(keep.sum()):
+                qc["warning_min_maf"] = (f"--min-maf requested but every value of the MAF source "
+                                         f"({qc['maf_source']}) is missing; not applied")
             drop(out["_MAF"] <= min_maf, f"maf_le_{min_maf:g}")
         else:
             qc["warning_min_maf"] = "--min-maf requested but the file has no MAF or EAF column; not applied"

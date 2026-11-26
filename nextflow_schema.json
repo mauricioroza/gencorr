@@ -262,6 +262,18 @@
                     "description": "Base random seed; each (locus, pair) gets a seed derived from it.",
                     "default": 20201231
                 },
+                "lava_mhc_region": {
+                    "type": "string",
+                    "pattern": "^(chr)?[0-9XYxy]+:[0-9]+-[0-9]+$",
+                    "description": "Extended MHC region (CHR:START-STOP, coordinates of the locus file). Loci overlapping it get extra.in_mhc = true.",
+                    "help_text": "Long-range LD in the MHC inflates local estimates, so LAVA studies usually exclude it. The default 6:25000000-34000000 is GRCh37, the build of LAVA's own locus file.",
+                    "default": "6:25000000-34000000"
+                },
+                "lava_exclude_mhc": {
+                    "type": "boolean",
+                    "description": "Do not analyse loci overlapping --lava_mhc_region (their rows get status excluded_mhc).",
+                    "help_text": "Off by default so the MHC is still reported, flagged by extra.in_mhc. Excluded rows are not counted in n_tests, so p_bonferroni and q_fdr are computed without them."
+                },
                 "lava_snp_list": {
                     "type": "string",
                     "format": "file-path",

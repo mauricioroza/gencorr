@@ -269,6 +269,9 @@ def validateSamples(List samples) {
         if (meta.n_cases && meta.n_controls && meta.n && Math.abs((meta.n as double) - (meta.n_cases as double) - (meta.n_controls as double)) > 0.5) {
             error("Samplesheet row '${meta.id}': n (${meta.n}) differs from n_cases + n_controls (${(meta.n_cases as double) + (meta.n_controls as double)}). Leave n empty for binary traits.")
         }
+        if (meta.pop_prev && !meta.samp_prev && !(meta.n_cases && meta.n_controls)) {
+            error("Samplesheet row '${meta.id}': pop_prev needs the sample's case proportion: give n_cases and n_controls, or samp_prev (0.5 when N is an effective N).")
+        }
     }
     if (samples.size() < 2) {
         error("The samplesheet must contain at least 2 traits (found ${samples.size()}).")

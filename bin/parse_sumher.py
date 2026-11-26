@@ -72,6 +72,16 @@ def snps_used(log_text: str, sumstats_name: str) -> float:
     return float(m.group(1)) if m else np.nan
 
 
+def tagging_predictors(log_text: str) -> float:
+    """Predictors in the tagging file (the Y of 'only X of the Y predictors',
+    else 'Reading details for Y predictors'); NaN when the log has neither."""
+    m = re.search(r"contains summary statistics for (?:only \d+|none) of (?:the )?(\d+)", log_text)
+    if m:
+        return float(m.group(1))
+    m = re.search(r"Reading details for (\d+) predictors from", log_text)
+    return float(m.group(1)) if m else np.nan
+
+
 def parse_pair(log_path: Path, cors_path: Path) -> dict:
     text = log_path.read_text(errors="replace")
     t1, t2 = trait_ids(text, log_path.name)
@@ -97,8 +107,12 @@ def parse_pair(log_path: Path, cors_path: Path) -> dict:
     if "Scaling1" in cors:
         extra.update(scaling_1=cors["Scaling1"][0], scaling_1_se=cors["Scaling1"][1],
                      scaling_2=cors["Scaling2"][0], scaling_2_se=cors["Scaling2"][1])
-    extra.update(n_snps_1=snps_used(text, f"{t1}{SUMSTATS_SUFFIX}"),
-                 n_snps_2=snps_used(text, f"{t2}{SUMSTATS_SUFFIX}"),
+    n_tagging = tagging_predictors(text)
+    n1, n2 = snps_used(text, f"{t1}{SUMSTATS_SUFFIX}"), snps_used(text, f"{t2}{SUMSTATS_SUFFIX}")
+    extra.update(n_snps_1=n1, n_snps_2=n2,
+                 # share of the tagging file's predictors each trait covers (confidence tier)
+                 snp_fraction_1=n1 / n_tagging if n_tagging > 0 else np.nan,
+                 snp_fraction_2=n2 / n_tagging if n_tagging > 0 else np.nan,
                  p_method="normal approximation of rg / SE (LDAK reports SEs only)",
                  error=error, log=log_path.name)
     extra = {k: (None if isinstance(v, float) and np.isnan(v) else v) for k, v in extra.items()}

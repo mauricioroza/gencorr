@@ -39,11 +39,13 @@ process LAVA_RUN {
     def args  = task.ext.args ?: ''
     prefix    = task.ext.prefix ?: "${meta.id}.${loci.baseName}"
     // LAVA input.info: continuous traits get cases/controls = NA (LAVA treats
-    // NA case proportion as continuous); 'prevalence' enables h2.latent.
+    // NA case proportion as continuous); 'prevalence' enables h2.latent, only
+    // for binary traits (a trait with samp_prev but no n_cases stays continuous).
     def info  = meta.traits.collect { t ->
-        def cases = t.n_cases && t.n_controls ? t.n_cases    : 'NA'
-        def ctrls = t.n_cases && t.n_controls ? t.n_controls : 'NA'
-        def prev  = t.pop_prev ?: 'NA'
+        def binary = t.n_cases && t.n_controls
+        def cases = binary ? t.n_cases    : 'NA'
+        def ctrls = binary ? t.n_controls : 'NA'
+        def prev  = binary && t.pop_prev ? t.pop_prev : 'NA'
         "${t.id}\t${cases}\t${ctrls}\t${prev}\tsumstats/${t.id}.lava.tsv"
     }.join('\n')
     def pairs = meta.pairs.collect { p -> "${p[0]}\t${p[1]}" }.join('\n')

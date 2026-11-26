@@ -65,14 +65,18 @@
                 "ldsc/gencorr.ldsc_h2.tsv",
                 "ldsc/gencorr.sample_overlap.txt",
                 "ldsc/logs",
+                "ldsc/logs/bmi.coverage.log",
                 "ldsc/logs/bmi.h2.log",
                 "ldsc/logs/bmi__b1.rg.log",
                 "ldsc/logs/bmi__b2.rg.log",
+                "ldsc/logs/depression.coverage.log",
                 "ldsc/logs/depression.h2.log",
                 "ldsc/logs/depression.h2_liab.log",
                 "ldsc/logs/depression__b1.rg.log",
+                "ldsc/logs/neuro.coverage.log",
                 "ldsc/logs/neuro.h2.log",
                 "ldsc/logs/neuro__b1.rg.log",
+                "ldsc/logs/rheuma.coverage.log",
                 "ldsc/logs/rheuma.h2.log",
                 "ldsc/logs/rheuma.h2_liab.log",
                 "ldsc/munged",
@@ -215,7 +219,7 @@
                 "median_n": 379478.0
             }
         ],
-        "timestamp": "2026-11-16T10:05:11.964211124",
+        "timestamp": "2026-11-26T12:08:04.337942021",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.5"

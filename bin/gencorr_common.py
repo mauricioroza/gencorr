@@ -85,10 +85,23 @@ VALID_SCOPES = {"global", "local"}
 #   h2 z > 4: Neale lab threshold for following up rg (nealelab.is, 2019)
 #   mean chi2 > 1.02: LDSC FAQ (below that, too little signal for rg)
 #   rg_se >= 0.3: PGC MDD (Meng et al. 2024) did not report Popcorn estimates with SE >= 0.3
+# Coverage rules (gencorr's own, relative to the method's reference so they do not
+# depend on its size; values reported per trait in extra):
+#   snp_fraction < 0.5: the trait has fewer than half of the reference SNPs
+#     (LDSC: LD score SNPs within the merge-alleles list, bin/ldsc_coverage.py;
+#     SumHer: tagging-file predictors). Genome-wide GWAS cover ~0.75-0.95; a
+#     targeted array, exome-imputed or truncated file far less (first real run:
+#     exome-imputed HbA1c 0.13 and leptin 0.014, both had been rated "trusted").
+#   block_coverage < 0.9 (LDSC only): fewer than 90% of ~1,000-SNP reference blocks
+#     hold at least a quarter of their SNPs, i.e. SNPs are missing from whole
+#     regions (exome-only, regional or missing-chromosome files) even if the
+#     overall fraction is acceptable.
 CONFIDENCE_H2_Z_TRUSTED = 4.0
 CONFIDENCE_H2_Z_MIN = 2.0
 CONFIDENCE_MEAN_CHI2_MIN = 1.02
 CONFIDENCE_RG_SE_MAX = 0.3
+CONFIDENCE_SNP_FRACTION_MIN = 0.5
+CONFIDENCE_BLOCK_COVERAGE_TRUSTED = 0.9
 CONFIDENCE_LEVELS = ("trusted", "low", "not_interpretable")
 
 
@@ -103,10 +116,13 @@ def row_confidence(row) -> str | None:
     """Confidence tier of one results row (None = not assessed).
 
     Only global rows with status 'ok' are assessed. A row is
-      not_interpretable: either trait's h2 z <= 2, |rg| > 1, or rg_se >= 0.3;
-      low:               either trait's h2 z <= 4, or a trait's mean chi2 <= 1.02
-                         (when the method reports it in extra: mean_chi2_1/2);
+      not_interpretable: either trait's h2 z <= 2, |rg| > 1, rg_se >= 0.3, or
+                         a trait's snp_fraction < 0.5;
+      low:               either trait's h2 z <= 4, a trait's mean chi2 <= 1.02,
+                         or a trait's block_coverage < 0.9;
       trusted:           otherwise.
+    mean_chi2_1/2, snp_fraction_1/2 and block_coverage_1/2 are read from extra;
+    a rule is skipped for values the method does not report.
     None when h2, its SE, rg or rg_se is missing.
     """
     if row.get("scope") != "global" or row.get("status") != "ok":
@@ -117,15 +133,21 @@ def row_confidence(row) -> str | None:
     values = h2 + se + [rg, rg_se]
     if any(v != v for v in values) or min(se) <= 0:   # NaN or unusable SE
         return None
-    h2_z = min(h2[0] / se[0], h2[1] / se[1])
-    if h2_z <= CONFIDENCE_H2_Z_MIN or abs(rg) > 1 or rg_se >= CONFIDENCE_RG_SE_MAX:
-        return "not_interpretable"
     try:
         extra = json.loads(row.get("extra") or "{}")
     except (TypeError, json.JSONDecodeError):
         extra = {}
-    chi2 = [_num(extra.get(k)) for k in ("mean_chi2_1", "mean_chi2_2")]
-    if h2_z <= CONFIDENCE_H2_Z_TRUSTED or any(c <= CONFIDENCE_MEAN_CHI2_MIN for c in chi2 if c == c):
+    if not isinstance(extra, dict):
+        extra = {}
+    def per_trait(key):
+        return [v for v in (_num(extra.get(f"{key}_1")), _num(extra.get(f"{key}_2"))) if v == v]
+    h2_z = min(h2[0] / se[0], h2[1] / se[1])
+    if (h2_z <= CONFIDENCE_H2_Z_MIN or abs(rg) > 1 or rg_se >= CONFIDENCE_RG_SE_MAX
+            or any(f < CONFIDENCE_SNP_FRACTION_MIN for f in per_trait("snp_fraction"))):
+        return "not_interpretable"
+    if (h2_z <= CONFIDENCE_H2_Z_TRUSTED
+            or any(c <= CONFIDENCE_MEAN_CHI2_MIN for c in per_trait("mean_chi2"))
+            or any(c < CONFIDENCE_BLOCK_COVERAGE_TRUSTED for c in per_trait("block_coverage"))):
         return "low"
     return "trusted"
 

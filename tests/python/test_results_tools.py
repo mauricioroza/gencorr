@@ -154,6 +154,12 @@ def test_ldsc_extra_has_diagnostics_and_overlap_flag():
     ({"rg_se": 0.3}, "not_interpretable"),                              # PGC Popcorn SE rule
     ({"extra": '{"mean_chi2_1": 1.01, "mean_chi2_2": 1.3}'}, "low"),    # LDSC FAQ mean chi2
     ({"extra": '{"mean_chi2_1": null}'}, "trusted"),                    # missing chi2 ignored
+    ({"n_snps": 18_000}, "trusted"),                                    # absolute count not used
+    ({"extra": '{"snp_fraction_1": 0.85, "snp_fraction_2": 0.13}'}, "not_interpretable"),  # exome-imputed
+    ({"extra": '{"snp_fraction_1": 0.85, "snp_fraction_2": 0.6}'}, "trusted"),   # evenly sparser array
+    ({"extra": '{"snp_fraction_1": null, "snp_fraction_2": 0.9}'}, "trusted"),   # missing value ignored
+    ({"extra": '{"block_coverage_1": 0.99, "block_coverage_2": 0.7}'}, "low"),  # regions missing
+    ({"extra": '{"block_coverage_1": 0.99, "block_coverage_2": 0.95}'}, "trusted"),
     ({"h2_1_se": np.nan}, None),                                        # cannot be assessed
     ({"status": "rg_not_estimable"}, None),
     ({"scope": "local", "locus": "1"}, None),

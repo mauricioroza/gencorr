@@ -140,7 +140,8 @@ t2d,GCST000028,,,,,,,,Type 2 diabetes (GWAS Catalog)
   ([details](docs/usage.md#gwas-catalog-studies)).
 - `n` is used only when the file has no N column.
 - `n_cases`/`n_controls` mark a binary trait (LAVA case/control model, N fallback);
-  with `pop_prev` you also get liability-scale h2.
+  with `pop_prev` you also get liability-scale h2. `samp_prev` sets the sample's case
+  proportion directly (`0.5` when the file's N is an effective N, as in PGC files).
 - `colmap` overrides column detection, e.g. `Z=STAT`. `STAT` is never mapped
   automatically, because it is not always a Z-score.
 - `build` (`GRCh37` default, or `GRCh38`) and `ancestry` (`EUR` default, `EAS`,
@@ -157,7 +158,8 @@ t2d,GCST000028,,,,,,,,Type 2 diabetes (GWAS Catalog)
 | `--pair_mode`             | `all`       | `all` pairs; `target --targets mdd,scz` = each target vs all others (one vs group); `pairs --pairs pairs.csv` = listed pairs only            |
 | `--min_maf`, `--min_info` | off         | variant QC for all methods; `0.01` / `0.9` recommended                                                                                       |
 | `--lava_snp_list`         | all SNPs    | e.g. `w_hm3.snplist` (HapMap3 SNPs only)                                                                                                     |
-| `--lava_univ_thresh`      | `0.05`      | local h2 p-value both traits must pass before a pair is tested                                                                               |
+| `--lava_univ_thresh`      | `0.05`      | local h2 p-value both traits must pass before a pair is tested; for genome-wide screens use 0.05/number of loci (e.g. 2e-5)                  |
+| `--lava_exclude_mhc`      | `false`     | skip loci overlapping `--lava_mhc_region` (extended MHC, default `6:25000000-34000000`, GRCh37); always flagged as `extra.in_mhc`            |
 
 All parameters: [docs/usage.md](docs/usage.md) or
 `nextflow run mauricioroza/gencorr --help --show_hidden`.

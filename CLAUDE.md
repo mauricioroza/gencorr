@@ -160,6 +160,12 @@ mention it only as a comparison reference.
   test_cli_options.py: save_* checks run with ldsc,lava only; the SumHer check skips without
   the LDAK image. Open: images ldak/popcorn are private on ghcr.io and ldsc:3.0.1-128f996 is
   not pushed (user).
+- After the first real run's external review (2026-11-26, on dev): all-missing
+  INFO/EAF column now warns; `confidence` coverage rules (snp_fraction <0.5 not_interpretable,
+  LDSC block_coverage <0.9 low; bin/ldsc_coverage.py in LDSC_H2; thresholds are gencorr's own);
+  LAVA `extra.in_mhc` + `--lava_exclude_mhc` (status excluded_mhc); samplesheet `samp_prev`
+  (LDSC/Popcorn liability; LAVA still needs n_cases/n_controls). `--lava_univ_thresh` default kept at 0.05
+  (LAVA default), docs recommend 0.05/n_loci for genome-wide screens.
 - BigaGWAS's own LAVA scripts (specific_lava.R, 2traits.R, lava_pgc.R) are not public, so its settings are
   partly unknown.
 

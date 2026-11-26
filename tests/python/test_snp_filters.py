@@ -62,6 +62,18 @@ def test_threshold_without_column_warns_and_removes_nothing():
     assert "warning_min_info" in qc and "warning_min_maf" in qc
 
 
+def test_all_missing_column_warns_like_absent_column():
+    # GWAS Catalog harmonised files often carry an EAF column with only NA
+    out, qc = harmonize(base(EAF=[None] * 4, INFO=[None] * 4), min_info=0.9, min_maf=0.01)
+    assert len(out) == 4
+    assert qc["maf_missing_kept"] == 4 and qc["info_missing_kept"] == 4
+    assert "is missing; not applied" in qc["warning_min_maf"]
+    assert "is missing; not applied" in qc["warning_min_info"]
+    # partly missing: the filter runs, no warning
+    _, qc = harmonize(base(EAF=[None, "0.5", None, "0.2"]), min_maf=0.01)
+    assert qc["maf_missing_kept"] == 2 and "warning_min_maf" not in qc
+
+
 def test_maf_column_is_not_written_to_harmonized_file():
     out, _ = harmonize(base(MAF=["0.2"] * 4), min_maf=0.01)
     assert "MAF" not in out.columns and "_MAF" not in out.columns

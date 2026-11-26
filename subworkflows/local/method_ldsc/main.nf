@@ -81,7 +81,8 @@ workflow METHOD_LDSC {
     LDSC_RG ( ch_rg_in.batch, ch_rg_in.ld )
 
     LDSC_SUMMARISE (
-        LDSC_H2.out.log.map { _meta, logs -> logs }.flatten().collect(),
+        LDSC_H2.out.log.map { _meta, logs -> logs }.flatten()
+            .mix( LDSC_H2.out.coverage.map { _meta, f -> f } ).collect(),
         LDSC_RG.out.log.map { _meta, log -> log }.collect().ifEmpty([])
     )
 

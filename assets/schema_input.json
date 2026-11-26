@@ -44,6 +44,13 @@
                 "errorMessage": "pop_prev must be between 0 and 1 (population prevalence, binary traits only)",
                 "meta": ["pop_prev"]
             },
+            "samp_prev": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "exclusiveMaximum": 1,
+                "errorMessage": "samp_prev must be between 0 and 1 (proportion of cases in the sample, binary traits only; 0.5 when N is an effective N)",
+                "meta": ["samp_prev"]
+            },
             "colmap": {
                 "type": "string",
                 "pattern": "^([A-Z0-9]+=[^,=\\s']+)(,[A-Z0-9]+=[^,=\\s']+)*$",
@@ -72,7 +79,7 @@
         "dependentRequired": {
             "n_cases": ["n_controls"],
             "n_controls": ["n_cases"],
-            "pop_prev": ["n_cases", "n_controls"]
+            "samp_prev": ["pop_prev"]
         },
         "uniqueEntries": ["id"]
     }

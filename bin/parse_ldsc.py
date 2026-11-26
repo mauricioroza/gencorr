@@ -92,6 +92,14 @@ def parse_h2_log(path: Path) -> dict:
     return out
 
 
+def parse_coverage_log(path: Path) -> dict:
+    """snp_fraction and block_coverage written by bin/ldsc_coverage.py
+    (NaN when missing, e.g. a stub run)."""
+    text = path.read_text()
+    return {"snp_fraction": find(rf"snp_fraction: {NUM}", text),
+            "block_coverage": find(rf"block_coverage: {NUM}", text)}
+
+
 def h2_status(row: dict) -> str:
     """ok, or why a trait has no observed-scale h2."""
     if row.get("error"):
@@ -104,6 +112,10 @@ def collect_h2(paths: list[Path]) -> pd.DataFrame:
     rows: dict[str, dict] = {}
     for path in paths:
         name = path.name
+        if name.endswith(".coverage.log"):
+            rows.setdefault(name[: -len(".coverage.log")], {"trait": name[: -len(".coverage.log")]}) \
+                .update(parse_coverage_log(path))
+            continue
         if name.endswith(".h2_liab.log"):
             trait, kind = name[: -len(".h2_liab.log")], "liab"
         elif name.endswith(".h2.log"):
@@ -137,7 +149,7 @@ def collect_h2(paths: list[Path]) -> pd.DataFrame:
             print(f"WARNING: no observed-scale h2 in the LDSC log of '{trait}'", file=sys.stderr)
     cols = ["trait", "n_snps", "h2_obs", "h2_obs_se", "h2_liab", "h2_liab_se",
             "samp_prev", "pop_prev", "intercept", "intercept_se", "lambda_gc",
-            "mean_chi2", "ratio", "ratio_se", "status"]
+            "mean_chi2", "ratio", "ratio_se", "snp_fraction", "block_coverage", "status"]
     df = pd.DataFrame(list(rows.values()))
     for c in cols:
         if c not in df.columns:
@@ -226,6 +238,9 @@ def build_results(rg: pd.DataFrame, h2: pd.DataFrame) -> pd.DataFrame:
             # per-trait h2 regression diagnostics (used by the confidence tier)
             "mean_chi2_1": h2v(r["trait1"], "mean_chi2"), "mean_chi2_2": h2v(r["trait2"], "mean_chi2"),
             "intercept_1": h2v(r["trait1"], "intercept"), "intercept_2": h2v(r["trait2"], "intercept"),
+            "snp_fraction_1": h2v(r["trait1"], "snp_fraction"), "snp_fraction_2": h2v(r["trait2"], "snp_fraction"),
+            "block_coverage_1": h2v(r["trait1"], "block_coverage"),
+            "block_coverage_2": h2v(r["trait2"], "block_coverage"),
             "error": r.get("error") if isinstance(r.get("error"), str) else None,
             "log": r["log"],
         }

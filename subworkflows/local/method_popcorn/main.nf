@@ -86,11 +86,14 @@ def ancestryKey(String a, String b) {
 
 //
 // Population (K) and sample (P) prevalence for Popcorn's liability scale, for a
-// binary trait with n_cases, n_controls and pop_prev in the samplesheet; [:] otherwise.
+// binary trait with pop_prev and samp_prev (or n_cases and n_controls) in the
+// samplesheet; [:] otherwise. samp_prev wins over n_cases / (n_cases + n_controls).
 //
 def liabilityPrevalences(Map m) {
-    if (!(m.n_cases && m.n_controls && m.pop_prev)) {
+    if (!m.pop_prev || !(m.samp_prev || (m.n_cases && m.n_controls))) {
         return [:]
     }
-    return [ k: m.pop_prev, p: (m.n_cases as double) / ((m.n_cases as double) + (m.n_controls as double)) ]
+    def p = m.samp_prev ? m.samp_prev as double
+          : (m.n_cases as double) / ((m.n_cases as double) + (m.n_controls as double))
+    return [ k: m.pop_prev, p: p ]
 }

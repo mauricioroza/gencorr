@@ -211,4 +211,7 @@ correlates r = 0.92 with BigaGWAS; the difference is entirely the SNP set.
 
 The T2D (ieu-a-25) and CHD (ieu-a-9) example files are Metabochip
 (regional) data, not genome-wide. They test that the computations agree, but
-the LDSC estimates themselves are not meaningful (e.g. T2D h2 = 5.6).
+the LDSC estimates themselves are not meaningful (e.g. T2D h2 = 5.6). gencorr's
+`confidence` flags this: job 972 re-run on 2026-11-26 (still identical to
+BigaGWAS) is `not_interpretable`, with `snp_fraction` 0.004 (T2D) and 0.041 (CHD)
+and `block_coverage` 0.004.

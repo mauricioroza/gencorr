@@ -242,4 +242,33 @@ nextflow_function {
             assert function.result == [id: 'x', pop_prev: 0.1]
         }
     }
+
+    test("validateSamples: pop_prev with samp_prev or n_cases/n_controls passes") {
+        function "validateSamples"
+        when {
+            function {
+                """
+                input[0] = [ [[id: 'mdd', pop_prev: 0.15, samp_prev: 0.5], []],
+                             [[id: 'scz', pop_prev: 0.01, n_cases: 100, n_controls: 300], []] ]
+                """
+            }
+        }
+        then {
+            assert function.success
+        }
+    }
+
+    test("validateSamples: pop_prev without a sample prevalence fails") {
+        function "validateSamples"
+        when {
+            function {
+                """
+                input[0] = [ [[id: 'mdd', pop_prev: 0.15], []], [[id: 'bmi'], []] ]
+                """
+            }
+        }
+        then {
+            assert function.failed
+        }
+    }
 }
